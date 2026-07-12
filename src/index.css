@@ -201,6 +201,17 @@
     line-height: 1.5;
   }
 
+  /* Visible focus states with brand accent */
+  *:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  /* Remove focus outline for mouse users */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+
   /* Display font for headings */
   h1, h2, h3, h4 {
     font-family: var(--font-display);
@@ -303,5 +314,23 @@
 
   .pb-star-pop {
     animation: pb-star-fill 0.25s ease-out both;
+  }
+
+  /* Skip link for keyboard navigation */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    padding: 8px 16px;
+    border-radius: 0 0 4px 0;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 100;
+    transition: top 0.2s;
+  }
+  .skip-link:focus {
+    top: 0;
   }
 }

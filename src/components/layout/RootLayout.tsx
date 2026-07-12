@@ -9,9 +9,10 @@ export function RootLayout() {
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
+      <a href="#main-content" className="skip-link">Skip to content</a>
       <NavBar />
 
-      <main className="flex-1 flex flex-col w-full">
+      <main id="main-content" className="flex-1 flex flex-col w-full">
         <Outlet />
       </main>
 

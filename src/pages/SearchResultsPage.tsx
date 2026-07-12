@@ -1,8 +1,9 @@
 import { useSearchParams } from "react-router-dom";
 import { useSearchShows } from "@/hooks/use-tmdb";
 import { ShowPosterCard } from "@/components/shows/ShowPosterCard";
-import { Loader2, SearchX } from "lucide-react";
+import { Loader2, SearchX, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export function SearchResultsPage() {
   const [searchParams] = useSearchParams();
@@ -62,12 +63,12 @@ export function SearchResultsPage() {
 
       {/* No results */}
       {query && !loading && !error && shows.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <SearchX className="size-8 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">
-            No shows found for "{query}".
-          </p>
-        </div>
+        <EmptyState
+          icon={Search}
+          title="No shows found"
+          description="Try a different title, or browse our catalog instead."
+          action={{ label: "Browse Shows", to: "/shows" }}
+        />
       )}
 
       {/* Results grid */}

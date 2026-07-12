@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
 import { cn } from "@/lib/utils";
 import { Search, UserPlus, UserCheck, Users, Loader2 } from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 // ---------------------------------------------------------------------------
 // MembersPage — /members route
@@ -63,17 +64,11 @@ export default function MembersPage() {
             <p className="text-sm">Loading members…</p>
           </div>
         ) : filteredProfiles.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
-            <Users className="size-12 mb-4 stroke-[1.25]" />
-            <p className="text-base font-medium text-foreground">
-              {query ? "No members found" : "No members yet"}
-            </p>
-            <p className="text-sm mt-1">
-              {query
-                ? "Try a different search term."
-                : "Check back once people join."}
-            </p>
-          </div>
+          <EmptyState
+            icon={Users}
+            title={query ? "No members found" : "No members yet"}
+            description={query ? "Try a different search term." : "Check back once people join."}
+          />
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredProfiles.map((profile) => (

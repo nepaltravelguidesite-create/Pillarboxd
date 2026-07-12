@@ -18,6 +18,7 @@ import {
   type WatchProvider,
 } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
+import { SEOMeta } from "@/components/SEOMeta";
 import { StarRating } from "@/components/shows/StarRating";
 import { LogEntryModal } from "@/components/shows/LogEntryModal";
 import { ShowCarousel } from "@/components/shows/ShowCarousel";
@@ -585,7 +586,18 @@ export function ShowProfilePage() {
   };
 
   return (
-    <div className="flex flex-col w-full">
+    <>
+      <SEOMeta
+        title={showDetail.name}
+        description={showDetail.overview?.slice(0, 160)}
+        ogImage={
+          showDetail.backdrop_path
+            ? `https://image.tmdb.org/t/p/w1280${showDetail.backdrop_path}`
+            : undefined
+        }
+        ogType="video.show"
+      />
+      <div className="flex flex-col w-full">
       {/* Full-screen backdrop behind header */}
       <div className="relative w-full h-[40vh] sm:h-[50vh] min-h-[300px] max-h-[500px] overflow-hidden">
         {showDetail.backdrop_path ? (
@@ -736,6 +748,7 @@ export function ShowProfilePage() {
         onOpenChange={setLogModalOpen}
         show={show}
       />
-    </div>
+      </div>
+    </>
   );
 }

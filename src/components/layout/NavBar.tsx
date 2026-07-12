@@ -4,6 +4,7 @@ import { Menu, X, Plus, User, LogIn, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
 import { SearchBar } from "@/components/layout/SearchBar";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 import { PillarboxdLogo } from "@/components/brand/PillarboxdLogo";
 import { cn } from "@/lib/utils";
 
@@ -386,6 +387,8 @@ export function NavBar() {
             <div className="hidden sm:block w-48 md:w-56 lg:w-72 xl:w-80 shrink-0">
               <SearchBar />
             </div>
+
+            <NotificationBell />
 
             <LogButton className="hidden sm:flex shrink-0" />
 

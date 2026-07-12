@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { List, Plus, Trash2, Globe, Lock, Heart, Loader2 } from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 // ---------------------------------------------------------------------------
 // ListsPage — /lists route
@@ -241,15 +242,11 @@ export default function ListsPage() {
             <p className="text-sm">Loading your lists…</p>
           </div>
         ) : myLists.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
-            <List className="size-12 mb-4 stroke-[1.25]" />
-            <p className="text-base font-medium text-foreground">
-              No lists yet
-            </p>
-            <p className="text-sm mt-1">
-              Create your first list to start collecting shows.
-            </p>
-          </div>
+          <EmptyState
+            icon={List}
+            title="No lists yet"
+            description="Create your first list to organize shows you love."
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {myLists.map((list) => (

@@ -5,6 +5,7 @@ import { useUserData, type UserLog } from "@/context/UserDataContext";
 import { useSocial } from "@/context/SocialContext";
 import { useUI } from "@/context/UIContext";
 import { posterUrl } from "@/lib/tmdb";
+import { SEOMeta } from "@/components/SEOMeta";
 import { cn } from "@/lib/utils";
 import {
   Heart,
@@ -332,7 +333,14 @@ export function UserProfilePage() {
   }
 
   return (
-    <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <>
+      <SEOMeta
+        title={`${user?.displayName || "Profile"} — Pillarboxd`}
+        description={`Tracking, ratings, and diary for ${
+          user?.displayName || "this user"
+        } on Pillarboxd`}
+      />
+      <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Profile header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
         <div className="flex items-center gap-4">
@@ -529,5 +537,6 @@ export function UserProfilePage() {
         </div>
       )}
     </div>
+    </>
   );
 }

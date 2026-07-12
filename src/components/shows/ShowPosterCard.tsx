@@ -75,7 +75,11 @@ function ShowPosterCardInner({
 
         {/* Error fallback */}
         {imgError ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-secondary/30">
+          <div
+            role="img"
+            aria-label={`${show.name} poster unavailable`}
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-secondary/30"
+          >
             <Tv className="size-8 text-muted-foreground/40" strokeWidth={1.5} />
             <span className="text-[10px] text-muted-foreground/60 text-center px-2 line-clamp-2 leading-tight">
               {show.name}

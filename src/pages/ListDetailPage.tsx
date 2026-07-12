@@ -4,6 +4,7 @@ import { useSocial, type ShowList, type ListItem } from "@/context/SocialContext
 import { useAuth } from "@/context/AuthContext";
 import { type TVShow } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
+import { SEOMeta } from "@/components/SEOMeta";
 import { ShowPosterCard } from "@/components/shows/ShowPosterCard";
 import { Button } from "@/components/ui/button";
 import { Loader2, Trash2, List, Lock, Globe, Heart } from "lucide-react";
@@ -186,6 +187,10 @@ export default function ListDetailPage() {
 
   return (
     <Shell>
+      <SEOMeta
+        title={list?.title || "List"}
+        description={list?.description || "A custom show list on Pillarboxd"}
+      />
       {/* Header */}
       <header className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">

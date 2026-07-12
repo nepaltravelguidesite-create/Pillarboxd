@@ -8,7 +8,9 @@ import { UIProvider } from "@/context/UIContext";
 import { AppProvider } from "@/context/AppContext";
 import { UserDataProvider } from "@/context/UserDataContext";
 import { SocialProvider } from "@/context/SocialContext";
+import { NotificationsProvider } from "@/context/NotificationsContext";
 import { RootLayout } from "@/components/layout/RootLayout";
+import { OnboardingFlow } from "@/components/OnboardingFlow";
 import { HomePage } from "@/pages/HomePage";
 import { PlaceholderPage } from "@/pages/PlaceholderPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
@@ -22,6 +24,7 @@ import MembersPage from "@/pages/MembersPage";
 import LogPage from "@/pages/LogPage";
 import JournalPage from "@/pages/JournalPage";
 import PersonPage from "@/pages/PersonPage";
+import StatsPage from "@/pages/StatsPage";
 
 // ---------------------------------------------------------------------------
 // Router definition
@@ -36,7 +39,10 @@ const router = createBrowserRouter([
           <AppProvider>
             <UserDataProvider>
               <SocialProvider>
-                <RootLayout />
+                <NotificationsProvider>
+                  <OnboardingFlow />
+                  <RootLayout />
+                </NotificationsProvider>
               </SocialProvider>
             </UserDataProvider>
           </AppProvider>
@@ -64,6 +70,10 @@ const router = createBrowserRouter([
       { path: "create-account", element: <Navigate to="/" replace /> },
       { path: "profile", element: <UserProfilePage /> },
       { path: "profile/:username", element: <UserProfilePage /> },
+
+      // Stats dashboard
+      { path: "profile/stats", element: <StatsPage /> },
+      { path: "profile/:username/stats", element: <StatsPage /> },
 
       // Lists
       { path: "lists", element: <ListsPage /> },
