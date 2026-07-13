@@ -316,6 +316,37 @@
     animation: pb-star-fill 0.25s ease-out both;
   }
 
+  /* Projector-beam logo animations */
+  @keyframes beam-breathe-outer {
+    0%, 100% { opacity: 0.18; }
+    50% { opacity: 0.5; }
+  }
+
+  @keyframes beam-breathe-inner {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.85; }
+  }
+
+  @keyframes lens-pulse {
+    0%, 100% { opacity: 0.85; }
+    50% { opacity: 1; }
+  }
+
+  @keyframes dust-twinkle-1 {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.8; }
+  }
+
+  @keyframes dust-twinkle-2 {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.65; }
+  }
+
+  @keyframes dust-twinkle-3 {
+    0%, 100% { opacity: 0.1; }
+    50% { opacity: 0.55; }
+  }
+
   /* Skip link for keyboard navigation */
   .skip-link {
     position: absolute;

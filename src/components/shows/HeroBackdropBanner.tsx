@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Star, Play, Info, ChevronLeft, ChevronRight, Tv } from "lucide-react";
 import { backdropUrl, type TVShow } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
+import { AftershowLogoAnimated } from "@/components/brand/AftershowLogoAnimated";
 
 interface HeroBackdropBannerProps {
   shows: TVShow[];
@@ -104,6 +105,11 @@ export function HeroBackdropBanner({ shows, loading = false }: HeroBackdropBanne
           </div>
         );
       })}
+
+      {/* Ambient animated logo */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 opacity-30 pointer-events-none z-20">
+        <AftershowLogoAnimated size={36} showWordmark={false} />
+      </div>
 
       {/* Content overlay */}
       <div className="absolute inset-0 flex items-end">

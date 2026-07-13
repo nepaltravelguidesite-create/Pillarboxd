@@ -361,6 +361,20 @@ export function NavBar() {
       >
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6">
           <div className="flex h-12 items-center gap-3 md:gap-4">
+            <Link to="/" className="group focus:outline-none shrink-0">
+              <AftershowLogo size={24} />
+            </Link>
+
+            <DesktopNavLinks />
+
+            <div className="flex-1" />
+
+            <div className="hidden sm:block w-48 md:w-56 lg:w-72 xl:w-80 shrink-0">
+              <SearchBar />
+            </div>
+
+            <NotificationBell />
+
             <button
               type="button"
               aria-label="Open navigation menu"
@@ -375,20 +389,6 @@ export function NavBar() {
             >
               <Menu className="size-5" strokeWidth={2} aria-hidden />
             </button>
-
-            <Link to="/" className="group focus:outline-none shrink-0">
-              <AftershowLogo size={24} />
-            </Link>
-
-            <DesktopNavLinks />
-
-            <div className="flex-1" />
-
-            <div className="hidden sm:block w-48 md:w-56 lg:w-72 xl:w-80 shrink-0">
-              <SearchBar />
-            </div>
-
-            <NotificationBell />
 
             <LogButton className="hidden sm:flex shrink-0" />
 

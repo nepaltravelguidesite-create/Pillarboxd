@@ -9,11 +9,11 @@ interface AftershowLogoProps {
 }
 
 /**
- * Aftershow logo — "The Ghost Light"
+ * Aftershow logo — "The Projector Beam"
  *
- * A bare bulb on a stand: the one lamp left glowing on an empty stage
- * after a show ends. The show's over — let's talk about it.
- * Single-color SVG, inherits currentColor, scales cleanly from 16px to favicon.
+ * A film projector's beam still cutting through a dark room after the reel
+ * has ended — dust drifting in the light — right before the house lights
+ * come up. Single-color SVG, inherits currentColor, scales from 16px to favicon.
  */
 export function AftershowLogo({
   className,
@@ -23,20 +23,20 @@ export function AftershowLogo({
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
       <svg
-        width={(size * 20) / 32}
+        width={size}
         height={size}
-        viewBox="0 0 20 32"
-        fill="currentColor"
+        viewBox="0 0 32 32"
+        fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-label="Aftershow"
         role="img"
       >
-        {/* Bulb */}
-        <circle cx="10" cy="9" r="5.5" />
-        {/* Stand */}
-        <rect x="8.5" y="15" width="3" height="11" rx="1.5" />
-        {/* Base */}
-        <rect x="3" y="26" width="14" height="3" rx="1.5" />
+        <path d="M7 25 L30 4 L30 18 Z" fill="currentColor" opacity="0.35" />
+        <path d="M7 25 L18 14 L18 20 Z" fill="currentColor" opacity="0.7" />
+        <circle cx="16" cy="12" r="0.7" fill="currentColor" opacity="0.6" />
+        <circle cx="22" cy="10" r="0.5" fill="currentColor" opacity="0.5" />
+        <circle cx="24" cy="15" r="0.5" fill="currentColor" opacity="0.4" />
+        <circle cx="7" cy="25" r="2.3" fill="currentColor" />
       </svg>
       {showWordmark && (
         <span
