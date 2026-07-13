@@ -15,6 +15,8 @@ import type { TVShow } from "@/lib/tmdb";
 // Types
 // ---------------------------------------------------------------------------
 
+export type WatchStatus = 'watching' | 'completed' | 'want_to_watch' | 'on_hold' | 'dropped';
+
 export interface UserShow {
   id: string;
   user_id: string;
@@ -26,6 +28,7 @@ export interface UserShow {
   rating: number | null;
   liked: boolean;
   watchlisted: boolean;
+  status: WatchStatus | null;
   created_at: string;
   updated_at: string;
 }
@@ -56,6 +59,7 @@ interface UserDataContextValue {
   setRating: (show: TVShow, rating: number | null) => Promise<void>;
   toggleLike: (show: TVShow) => Promise<void>;
   toggleWatchlist: (show: TVShow) => Promise<void>;
+  setShowStatus: (show: TVShow, status: WatchStatus | null) => Promise<void>;
   addLog: (log: Omit<UserLog, "id" | "user_id" | "created_at">) => Promise<void>;
   deleteLog: (logId: string) => Promise<void>;
 }
@@ -297,6 +301,57 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
   );
 
   // -------------------------------------------------------------------------
+  // setShowStatus
+  // -------------------------------------------------------------------------
+
+  const setShowStatus = useCallback(
+    async (show: TVShow, status: WatchStatus | null) => {
+      if (!user) return;
+
+      const existing = userShows.find((s) => s.show_id === show.id);
+
+      if (existing) {
+        const { error } = await supabase
+          .from("user_shows")
+          .update({ status })
+          .eq("id", existing.id);
+
+        if (error) {
+          console.error("[UserData] setShowStatus error:", error);
+          toast.error("Failed to update status");
+          return;
+        }
+
+        setUserShows((prev) =>
+          prev.map((s) => (s.id === existing.id ? { ...s, status } : s))
+        );
+      } else {
+        const { data, error } = await supabase
+          .from("user_shows")
+          .insert({
+            ...denormalizeShow(show),
+            user_id: user.id,
+            rating: null,
+            liked: false,
+            watchlisted: status === 'want_to_watch',
+            status,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error("[UserData] setShowStatus insert error:", error);
+          toast.error("Failed to update status");
+          return;
+        }
+
+        setUserShows((prev) => [...prev, data as UserShow]);
+      }
+    },
+    [user, userShows]
+  );
+
+  // -------------------------------------------------------------------------
   // addLog — insert a diary entry
   // -------------------------------------------------------------------------
 
@@ -353,6 +408,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
         setRating,
         toggleLike,
         toggleWatchlist,
+        setShowStatus,
         addLog,
         deleteLog,
       }}

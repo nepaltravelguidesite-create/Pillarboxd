@@ -1,7 +1,11 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { useUserData, type UserLog } from "@/context/UserDataContext";
+import {
+  useUserData,
+  type UserLog,
+  type WatchStatus,
+} from "@/context/UserDataContext";
 import { useSocial } from "@/context/SocialContext";
 import { useUI } from "@/context/UIContext";
 import { posterUrl } from "@/lib/tmdb";
@@ -18,6 +22,8 @@ import {
   LogIn,
   Trash2,
   Play,
+  Globe,
+  Settings as SettingsIcon,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -133,6 +139,7 @@ interface WatchlistCardProps {
     rating: number | null;
     liked: boolean;
     watchlisted: boolean;
+    status: WatchStatus | null;
   };
 }
 
@@ -154,7 +161,10 @@ function WatchlistCard({ show }: WatchlistCardProps) {
             alt={show.show_name}
             loading="lazy"
             onError={() => setImgError(true)}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className={cn(
+              "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
+              show.status === "dropped" && "saturate-0 opacity-60"
+            )}
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 bg-secondary/30">
@@ -238,9 +248,10 @@ export function UserProfilePage() {
   const { userShows, userLogs, loading } = useUserData();
   const { userEpisodes } = useSocial();
   const { openAuthModal } = useUI();
-  const [activeTab, setActiveTab] = useState<"diary" | "watchlist" | "likes">(
-    "diary"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "diary" | "watchlist" | "likes" | "library"
+  >("diary");
+  const [statusFilter, setStatusFilter] = useState<WatchStatus | "all">("all");
 
   // Compute stats
   const stats = useMemo(() => {
@@ -269,6 +280,12 @@ export function UserProfilePage() {
     () => userShows.filter((s) => s.liked),
     [userShows]
   );
+
+  // Library: all tracked shows, optionally filtered by watch status
+  const libraryShows = useMemo(() => {
+    if (statusFilter === "all") return userShows;
+    return userShows.filter((s) => s.status === statusFilter);
+  }, [userShows, statusFilter]);
 
   // Continue Watching: shows with watched episodes, find next unwatched
   const continueWatching = useMemo(() => {
@@ -355,8 +372,61 @@ export function UserProfilePage() {
               {user.displayName}
             </h1>
             <p className="text-sm text-muted-foreground">@{user.username}</p>
+            {user.bio && (
+              <p className="text-sm text-foreground/80 mt-2 max-w-md">
+                {user.bio}
+              </p>
+            )}
           </div>
         </div>
+
+        {/* Social links */}
+        {(user.twitterUrl || user.instagramUrl || user.websiteUrl) && (
+          <div className="flex items-center gap-2">
+            {user.twitterUrl && (
+              <a
+                href={user.twitterUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Twitter"
+                className="flex items-center justify-center size-8 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+              >
+                <Globe className="size-4" />
+              </a>
+            )}
+            {user.instagramUrl && (
+              <a
+                href={user.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="flex items-center justify-center size-8 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+              >
+                <Globe className="size-4" />
+              </a>
+            )}
+            {user.websiteUrl && (
+              <a
+                href={user.websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Website"
+                className="flex items-center justify-center size-8 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+              >
+                <Globe className="size-4" />
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* Settings link */}
+        <Link
+          to="/settings"
+          aria-label="Settings"
+          className="sm:ml-auto flex items-center justify-center size-9 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+        >
+          <SettingsIcon className="size-4" />
+        </Link>
       </div>
 
       {/* Stats row */}
@@ -442,6 +512,7 @@ export function UserProfilePage() {
             { key: "diary", label: "Diary", count: userLogs.length },
             { key: "watchlist", label: "Watchlist", count: watchlistShows.length },
             { key: "likes", label: "Likes", count: likedShows.length },
+            { key: "library", label: "Library", count: userShows.length },
           ] as const
         ).map((tab) => (
           <button
@@ -530,6 +601,52 @@ export function UserProfilePage() {
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4">
               {likedShows.map((show) => (
+                <WatchlistCard key={show.id} show={show} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Library */}
+      {activeTab === "library" && (
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <label
+              htmlFor="status-filter"
+              className="text-xs uppercase tracking-widest text-muted-foreground"
+            >
+              Status
+            </label>
+            <select
+              id="status-filter"
+              value={statusFilter}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as WatchStatus | "all")
+              }
+              className="h-8 rounded border border-border bg-card px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            >
+              <option value="all">All</option>
+              <option value="watching">Watching</option>
+              <option value="completed">Completed</option>
+              <option value="want_to_watch">Want to Watch</option>
+              <option value="on_hold">On Hold</option>
+              <option value="dropped">Dropped</option>
+            </select>
+          </div>
+          {libraryShows.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <Tv className="size-8 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">
+                No shows in your library yet.
+              </p>
+              <Link to="/" className="text-xs text-accent hover:underline">
+                Browse shows
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4">
+              {libraryShows.map((show) => (
                 <WatchlistCard key={show.id} show={show} />
               ))}
             </div>

@@ -30,6 +30,7 @@ import { useSocial } from "@/context/SocialContext";
 import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
 import { BarChart3, Clock, Tv, CheckCircle2, Sparkles } from "lucide-react";
+import { SubscriptionInsight } from "@/components/shows/SubscriptionInsight";
 
 // ---------------------------------------------------------------------------
 // StatsPage — /profile/stats route
@@ -352,6 +353,8 @@ export default function StatsPage() {
             username={user.displayName}
           />
         )}
+
+        {user && <SubscriptionInsight />}
 
         {/* Charts */}
         <div className="mt-8 grid gap-4 lg:grid-cols-2">

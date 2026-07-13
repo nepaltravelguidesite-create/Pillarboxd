@@ -26,6 +26,7 @@ import LogPage from "@/pages/LogPage";
 import JournalPage from "@/pages/JournalPage";
 import PersonPage from "@/pages/PersonPage";
 import StatsPage from "@/pages/StatsPage";
+import SettingsPage from "@/pages/SettingsPage";
 
 // ---------------------------------------------------------------------------
 // Router definition
@@ -75,6 +76,9 @@ const router = createBrowserRouter([
       // Stats dashboard
       { path: "profile/stats", element: <StatsPage /> },
       { path: "profile/:username/stats", element: <StatsPage /> },
+
+      // Settings
+      { path: "settings", element: <SettingsPage /> },
 
       // Lists
       { path: "lists", element: <ListsPage /> },

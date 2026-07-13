@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
-import { Menu, X, Plus, User, LogIn, LogOut } from "lucide-react";
+import { Menu, X, Plus, User, LogIn, LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
 import { SearchBar } from "@/components/layout/SearchBar";
@@ -98,6 +98,17 @@ function UserArea({ className }: { className?: string }) {
             <User className="size-4 text-muted-foreground" strokeWidth={2} aria-hidden />
           )}
           <span className="hidden lg:block max-w-[100px] truncate">{user.displayName}</span>
+        </Link>
+        <Link
+          to="/settings"
+          aria-label="Settings"
+          className={cn(
+            "flex items-center justify-center size-8 rounded",
+            "text-muted-foreground hover:text-foreground",
+            "hover:bg-secondary/50 transition-colors duration-150"
+          )}
+        >
+          <Settings className="size-4" strokeWidth={2} />
         </Link>
         <button
           type="button"
@@ -263,6 +274,23 @@ function MobileDrawer({
                   >
                     <User className="size-4 shrink-0" strokeWidth={2} aria-hidden />
                     <span>Profile</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/settings"
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-2.5 w-full px-3 py-2.5 rounded text-sm font-medium",
+                        isActive
+                          ? "bg-primary/10 text-brand-amber"
+                          : "text-foreground/70 hover:text-foreground hover:bg-secondary/50"
+                      )
+                    }
+                  >
+                    <Settings className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                    <span>Settings</span>
                   </NavLink>
                 </li>
                 <li>

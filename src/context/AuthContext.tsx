@@ -19,6 +19,10 @@ export interface AuthUser {
   username: string;
   displayName: string;
   avatarUrl?: string;
+  bio?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
+  websiteUrl?: string;
 }
 
 type AuthState = "loading" | "authenticated" | "unauthenticated";
@@ -31,6 +35,7 @@ interface AuthContextValue {
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, username: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -49,9 +54,42 @@ export function useAuth(): AuthContextValue {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function mapUser(user: User | null): AuthUser | null {
-  if (!user) return null;
+type ProfileRow = {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+  bio: string | null;
+  twitter_url: string | null;
+  instagram_url: string | null;
+  website_url: string | null;
+};
 
+async function fetchProfile(userId: string): Promise<AuthUser | null> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, avatar_url, bio, twitter_url, instagram_url, website_url")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (data) {
+    const p = data as ProfileRow;
+    return {
+      id: p.id,
+      email: "",
+      username: p.username,
+      displayName: p.display_name,
+      avatarUrl: p.avatar_url ?? undefined,
+      bio: p.bio ?? undefined,
+      twitterUrl: p.twitter_url ?? undefined,
+      instagramUrl: p.instagram_url ?? undefined,
+      websiteUrl: p.website_url ?? undefined,
+    };
+  }
+  return null;
+}
+
+function fallbackFromMeta(user: User): AuthUser {
   const meta = user.user_metadata ?? {};
   return {
     id: user.id,
@@ -71,23 +109,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authState, setAuthState] = useState<AuthState>("loading");
   const [user, setUser] = useState<AuthUser | null>(null);
 
-  // Initialize session on mount
+  async function loadUser(newSession: Session | null) {
+    if (!newSession?.user) {
+      setUser(null);
+      setAuthState("unauthenticated");
+      return;
+    }
+
+    const profile = await fetchProfile(newSession.user.id);
+    if (profile) {
+      setUser({ ...profile, email: newSession.user.email ?? "" });
+    } else {
+      const fallback = fallbackFromMeta(newSession.user);
+      setUser(fallback);
+    }
+    setAuthState("authenticated");
+  }
+
   useEffect(() => {
     let mounted = true;
 
     supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return;
       setSession(data.session);
-      setUser(mapUser(data.session?.user ?? null));
-      setAuthState(data.session ? "authenticated" : "unauthenticated");
+      (async () => {
+        await loadUser(data.session);
+      })();
     });
 
-    // onAuthStateChange — wrap async work in IIFE to avoid deadlock
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
       (async () => {
-        setSession(newSession);
-        setUser(mapUser(newSession?.user ?? null));
-        setAuthState(newSession ? "authenticated" : "unauthenticated");
+        await loadUser(newSession);
       })();
     });
 
@@ -97,50 +150,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // -------------------------------------------------------------------------
-  // Google OAuth
-  // -------------------------------------------------------------------------
+  const refreshProfile = useCallback(async () => {
+    if (!session?.user) return;
+    const profile = await fetchProfile(session.user.id);
+    if (profile) {
+      setUser({ ...profile, email: session.user.email ?? "" });
+    }
+  }, [session]);
 
   const signInWithGoogle = useCallback(async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-      },
+      options: { redirectTo: window.location.origin },
     });
     if (error) throw error;
   }, []);
-
-  // -------------------------------------------------------------------------
-  // Email/password sign in
-  // -------------------------------------------------------------------------
 
   const signInWithEmail = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   }, []);
 
-  // -------------------------------------------------------------------------
-  // Email/password sign up
-  // -------------------------------------------------------------------------
-
   const signUpWithEmail = useCallback(
     async (email: string, password: string, username: string) => {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: { username },
-        },
+        options: { data: { username } },
       });
       if (error) throw error;
     },
     []
   );
-
-  // -------------------------------------------------------------------------
-  // Sign out
-  // -------------------------------------------------------------------------
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
@@ -157,6 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithEmail,
         signUpWithEmail,
         signOut,
+        refreshProfile,
       }}
     >
       {children}

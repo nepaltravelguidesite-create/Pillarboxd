@@ -21,6 +21,9 @@ export interface UserProfile {
   display_name: string;
   avatar_url: string | null;
   bio: string | null;
+  twitter_url: string | null;
+  instagram_url: string | null;
+  website_url: string | null;
   follower_count: number;
   following_count: number;
   created_at: string;

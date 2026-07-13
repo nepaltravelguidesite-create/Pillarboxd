@@ -41,6 +41,7 @@ import {
 
 function WatchProviders({ showId }: { showId: number }) {
   const [providers, setProviders] = useState<WatchProvider[]>([]);
+  const [link, setLink] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -62,6 +63,7 @@ function WatchProviders({ showId }: { showId: number }) {
           return true;
         });
         setProviders(deduped.slice(0, 8));
+        setLink(data.link ?? "");
       })
       .catch(() => {})
       .finally(() => {
@@ -79,28 +81,58 @@ function WatchProviders({ showId }: { showId: number }) {
       <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-1.5">
         Where to Watch
       </p>
-      <div className="flex flex-wrap gap-1.5">
-        {providers.map((p) => (
-          <div
-            key={p.provider_id}
-            className="size-7 rounded bg-muted border border-border/50 overflow-hidden"
-            title={p.provider_name}
-          >
-            {p.logo_path ? (
-              <img
-                src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
-                alt={p.provider_name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground">
-                {p.provider_name.slice(0, 2)}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      {link ? (
+        <a
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-wrap gap-1.5 group cursor-pointer hover:opacity-80 transition-opacity"
+        >
+          {providers.map((p) => (
+            <div
+              key={p.provider_id}
+              className="size-7 rounded bg-muted border border-border/50 overflow-hidden ring-border group-hover:ring-1 ring-offset-0 transition-all"
+              title={p.provider_name}
+            >
+              {p.logo_path ? (
+                <img
+                  src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
+                  alt={p.provider_name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground">
+                  {p.provider_name.slice(0, 2)}
+                </div>
+              )}
+            </div>
+          ))}
+        </a>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {providers.map((p) => (
+            <div
+              key={p.provider_id}
+              className="size-7 rounded bg-muted border border-border/50 overflow-hidden"
+              title={p.provider_name}
+            >
+              {p.logo_path ? (
+                <img
+                  src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
+                  alt={p.provider_name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground">
+                  {p.provider_name.slice(0, 2)}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -116,7 +148,7 @@ interface ActionPanelProps {
 }
 
 function ActionPanel({ show, showDetail, onLogClick }: ActionPanelProps) {
-  const { getShowData, setRating, toggleLike, toggleWatchlist } = useUserData();
+  const { getShowData, setRating, toggleLike, toggleWatchlist, setShowStatus } = useUserData();
   const { getShowProgress } = useSocial();
   const { openAuthModal } = useUI();
   const { user } = useAuth();
@@ -125,6 +157,7 @@ function ActionPanel({ show, showDetail, onLogClick }: ActionPanelProps) {
   const rating = showData?.rating ?? null;
   const liked = showData?.liked ?? false;
   const watchlisted = showData?.watchlisted ?? false;
+  const status = showData?.status ?? null;
   const progress = getShowProgress(show.id);
 
   function guard(fn: () => void) {
@@ -199,6 +232,36 @@ function ActionPanel({ show, showDetail, onLogClick }: ActionPanelProps) {
             Log
           </span>
         </button>
+      </div>
+
+      {/* Watch status */}
+      <div className="pt-2 border-t border-border/50">
+        <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-1.5">
+          Status
+        </p>
+        <div className="flex flex-wrap gap-1">
+          {([
+            { value: 'watching', label: 'Watching' },
+            { value: 'completed', label: 'Completed' },
+            { value: 'want_to_watch', label: 'Want' },
+            { value: 'on_hold', label: 'On Hold' },
+            { value: 'dropped', label: 'Dropped' },
+          ] as const).map((s) => (
+            <button
+              key={s.value}
+              type="button"
+              onClick={() => guard(() => setShowStatus(show, status === s.value ? null : s.value))}
+              className={cn(
+                "px-2 py-1 rounded text-[10px] font-medium uppercase tracking-wider transition-colors",
+                status === s.value
+                  ? "border border-primary/50 bg-primary/10 text-primary"
+                  : "border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+              )}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Progress bar */}
