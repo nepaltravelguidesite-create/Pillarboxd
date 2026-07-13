@@ -26,8 +26,8 @@ export interface SEOMetaProps {
   ogType?: string;
 }
 
-const DEFAULT_TITLE = "Pillarboxd — Track, rate & log your TV shows";
-const BRAND_SUFFIX = "— Pillarboxd";
+const DEFAULT_TITLE = "Aftershow — Track, rate & log your TV shows";
+const BRAND_SUFFIX = "— Aftershow";
 
 function upsertMeta(selector: string, attributes: Record<string, string>) {
   let el = document.head.querySelector<HTMLMetaElement>(selector);
@@ -51,7 +51,7 @@ export function SEOMeta({
   ogType = "website",
 }: SEOMetaProps) {
   useEffect(() => {
-    const fullTitle = title.includes("Pillarboxd") ? title : `${title} ${BRAND_SUFFIX}`;
+    const fullTitle = title.includes("Aftershow") ? title : `${title} ${BRAND_SUFFIX}`;
     document.title = fullTitle;
 
     if (description) {

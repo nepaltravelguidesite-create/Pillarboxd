@@ -41,8 +41,8 @@ export default function AboutPage() {
   return (
     <div className="bg-background text-foreground">
       <SEOMeta
-        title="About — Pillarboxd"
-        description="Pillarboxd is a TV tracker for people who care about what they watch. Log episodes, rate shows, discover what's next."
+        title="About — Aftershow"
+        description="Aftershow is a TV tracker for people who care about what they watch. Log episodes, rate shows, discover what's next."
       />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
@@ -52,7 +52,7 @@ export default function AboutPage() {
             Track every show you watch.
           </h1>
           <p className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-            Pillarboxd is a TV tracker for people who care about what they watch.
+            Aftershow is a TV tracker for people who care about what they watch.
             Log episodes, rate shows, discover what's next.
           </p>
         </section>
@@ -65,7 +65,7 @@ export default function AboutPage() {
           <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed">
             Film trackers treat a movie as a single event — you saw it, or you
             didn't. Television doesn't work that way. A season is a commitment.
-            An episode is a unit of attention. Pillarboxd is built around
+            An episode is a unit of attention. Aftershow is built around
             episode-level tracking, not just a checkbox that says "done." Watch
             season progress fill in as you go. See an upcoming episode calendar
             for the shows you follow. Then look back at a year in review and find

@@ -64,7 +64,7 @@ export default function ContactPage() {
   return (
     <div className="bg-background text-foreground">
       <SEOMeta
-        title="Contact — Pillarboxd"
+        title="Contact — Aftershow"
         description="Questions, feedback, or just want to say hi? Drop us a message."
       />
 

@@ -23,7 +23,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { PillarboxdLogo } from "@/components/brand/PillarboxdLogo";
+import { AftershowLogo } from "@/components/brand/AftershowLogo";
 import { SEOMeta } from "@/components/SEOMeta";
 import { useUserData } from "@/context/UserDataContext";
 import { useSocial } from "@/context/SocialContext";
@@ -594,9 +594,9 @@ function YearInReview({
 
           {/* Logo footer */}
           <div className="mt-8 flex items-center justify-between border-t border-border/40 pt-4">
-            <PillarboxdLogo size={20} />
+            <AftershowLogo size={20} />
             <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              pillarboxd.com
+              aftershow.com
             </span>
           </div>
         </div>

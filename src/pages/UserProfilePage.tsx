@@ -335,10 +335,10 @@ export function UserProfilePage() {
   return (
     <>
       <SEOMeta
-        title={`${user?.displayName || "Profile"} — Pillarboxd`}
+        title={`${user?.displayName || "Profile"} — Aftershow`}
         description={`Tracking, ratings, and diary for ${
           user?.displayName || "this user"
-        } on Pillarboxd`}
+        } on Aftershow`}
       />
       <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Profile header */}

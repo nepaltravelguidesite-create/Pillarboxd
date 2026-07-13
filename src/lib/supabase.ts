@@ -5,7 +5,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error(
-    "[Pillarboxd] Missing Supabase env vars. " +
+    "[Aftershow] Missing Supabase env vars. " +
       "VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set."
   );
 }

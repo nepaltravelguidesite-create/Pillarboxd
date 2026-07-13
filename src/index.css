@@ -7,7 +7,7 @@
 
 /*
   ============================================================
-  PILLARBOXD DESIGN SYSTEM
+  AFTERSHOW DESIGN SYSTEM
   Original palette — cinema-dark, cool-toned with amber accents.
 
   DIRECTION
@@ -145,7 +145,7 @@
   --sidebar-ring: #e8a838;
 }
 
-/* Pillarboxd is always dark — no .dark variant needed. */
+/* Aftershow is always dark — no .dark variant needed. */
 /* Force dark so shadcn tokens still work if ThemeProvider emits .dark */
 .dark {
   --background: #0b0f13;
@@ -237,7 +237,7 @@
 }
 
 @layer utilities {
-  /* Pillarboxd-specific utilities */
+  /* Aftershow-specific utilities */
   .text-brand-amber {
     color: var(--brand-amber);
   }

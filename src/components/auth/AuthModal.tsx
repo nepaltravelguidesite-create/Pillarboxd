@@ -130,7 +130,7 @@ export function AuthModal({
           <DialogDescription className="text-xs text-muted-foreground">
             {mode === "signin"
               ? "Sign in to track, rate, and review your favorite shows."
-              : "Join Pillarboxd to track every series you have ever watched."}
+              : "Join Aftershow to track every series you have ever watched."}
           </DialogDescription>
         </DialogHeader>
 

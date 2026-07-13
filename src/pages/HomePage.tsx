@@ -63,7 +63,7 @@ export function HomePage() {
   return (
     <div className="flex flex-col w-full">
       <SEOMeta
-        title="Pillarboxd — Track every show you watch"
+        title="Aftershow — Track every show you watch"
         description="Log episodes, rate shows, discover what's next. The TV tracker for people who care about what they watch."
         ogImage="/og-default.webp"
       />

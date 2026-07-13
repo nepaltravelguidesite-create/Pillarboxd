@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
-import { PillarboxdLogo } from "@/components/brand/PillarboxdLogo";
+import { AftershowLogo } from "@/components/brand/AftershowLogo";
 
 export function NotFoundPage() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center gap-4">
       <div className="opacity-20">
-        <PillarboxdLogo size={48} showWordmark={false} />
+        <AftershowLogo size={48} showWordmark={false} />
       </div>
       <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">
         Page Not Found

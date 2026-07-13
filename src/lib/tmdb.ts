@@ -18,7 +18,7 @@ const API_KEY = import.meta.env.VITE_TMDB_API_KEY as string | undefined;
 
 if (!READ_TOKEN && !API_KEY) {
   console.warn(
-    "[Pillarboxd] No TMDB credentials found. " +
+    "[Aftershow] No TMDB credentials found. " +
       "Set VITE_TMDB_READ_TOKEN or VITE_TMDB_API_KEY in your .env file."
   );
 }

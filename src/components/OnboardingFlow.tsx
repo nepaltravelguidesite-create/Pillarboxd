@@ -16,7 +16,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-const ONBOARDING_KEY = "pillarboxd_onboarding_complete";
+const ONBOARDING_KEY = "aftershow_onboarding_complete";
 const SHOWS_PER_STEP = 6;
 
 // ---------------------------------------------------------------------------
@@ -218,13 +218,13 @@ export function OnboardingFlow() {
               <Sparkles className="size-8 text-primary" />
             </div>
             <DialogTitle className="font-display text-2xl font-bold text-foreground">
-              Welcome to Pillarboxd!
+              Welcome to Aftershow!
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground leading-relaxed max-w-sm">
-              Pillarboxd is your personal TV show tracker. Rate shows you've
-              watched, keep a watchlist of what's next, log episodes as you go,
-              and follow friends to see what they're loving. Let's set you up in
-              a few quick steps.
+              The show's over — let's talk about it. Aftershow is your
+              personal TV tracker. Rate shows you've watched, keep a watchlist
+              of what's next, log episodes as you go, and follow friends to
+              see what they're loving. Let's set you up in a few quick steps.
             </DialogDescription>
             <Button className="w-full" size="lg" onClick={() => setStep(1)}>
               Get Started

@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
 import { SearchBar } from "@/components/layout/SearchBar";
 import { NotificationBell } from "@/components/layout/NotificationBell";
-import { PillarboxdLogo } from "@/components/brand/PillarboxdLogo";
+import { AftershowLogo } from "@/components/brand/AftershowLogo";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -202,7 +202,7 @@ function MobileDrawer({
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <Link to="/" onClick={onClose}>
-            <PillarboxdLogo size={22} />
+            <AftershowLogo size={22} />
           </Link>
           <button
             type="button"
@@ -377,7 +377,7 @@ export function NavBar() {
             </button>
 
             <Link to="/" className="group focus:outline-none shrink-0">
-              <PillarboxdLogo size={24} />
+              <AftershowLogo size={24} />
             </Link>
 
             <DesktopNavLinks />

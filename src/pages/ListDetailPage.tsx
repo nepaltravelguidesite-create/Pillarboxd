@@ -196,7 +196,7 @@ export default function ListDetailPage() {
     <Shell>
       <SEOMeta
         title={list?.title || "List"}
-        description={list?.description || "A custom show list on Pillarboxd"}
+        description={list?.description || "A custom show list on Aftershow"}
       />
       {/* Header */}
       <header className="mb-8">

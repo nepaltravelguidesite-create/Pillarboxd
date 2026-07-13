@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { PillarboxdLogo } from "@/components/brand/PillarboxdLogo";
+import { AftershowLogo } from "@/components/brand/AftershowLogo";
 
 const FOOTER_LINKS = [
   { label: "About", to: "/about" },
@@ -21,9 +21,9 @@ export function Footer() {
             <Link
               to="/"
               className="group focus:outline-none"
-              aria-label="Pillarboxd home"
+              aria-label="Aftershow home"
             >
-              <PillarboxdLogo size={22} />
+              <AftershowLogo size={22} />
             </Link>
             <p className="text-xs text-muted-foreground text-center sm:text-left max-w-xs">
               Track, rate, and review every TV series you've ever watched.
@@ -53,7 +53,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-6 pt-5 border-t border-border/50 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
           <p className="text-xs text-muted-foreground/60 text-center">
-            &copy; {new Date().getFullYear()} Pillarboxd. TV show data provided by{" "}
+            &copy; {new Date().getFullYear()} Aftershow. TV show data provided by{" "}
             <a
               href="https://www.themoviedb.org"
               target="_blank"

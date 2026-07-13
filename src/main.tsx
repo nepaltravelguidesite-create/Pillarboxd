@@ -4,7 +4,7 @@ import "./index.css";
 import App from "./App.tsx";
 
 // Force the dark class on <html> so all shadcn .dark CSS variables activate.
-// Pillarboxd is permanently dark-themed.
+// Aftershow is permanently dark-themed.
 document.documentElement.classList.add("dark");
 
 createRoot(document.getElementById("root")!).render(
