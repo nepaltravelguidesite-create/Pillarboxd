@@ -31,6 +31,7 @@ export function LogEntryModal({ open, onOpenChange, show }: LogEntryModalProps) 
   const [episodesWatched, setEpisodesWatched] = useState(1);
   const [review, setReview] = useState("");
   const [rewatch, setRewatch] = useState(false);
+  const [containsSpoilers, setContainsSpoilers] = useState(false);
   const [rating, setRating] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -42,6 +43,7 @@ export function LogEntryModal({ open, onOpenChange, show }: LogEntryModalProps) 
       setEpisodesWatched(1);
       setReview("");
       setRewatch(false);
+      setContainsSpoilers(false);
       setRating(null);
     }
   }, [open]);
@@ -64,6 +66,7 @@ export function LogEntryModal({ open, onOpenChange, show }: LogEntryModalProps) 
         review: review.trim() || null,
         rewatch: rewatch,
         rating: rating,
+        contains_spoiler: containsSpoilers,
       });
       onOpenChange(false);
     } catch (err) {
@@ -217,6 +220,19 @@ export function LogEntryModal({ open, onOpenChange, show }: LogEntryModalProps) 
               className="w-full rounded border border-border bg-background/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-colors resize-y min-h-[80px]"
             />
           </div>
+
+          {/* Contains spoilers toggle */}
+          {review.trim().length > 0 && (
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={containsSpoilers}
+                onChange={(e) => setContainsSpoilers(e.target.checked)}
+                className="size-4 rounded border-border accent-primary"
+              />
+              <span className="text-xs text-muted-foreground">Contains spoilers</span>
+            </label>
+          )}
 
           {/* Submit */}
           <div className="flex items-center gap-2 pt-1">

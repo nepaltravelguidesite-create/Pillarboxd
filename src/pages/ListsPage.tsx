@@ -281,6 +281,9 @@ interface ListCardProps {
 }
 
 function ListCard({ list, onDelete }: ListCardProps) {
+  const { user } = useAuth();
+  const { openAuthModal } = useUI();
+  const { isListLiked, toggleListLike } = useSocial();
   return (
     <div className="group relative flex flex-col rounded-xl border border-border bg-secondary/20 hover:border-primary/50 hover:bg-secondary/30 transition-colors overflow-hidden">
       {/* Top accent strip */}
@@ -343,10 +346,23 @@ function ListCard({ list, onDelete }: ListCardProps) {
             <List className="size-3.5" />
             {list.item_count} {list.item_count === 1 ? "show" : "shows"}
           </span>
-          <span className="inline-flex items-center gap-1">
-            <Heart className="size-3.5" />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!user) { openAuthModal("signin"); return; }
+              toggleListLike(list.id);
+            }}
+            className={cn(
+              "inline-flex items-center gap-1 transition-colors",
+              isListLiked(list.id) ? "text-primary" : "hover:text-foreground"
+            )}
+            aria-label={isListLiked(list.id) ? "Unlike list" : "Like list"}
+          >
+            <Heart className={cn("size-3.5", isListLiked(list.id) && "fill-primary")} />
             {list.like_count} {list.like_count === 1 ? "like" : "likes"}
-          </span>
+          </button>
         </div>
       </div>
     </div>

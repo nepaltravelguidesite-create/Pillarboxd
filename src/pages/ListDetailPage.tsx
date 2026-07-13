@@ -7,7 +7,19 @@ import { cn } from "@/lib/utils";
 import { SEOMeta } from "@/components/SEOMeta";
 import { ShowPosterCard } from "@/components/shows/ShowPosterCard";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { Loader2, Trash2, List, Lock, Globe, Heart } from "lucide-react";
+import { useUI } from "@/context/UIContext";
 
 // ---------------------------------------------------------------------------
 // ListDetailPage — /lists/:listId route
@@ -16,7 +28,8 @@ import { Loader2, Trash2, List, Lock, Globe, Heart } from "lucide-react";
 export default function ListDetailPage() {
   const { listId } = useParams<{ listId: string }>();
   const { user } = useAuth();
-  const { myLists, getListItems, removeShowFromList, deleteList } = useSocial();
+  const { myLists, getListItems, removeShowFromList, deleteList, isListLiked, toggleListLike } = useSocial();
+  const { openAuthModal } = useUI();
 
   const [list, setList] = useState<ShowList | null>(null);
   const [items, setItems] = useState<ListItem[]>([]);
@@ -111,15 +124,9 @@ export default function ListDetailPage() {
 
   function handleDeleteList() {
     if (!listId || !list) return;
-    if (
-      window.confirm(
-        `Delete "${list.title}"? This cannot be undone.`
-      )
-    ) {
-      deleteList(listId);
-      // Navigate home via Link-less redirect — use window location
-      window.location.href = "/lists";
-    }
+    deleteList(listId);
+    // Navigate home via Link-less redirect — use window location
+    window.location.href = "/lists";
   }
 
   // -------------------------------------------------------------------------
@@ -228,26 +235,67 @@ export default function ListDetailPage() {
               )
             )}
 
-            {/* Stats */}
+            {/* Stats + Like button */}
             <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1">
                 <List className="size-3.5" />
                 {list.item_count} {list.item_count === 1 ? "show" : "shows"}
               </span>
-              <span className="inline-flex items-center gap-1">
-                <Heart className="size-3.5" />
-                {list.like_count} {list.like_count === 1 ? "like" : "likes"}
-              </span>
+              {!isOwner && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!user) { openAuthModal("signin"); return; }
+                    toggleListLike(list.id);
+                  }}
+                  className={cn(
+                    "inline-flex items-center gap-1 transition-colors",
+                    isListLiked(list.id) ? "text-primary" : "hover:text-foreground"
+                  )}
+                  aria-label={isListLiked(list.id) ? "Unlike list" : "Like list"}
+                >
+                  <Heart className={cn("size-3.5", isListLiked(list.id) && "fill-primary")} />
+                  {list.like_count} {list.like_count === 1 ? "like" : "likes"}
+                </button>
+              )}
+              {isOwner && (
+                <span className="inline-flex items-center gap-1">
+                  <Heart className="size-3.5" />
+                  {list.like_count} {list.like_count === 1 ? "like" : "likes"}
+                </span>
+              )}
             </div>
           </div>
 
           {/* Owner controls */}
           {isOwner && (
             <div className="flex items-center gap-2 shrink-0">
-              <Button variant="outline" size="sm" onClick={handleDeleteList}>
-                <Trash2 className="size-4" />
-                Delete
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Trash2 className="size-4" />
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete list?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete this list and all its items.
+                      This cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      onClick={handleDeleteList}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           )}
         </div>
@@ -286,28 +334,45 @@ export default function ListDetailPage() {
 
               {/* Remove button (owner only) */}
               {isOwner && (
-                <button
-                  type="button"
-                  onClick={() => handleRemove(item.show_id)}
-                  disabled={removingId === item.show_id}
-                  className={cn(
-                    "inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium",
-                    "text-muted-foreground hover:bg-destructive/10 hover:text-destructive",
-                    "transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  )}
-                >
-                  {removingId === item.show_id ? (
-                    <>
-                      <Loader2 className="size-3.5 animate-spin" />
-                      Removing…
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="size-3.5" />
-                      Remove
-                    </>
-                  )}
-                </button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      type="button"
+                      disabled={removingId === item.show_id}
+                      className={cn(
+                        "inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium",
+                        "text-muted-foreground hover:bg-destructive/10 hover:text-destructive",
+                        "transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      )}
+                    >
+                      {removingId === item.show_id ? (
+                        <>
+                          <Loader2 className="size-3.5 animate-spin" />
+                          Removing…
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="size-3.5" />
+                          Remove
+                        </>
+                      )}
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remove show?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Remove this show from the list?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleRemove(item.show_id)}>
+                        Remove
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </div>
           ))}

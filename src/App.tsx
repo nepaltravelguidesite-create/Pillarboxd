@@ -12,7 +12,8 @@ import { NotificationsProvider } from "@/context/NotificationsContext";
 import { RootLayout } from "@/components/layout/RootLayout";
 import { OnboardingFlow } from "@/components/OnboardingFlow";
 import { HomePage } from "@/pages/HomePage";
-import { PlaceholderPage } from "@/pages/PlaceholderPage";
+import AboutPage from "@/pages/AboutPage";
+import ContactPage from "@/pages/ContactPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { SearchResultsPage } from "@/pages/SearchResultsPage";
 import { ShowProfilePage } from "@/pages/ShowProfilePage";
@@ -89,8 +90,8 @@ const router = createBrowserRouter([
       { path: "journal", element: <JournalPage /> },
 
       // Static
-      { path: "about", element: <PlaceholderPage /> },
-      { path: "contact", element: <PlaceholderPage /> },
+      { path: "about", element: <AboutPage /> },
+      { path: "contact", element: <ContactPage /> },
 
       // Legacy redirect
       { path: "films", element: <Navigate to="/shows" replace /> },

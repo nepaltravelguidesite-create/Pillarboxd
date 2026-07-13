@@ -22,6 +22,7 @@ import { SEOMeta } from "@/components/SEOMeta";
 import { StarRating } from "@/components/shows/StarRating";
 import { LogEntryModal } from "@/components/shows/LogEntryModal";
 import { ShowCarousel } from "@/components/shows/ShowCarousel";
+import { ReviewFeed } from "@/components/shows/ReviewFeed";
 import {
   Loader2,
   Heart,
@@ -720,6 +721,9 @@ export function ShowProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Reviews */}
+      <ReviewFeed showId={showDetail.id} />
 
       {/* Cast list */}
       {cast.length > 0 && <CastList cast={cast} />}

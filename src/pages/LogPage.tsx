@@ -5,6 +5,17 @@ import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
 import { posterUrl } from "@/lib/tmdb";
 import { StarRating } from "@/components/shows/StarRating";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { Calendar, Trash2, RotateCcw, Eye, Star } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -238,15 +249,35 @@ function LogEntry({
           </div>
 
           {/* Delete (inline edit affordance) */}
-          <button
-            type="button"
-            onClick={onDelete}
-            aria-label="Delete this diary entry"
-            title="Delete entry"
-            className="shrink-0 inline-flex items-center justify-center size-8 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-          >
-            <Trash2 className="size-4" />
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                type="button"
+                aria-label="Delete this diary entry"
+                title="Delete entry"
+                className="shrink-0 inline-flex items-center justify-center size-8 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete log entry?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently remove this diary entry.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={onDelete}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
 
         {/* Rating */}

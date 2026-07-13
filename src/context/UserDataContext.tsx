@@ -8,6 +8,7 @@ import {
 } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 import type { TVShow } from "@/lib/tmdb";
 
 // ---------------------------------------------------------------------------
@@ -43,6 +44,7 @@ export interface UserLog {
   review: string | null;
   rewatch: boolean;
   rating: number | null;
+  contains_spoiler: boolean;
   created_at: string;
 }
 
@@ -158,6 +160,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
 
         if (error) {
           console.error("[UserData] setRating error:", error);
+          toast.error("Failed to save rating");
           return;
         }
 
@@ -179,6 +182,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
 
         if (error) {
           console.error("[UserData] setRating insert error:", error);
+          toast.error("Failed to save rating");
           return;
         }
 
@@ -207,6 +211,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
 
         if (error) {
           console.error("[UserData] toggleLike error:", error);
+          toast.error("Failed to update like");
           return;
         }
 
@@ -228,6 +233,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
 
         if (error) {
           console.error("[UserData] toggleLike insert error:", error);
+          toast.error("Failed to update like");
           return;
         }
 
@@ -256,6 +262,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
 
         if (error) {
           console.error("[UserData] toggleWatchlist error:", error);
+          toast.error("Failed to update watchlist");
           return;
         }
 
@@ -279,6 +286,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
 
         if (error) {
           console.error("[UserData] toggleWatchlist insert error:", error);
+          toast.error("Failed to update watchlist");
           return;
         }
 
@@ -304,6 +312,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error("[UserData] addLog error:", error);
+        toast.error("Failed to save diary entry");
         return;
       }
 
@@ -325,6 +334,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error("[UserData] deleteLog error:", error);
+        toast.error("Failed to delete diary entry");
         return;
       }
 

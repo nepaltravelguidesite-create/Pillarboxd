@@ -76,12 +76,12 @@ export default function MembersPage() {
                 key={profile.id}
                 profile={profile}
                 following={isFollowing(profile.id)}
-                onToggleFollow={() => {
+                onToggleFollow={async () => {
                   if (!user) {
                     openAuthModal("signup");
                     return;
                   }
-                  toggleFollow(profile.id);
+                  await toggleFollow(profile.id);
                 }}
               />
             ))}
@@ -99,13 +99,24 @@ export default function MembersPage() {
 interface MemberCardProps {
   profile: UserProfile;
   following: boolean;
-  onToggleFollow: () => void;
+  onToggleFollow: () => void | Promise<void>;
 }
 
 function MemberCard({ profile, following, onToggleFollow }: MemberCardProps) {
+  const [followLoading, setFollowLoading] = useState(false);
+
   const initial = (profile.display_name || profile.username || "?")
     .charAt(0)
     .toUpperCase();
+
+  const handleToggleFollow = async () => {
+    setFollowLoading(true);
+    try {
+      await onToggleFollow();
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col items-center text-center p-4 sm:p-5 rounded-xl border border-border bg-secondary/20 hover:border-primary/50 hover:bg-secondary/30 transition-colors">
@@ -141,15 +152,19 @@ function MemberCard({ profile, following, onToggleFollow }: MemberCardProps) {
 
       {/* Follow / Following toggle */}
       <button
-        onClick={onToggleFollow}
+        onClick={handleToggleFollow}
+        disabled={followLoading}
         className={cn(
           "mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+          "disabled:opacity-70 disabled:cursor-not-allowed",
           following
             ? "border border-border bg-transparent text-foreground hover:bg-secondary/40"
             : "bg-primary text-primary-foreground hover:bg-primary/90"
         )}
       >
-        {following ? (
+        {followLoading ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : following ? (
           <>
             <UserCheck className="size-4" />
             Following

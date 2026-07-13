@@ -8,6 +8,7 @@ import {
 } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 import type { TVShow } from "@/lib/tmdb";
 
 // ---------------------------------------------------------------------------
@@ -91,6 +92,14 @@ interface SocialContextValue {
   removeShowFromList: (listId: string, showId: number) => Promise<void>;
   getListItems: (listId: string) => Promise<ListItem[]>;
   refreshLists: () => Promise<void>;
+
+  // Review & List Likes
+  reviewLikes: Set<string>;
+  isReviewLiked: (logId: string) => boolean;
+  toggleReviewLike: (logId: string) => Promise<void>;
+  listLikes: Set<string>;
+  isListLiked: (listId: string) => boolean;
+  toggleListLike: (listId: string) => Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -117,6 +126,8 @@ export function SocialProvider({ children }: { children: ReactNode }) {
   const [loadingProfiles, setLoadingProfiles] = useState(true);
   const [myLists, setMyLists] = useState<ShowList[]>([]);
   const [loadingLists, setLoadingLists] = useState(true);
+  const [reviewLikes, setReviewLikes] = useState<Set<string>>(new Set());
+  const [listLikes, setListLikes] = useState<Set<string>>(new Set());
 
   // -------------------------------------------------------------------------
   // Load data on sign in
@@ -173,11 +184,31 @@ export function SocialProvider({ children }: { children: ReactNode }) {
     setLoadingLists(false);
   }, [user]);
 
+  const loadReviewLikes = useCallback(async () => {
+    if (!user) { setReviewLikes(new Set()); return; }
+    const { data } = await supabase
+      .from("review_likes")
+      .select("log_id")
+      .eq("user_id", user.id);
+    if (data) setReviewLikes(new Set(data.map((l) => l.log_id)));
+  }, [user]);
+
+  const loadListLikes = useCallback(async () => {
+    if (!user) { setListLikes(new Set()); return; }
+    const { data } = await supabase
+      .from("list_likes")
+      .select("list_id")
+      .eq("user_id", user.id);
+    if (data) setListLikes(new Set(data.map((l) => l.list_id)));
+  }, [user]);
+
   useEffect(() => {
     loadEpisodes();
     loadFollowing();
     loadLists();
-  }, [loadEpisodes, loadFollowing, loadLists]);
+    loadReviewLikes();
+    loadListLikes();
+  }, [loadEpisodes, loadFollowing, loadLists, loadReviewLikes, loadListLikes]);
 
   useEffect(() => {
     loadProfiles();
@@ -217,7 +248,11 @@ export function SocialProvider({ children }: { children: ReactNode }) {
       if (existing) {
         // Optimistic remove
         setUserEpisodes((prev) => prev.filter((e) => e.id !== existing.id));
-        await supabase.from("user_episodes").delete().eq("id", existing.id);
+        const { error: delErr } = await supabase
+          .from("user_episodes")
+          .delete()
+          .eq("id", existing.id);
+        if (delErr) toast.error("Failed to update episode");
       } else {
         // Optimistic add
         const tempId = crypto.randomUUID();
@@ -235,7 +270,7 @@ export function SocialProvider({ children }: { children: ReactNode }) {
         };
         setUserEpisodes((prev) => [newEp, ...prev]);
 
-        const { data } = await supabase
+        const { data, error: insErr } = await supabase
           .from("user_episodes")
           .insert({
             user_id: user.id,
@@ -249,6 +284,7 @@ export function SocialProvider({ children }: { children: ReactNode }) {
           .select()
           .single();
 
+        if (insErr) toast.error("Failed to update episode");
         if (data) {
           setUserEpisodes((prev) =>
             prev.map((e) => (e.id === tempId ? (data as UserEpisode) : e))
@@ -292,11 +328,12 @@ export function SocialProvider({ children }: { children: ReactNode }) {
           next.delete(userId);
           return next;
         });
-        await supabase
+        const { error: unfollowErr } = await supabase
           .from("follows")
           .delete()
           .eq("follower_id", user.id)
           .eq("following_id", userId);
+        if (unfollowErr) toast.error("Failed to unfollow user");
         // Optimistic decrement
         setAllProfiles((prev) =>
           prev.map((p) =>
@@ -307,9 +344,10 @@ export function SocialProvider({ children }: { children: ReactNode }) {
         );
       } else {
         setFollowing((prev) => new Set(prev).add(userId));
-        await supabase
+        const { error: followErr } = await supabase
           .from("follows")
           .insert({ follower_id: user.id, following_id: userId });
+        if (followErr) toast.error("Failed to follow user");
         setAllProfiles((prev) =>
           prev.map((p) =>
             p.id === userId
@@ -344,7 +382,10 @@ export function SocialProvider({ children }: { children: ReactNode }) {
         .select()
         .single();
 
-      if (error || !data) return null;
+      if (error || !data) {
+        toast.error("Failed to create list");
+        return null;
+      }
       const newList = data as ShowList;
       setMyLists((prev) => [newList, ...prev]);
       return newList;
@@ -354,7 +395,8 @@ export function SocialProvider({ children }: { children: ReactNode }) {
 
   const deleteList = useCallback(
     async (listId: string) => {
-      await supabase.from("lists").delete().eq("id", listId);
+      const { error } = await supabase.from("lists").delete().eq("id", listId);
+      if (error) toast.error("Failed to delete list");
       setMyLists((prev) => prev.filter((l) => l.id !== listId));
     },
     []
@@ -374,6 +416,7 @@ export function SocialProvider({ children }: { children: ReactNode }) {
       });
       if (error) {
         console.error("[Social] addShowToList:", error);
+        toast.error("Failed to add show to list");
         return;
       }
       // Update local item_count
@@ -390,11 +433,12 @@ export function SocialProvider({ children }: { children: ReactNode }) {
 
   const removeShowFromList = useCallback(
     async (listId: string, showId: number) => {
-      await supabase
+      const { error } = await supabase
         .from("list_items")
         .delete()
         .eq("list_id", listId)
         .eq("show_id", showId);
+      if (error) toast.error("Failed to remove show from list");
       setMyLists((prev) =>
         prev.map((l) =>
           l.id === listId
@@ -419,6 +463,54 @@ export function SocialProvider({ children }: { children: ReactNode }) {
     await loadLists();
   }, [loadLists]);
 
+  // -------------------------------------------------------------------------
+  // Review & List Like helpers
+  // -------------------------------------------------------------------------
+
+  const isReviewLiked = useCallback(
+    (logId: string) => reviewLikes.has(logId),
+    [reviewLikes]
+  );
+
+  const toggleReviewLike = useCallback(
+    async (logId: string) => {
+      if (!user) return;
+      if (reviewLikes.has(logId)) {
+        setReviewLikes((prev) => { const next = new Set(prev); next.delete(logId); return next; });
+        const { error: unlikeErr } = await supabase.from("review_likes").delete().eq("user_id", user.id).eq("log_id", logId);
+        if (unlikeErr) toast.error("Failed to update like");
+      } else {
+        setReviewLikes((prev) => new Set(prev).add(logId));
+        const { error: likeErr } = await supabase.from("review_likes").insert({ user_id: user.id, log_id: logId });
+        if (likeErr) toast.error("Failed to update like");
+      }
+    },
+    [user, reviewLikes]
+  );
+
+  const isListLiked = useCallback(
+    (listId: string) => listLikes.has(listId),
+    [listLikes]
+  );
+
+  const toggleListLike = useCallback(
+    async (listId: string) => {
+      if (!user) return;
+      if (listLikes.has(listId)) {
+        setListLikes((prev) => { const next = new Set(prev); next.delete(listId); return next; });
+        const { error: unlikeErr } = await supabase.from("list_likes").delete().eq("user_id", user.id).eq("list_id", listId);
+        if (unlikeErr) toast.error("Failed to update like");
+        setMyLists((prev) => prev.map((l) => l.id === listId ? { ...l, like_count: Math.max(l.like_count - 1, 0) } : l));
+      } else {
+        setListLikes((prev) => new Set(prev).add(listId));
+        const { error: likeErr } = await supabase.from("list_likes").insert({ user_id: user.id, list_id: listId });
+        if (likeErr) toast.error("Failed to update like");
+        setMyLists((prev) => prev.map((l) => l.id === listId ? { ...l, like_count: l.like_count + 1 } : l));
+      }
+    },
+    [user, listLikes, myLists]
+  );
+
   return (
     <SocialContext.Provider
       value={{
@@ -440,6 +532,12 @@ export function SocialProvider({ children }: { children: ReactNode }) {
         removeShowFromList,
         getListItems,
         refreshLists,
+        reviewLikes,
+        isReviewLiked,
+        toggleReviewLike,
+        listLikes,
+        isListLiked,
+        toggleListLike,
       }}
     >
       {children}

@@ -175,13 +175,13 @@ export function StarRating({
 
             {/* Right half overlay */}
             <div
-              className="absolute inset-0 overflow-hidden"
-              style={{ width: px / 2, left: px / 2 }}
+              className="absolute top-0 overflow-hidden"
+              style={{ width: px / 2, left: px / 2, height: px }}
               onClick={() => handleClick(rightSegment)}
             >
               <Star
                 className={cn(
-                  "absolute inset-0 transition-colors duration-150",
+                  "absolute top-0 transition-colors duration-150",
                   rightFilled
                     ? cn(
                         "text-primary fill-primary",
@@ -190,7 +190,7 @@ export function StarRating({
                     : "text-transparent"
                 )}
                 strokeWidth={1.5}
-                style={{ width: px, height: px }}
+                style={{ width: px, height: px, left: -(px / 2) }}
               />
             </div>
           </div>
