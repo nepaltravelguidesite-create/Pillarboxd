@@ -107,8 +107,10 @@ export function HeroBackdropBanner({ shows, loading = false }: HeroBackdropBanne
       })}
 
       {/* Ambient animated logo */}
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 opacity-30 pointer-events-none z-20">
-        <AftershowLogoAnimated size={36} showWordmark={false} />
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 pointer-events-none z-20">
+        <div className="flex items-center justify-center rounded-lg bg-background/40 backdrop-blur-sm p-2">
+          <AftershowLogoAnimated size={64} showWordmark={false} />
+        </div>
       </div>
 
       {/* Content overlay */}

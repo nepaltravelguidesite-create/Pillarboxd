@@ -194,10 +194,10 @@ function MobileDrawer({
         aria-modal
         aria-label="Navigation menu"
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw]",
-          "flex flex-col bg-card border-r border-border",
+          "fixed inset-y-0 right-0 z-50 w-72 max-w-[85vw]",
+          "flex flex-col bg-card border-l border-border",
           "transition-transform duration-300 ease-out",
-          open ? "translate-x-0" : "-translate-x-full"
+          open ? "translate-x-0" : "translate-x-full"
         )}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">

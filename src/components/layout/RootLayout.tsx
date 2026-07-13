@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Outlet, ScrollRestoration } from "react-router-dom";
 import { NavBar } from "@/components/layout/NavBar";
 import { Footer } from "@/components/layout/Footer";
@@ -7,11 +8,21 @@ import { useUI } from "@/context/UIContext";
 import { useAuth } from "@/context/AuthContext";
 import { AftershowLogoAnimated } from "@/components/brand/AftershowLogoAnimated";
 
+const MIN_SPLASH_MS = 900;
+
 export function RootLayout() {
   const { authModalOpen, authModalMode, closeAuthModal } = useUI();
   const { authState } = useAuth();
 
-  const showSplash = authState === "loading";
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinTimeElapsed(true), MIN_SPLASH_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const authResolved = authState !== "loading";
+  const showSplash = !authResolved || !minTimeElapsed;
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
@@ -19,7 +30,7 @@ export function RootLayout() {
 
       {showSplash && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background">
-          <AftershowLogoAnimated size={48} loop={false} />
+          <AftershowLogoAnimated size={48} loop />
         </div>
       )}
 
