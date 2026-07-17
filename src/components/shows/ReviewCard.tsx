@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Heart, MessageCircle } from "lucide-react";
 import { StarRating } from "@/components/shows/StarRating";
+import { getShowRatingIcon } from "@/lib/showRatingIcons";
 import { useSocial } from "@/context/SocialContext";
 import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
@@ -99,7 +100,12 @@ export function ReviewCard({ review, onExpand }: ReviewCardProps) {
       {/* Rating */}
       {review.rating != null && (
         <div className="mt-3">
-          <StarRating value={review.rating} readOnly size="sm" />
+          <StarRating
+            value={review.rating}
+            readOnly
+            size="sm"
+            icon={getShowRatingIcon(review.show_id)}
+          />
         </div>
       )}
 

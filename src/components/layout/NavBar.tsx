@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
-import { Menu, X, Plus, User, LogIn, LogOut, Settings } from "lucide-react";
+import { Menu, X, Plus, User, LogIn, LogOut, Settings, Search } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
 import { SearchBar } from "@/components/layout/SearchBar";
@@ -153,6 +153,47 @@ function UserArea({ className }: { className?: string }) {
       >
         <span>Create account</span>
       </button>
+    </div>
+  );
+}
+
+function CollapsibleSearch() {
+  const [expanded, setExpanded] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setExpanded(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative flex items-center shrink-0">
+      {expanded ? (
+        <div className="w-48 md:w-56 lg:w-72 xl:w-80">
+          <SearchBar />
+        </div>
+      ) : (
+        <button
+          type="button"
+          aria-label="Search shows"
+          onClick={() => setExpanded(true)}
+          className={cn(
+            "flex items-center justify-center size-8 rounded",
+            "text-muted-foreground hover:text-foreground",
+            "hover:bg-secondary/50 transition-colors duration-150"
+          )}
+        >
+          <Search className="size-4" strokeWidth={2} aria-hidden />
+        </button>
+      )}
     </div>
   );
 }
@@ -397,9 +438,7 @@ export function NavBar() {
 
             <div className="flex-1" />
 
-            <div className="hidden sm:block w-48 md:w-56 lg:w-72 xl:w-80 shrink-0">
-              <SearchBar />
-            </div>
+            <CollapsibleSearch />
 
             <NotificationBell />
 

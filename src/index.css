@@ -191,6 +191,10 @@
     @apply border-border;
   }
 
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
   html {
     @apply scroll-smooth;
   }

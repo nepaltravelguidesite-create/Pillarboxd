@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { RatingIcon } from "@/lib/showRatingIcons";
 
 interface StarRatingProps {
   value: number | null;
@@ -8,6 +9,7 @@ interface StarRatingProps {
   size?: "sm" | "md" | "lg";
   readOnly?: boolean;
   className?: string;
+  icon?: RatingIcon;
 }
 
 const SIZE_PX: Record<NonNullable<StarRatingProps["size"]>, number> = {
@@ -22,6 +24,7 @@ export function StarRating({
   size = "md",
   readOnly = false,
   className,
+  icon: CustomIcon,
 }: StarRatingProps) {
   const [hoverSegment, setHoverSegment] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -145,12 +148,20 @@ export function StarRating({
             className="relative inline-flex"
             style={{ width: px, height: px }}
           >
-            {/* Base star (outline) */}
-            <Star
-              className="absolute inset-0 text-muted-foreground/30"
-              strokeWidth={1.5}
-              style={{ width: px, height: px }}
-            />
+            {/* Base icon (outline / empty) */}
+            {CustomIcon ? (
+              <CustomIcon
+                filled={false}
+                className="absolute inset-0 text-muted-foreground/30"
+                style={{ width: px, height: px }}
+              />
+            ) : (
+              <Star
+                className="absolute inset-0 text-muted-foreground/30"
+                strokeWidth={1.5}
+                style={{ width: px, height: px }}
+              />
+            )}
 
             {/* Left half overlay */}
             <div
@@ -158,19 +169,30 @@ export function StarRating({
               style={{ width: px / 2 }}
               onClick={() => handleClick(leftSegment)}
             >
-              <Star
-                className={cn(
-                  "absolute inset-0 transition-colors duration-150",
-                  leftFilled
-                    ? cn(
-                        "text-primary fill-primary",
-                        leftPop && "pb-star-pop"
-                      )
-                    : "text-transparent"
-                )}
-                strokeWidth={1.5}
-                style={{ width: px, height: px }}
-              />
+              {CustomIcon ? (
+                <CustomIcon
+                  filled={leftFilled}
+                  className={cn(
+                    "absolute inset-0 transition-opacity duration-150",
+                    leftPop && "pb-star-pop"
+                  )}
+                  style={{ width: px, height: px }}
+                />
+              ) : (
+                <Star
+                  className={cn(
+                    "absolute inset-0 transition-colors duration-150",
+                    leftFilled
+                      ? cn(
+                          "text-primary fill-primary",
+                          leftPop && "pb-star-pop"
+                        )
+                      : "text-transparent"
+                  )}
+                  strokeWidth={1.5}
+                  style={{ width: px, height: px }}
+                />
+              )}
             </div>
 
             {/* Right half overlay */}
@@ -179,19 +201,30 @@ export function StarRating({
               style={{ width: px / 2, left: px / 2, height: px }}
               onClick={() => handleClick(rightSegment)}
             >
-              <Star
-                className={cn(
-                  "absolute top-0 transition-colors duration-150",
-                  rightFilled
-                    ? cn(
-                        "text-primary fill-primary",
-                        rightPop && "pb-star-pop"
-                      )
-                    : "text-transparent"
-                )}
-                strokeWidth={1.5}
-                style={{ width: px, height: px, left: -(px / 2) }}
-              />
+              {CustomIcon ? (
+                <CustomIcon
+                  filled={rightFilled}
+                  className={cn(
+                    "absolute top-0 transition-opacity duration-150",
+                    rightPop && "pb-star-pop"
+                  )}
+                  style={{ width: px, height: px, left: -(px / 2) }}
+                />
+              ) : (
+                <Star
+                  className={cn(
+                    "absolute top-0 transition-colors duration-150",
+                    rightFilled
+                      ? cn(
+                          "text-primary fill-primary",
+                          rightPop && "pb-star-pop"
+                        )
+                      : "text-transparent"
+                  )}
+                  strokeWidth={1.5}
+                  style={{ width: px, height: px, left: -(px / 2) }}
+                />
+              )}
             </div>
           </div>
         );

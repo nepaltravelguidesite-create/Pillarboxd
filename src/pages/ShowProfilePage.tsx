@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { SEOMeta } from "@/components/SEOMeta";
 import { StarRating } from "@/components/shows/StarRating";
+import { getShowRatingIcon } from "@/lib/showRatingIcons";
 import { LogEntryModal } from "@/components/shows/LogEntryModal";
 import { ShowCarousel } from "@/components/shows/ShowCarousel";
 import { ReviewFeed } from "@/components/shows/ReviewFeed";
@@ -34,6 +35,13 @@ import {
   Tv,
   Check,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // ---------------------------------------------------------------------------
 // Watch Providers section
@@ -76,6 +84,30 @@ function WatchProviders({ showId }: { showId: number }) {
 
   if (loading || providers.length === 0) return null;
 
+  const inner = (
+    <div className="flex flex-wrap gap-x-3 gap-y-2">
+      {providers.map((p) => (
+        <div key={p.provider_id} className="flex items-center gap-1.5">
+          <div className="size-5 rounded bg-muted overflow-hidden shrink-0">
+            {p.logo_path ? (
+              <img
+                src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
+                alt={p.provider_name}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-[7px] text-muted-foreground">
+                {p.provider_name.slice(0, 2)}
+              </div>
+            )}
+          </div>
+          <span className="text-xs text-muted-foreground">{p.provider_name}</span>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="pt-2 border-t border-border/50">
       <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-1.5">
@@ -86,52 +118,12 @@ function WatchProviders({ showId }: { showId: number }) {
           href={link}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex flex-wrap gap-1.5 group cursor-pointer hover:opacity-80 transition-opacity"
+          className="block group cursor-pointer hover:opacity-80 transition-opacity"
         >
-          {providers.map((p) => (
-            <div
-              key={p.provider_id}
-              className="size-7 rounded bg-muted border border-border/50 overflow-hidden ring-border group-hover:ring-1 ring-offset-0 transition-all"
-              title={p.provider_name}
-            >
-              {p.logo_path ? (
-                <img
-                  src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
-                  alt={p.provider_name}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground">
-                  {p.provider_name.slice(0, 2)}
-                </div>
-              )}
-            </div>
-          ))}
+          {inner}
         </a>
       ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {providers.map((p) => (
-            <div
-              key={p.provider_id}
-              className="size-7 rounded bg-muted border border-border/50 overflow-hidden"
-              title={p.provider_name}
-            >
-              {p.logo_path ? (
-                <img
-                  src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
-                  alt={p.provider_name}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground">
-                  {p.provider_name.slice(0, 2)}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        inner
       )}
     </div>
   );
@@ -175,6 +167,7 @@ function ActionPanel({ show, showDetail, onLogClick }: ActionPanelProps) {
         <StarRating
           value={rating}
           onChange={(v) => guard(() => setRating(show, v))}
+          icon={getShowRatingIcon(show.id)}
           size="lg"
         />
         <span className="text-[11px] text-muted-foreground uppercase tracking-widest">
@@ -192,7 +185,7 @@ function ActionPanel({ show, showDetail, onLogClick }: ActionPanelProps) {
             "border transition-colors duration-150",
             liked
               ? "border-primary/50 bg-primary/10 text-primary"
-              : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+              : "border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/30"
           )}
         >
           <Heart className={cn("size-5", liked && "fill-primary")} />
@@ -209,7 +202,7 @@ function ActionPanel({ show, showDetail, onLogClick }: ActionPanelProps) {
             "border transition-colors duration-150",
             watchlisted
               ? "border-primary/50 bg-primary/10 text-primary"
-              : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+              : "border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/30"
           )}
         >
           <Bookmark className={cn("size-5", watchlisted && "fill-primary")} />
@@ -223,12 +216,12 @@ function ActionPanel({ show, showDetail, onLogClick }: ActionPanelProps) {
           onClick={() => guard(onLogClick)}
           className={cn(
             "flex flex-col items-center justify-center gap-1 h-16 rounded",
-            "border border-primary bg-primary text-primary-foreground",
-            "hover:bg-primary/90 transition-colors duration-150"
+            "border border-border/60 text-muted-foreground",
+            "hover:text-foreground hover:border-foreground/30 transition-colors duration-150"
           )}
         >
-          <Plus className="size-5" strokeWidth={2.5} />
-          <span className="text-[10px] uppercase tracking-widest font-bold">
+          <Plus className="size-5" strokeWidth={2} />
+          <span className="text-[10px] uppercase tracking-widest font-semibold">
             Log
           </span>
         </button>
@@ -239,29 +232,24 @@ function ActionPanel({ show, showDetail, onLogClick }: ActionPanelProps) {
         <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-1.5">
           Status
         </p>
-        <div className="flex flex-wrap gap-1">
-          {([
-            { value: 'watching', label: 'Watching' },
-            { value: 'completed', label: 'Completed' },
-            { value: 'want_to_watch', label: 'Want' },
-            { value: 'on_hold', label: 'On Hold' },
-            { value: 'dropped', label: 'Dropped' },
-          ] as const).map((s) => (
-            <button
-              key={s.value}
-              type="button"
-              onClick={() => guard(() => setShowStatus(show, status === s.value ? null : s.value))}
-              className={cn(
-                "px-2 py-1 rounded text-[10px] font-medium uppercase tracking-wider transition-colors",
-                status === s.value
-                  ? "border border-primary/50 bg-primary/10 text-primary"
-                  : "border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
-              )}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+        <Select
+          value={status ?? "none"}
+          onValueChange={(v) =>
+            guard(() => setShowStatus(show, v === "none" ? null : v as typeof status))
+          }
+        >
+          <SelectTrigger className="h-8 text-xs" aria-label="Watch status">
+            <SelectValue placeholder="Set status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Not set</SelectItem>
+            <SelectItem value="watching">Watching</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="want_to_watch">Want to Watch</SelectItem>
+            <SelectItem value="on_hold">On Hold</SelectItem>
+            <SelectItem value="dropped">Dropped</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Progress bar */}
@@ -348,7 +336,7 @@ function SeasonDrawer({ show, showDetail }: SeasonDrawerProps) {
   const { user } = useAuth();
 
   const seasons = showDetail.seasons.filter(
-    (s) => s.season_number >= 0 && s.episode_count > 0
+    (s) => s.season_number > 0 && s.episode_count > 0
   );
 
   const current = seasons[selectedSeason];
@@ -673,8 +661,9 @@ export function ShowProfilePage() {
         ) : (
           <div className="absolute inset-0 bg-secondary/30" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-transparent" />
       </div>
 
       {/* Main content — poster + info + action panel */}
@@ -701,7 +690,7 @@ export function ShowProfilePage() {
 
           {/* Center: Title + meta + overview */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-bold text-foreground tracking-tight leading-tight">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
               {showDetail.name}
             </h1>
 
@@ -739,17 +728,21 @@ export function ShowProfilePage() {
 
             {/* Genres */}
             {showDetail.genres.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {showDetail.genres.map((genre) => (
-                  <Link
-                    key={genre.id}
-                    to={`/shows?genre=${genre.id}`}
-                    className="px-2 py-0.5 rounded text-[11px] font-medium bg-secondary/40 text-foreground/70 hover:bg-secondary/60 hover:text-foreground transition-colors"
-                  >
-                    {genre.name}
-                  </Link>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {showDetail.genres.map((genre, i) => (
+                  <span key={genre.id}>
+                    <Link
+                      to={`/shows?genre=${genre.id}`}
+                      className="text-foreground/70 hover:text-foreground hover:underline transition-colors"
+                    >
+                      {genre.name}
+                    </Link>
+                    {i < showDetail.genres.length - 1 && (
+                      <span className="text-muted-foreground/40 mx-1">·</span>
+                    )}
+                  </span>
                 ))}
-              </div>
+              </p>
             )}
 
             {/* Created by */}

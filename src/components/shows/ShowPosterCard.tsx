@@ -6,6 +6,7 @@ import { useUserData } from "@/context/UserDataContext";
 import { useUI } from "@/context/UIContext";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
+import { getShowRatingIcon } from "@/lib/showRatingIcons";
 
 interface ShowPosterCardProps {
   show: TVShow;
@@ -104,7 +105,21 @@ function ShowPosterCardInner({
         {/* Rating badge */}
         {showRating && rating && (
           <div className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 rounded-md bg-black/75 px-1.5 py-0.5 backdrop-blur-sm">
-            <Star className="size-2.5 text-primary fill-primary" strokeWidth={0} />
+            {(() => {
+              const Icon = getShowRatingIcon(show.id);
+              if (Icon) {
+                return (
+                  <Icon
+                    filled
+                    className="size-2.5"
+                    style={{ width: 10, height: 10 }}
+                  />
+                );
+              }
+              return (
+                <Star className="size-2.5 text-primary fill-primary" strokeWidth={0} />
+              );
+            })()}
             <span className="text-[10px] font-bold text-foreground">{rating}</span>
           </div>
         )}
