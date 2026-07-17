@@ -84,7 +84,6 @@ export function CommentThread({ logId }: CommentThreadProps) {
 
       const typedRows = rows as CommentRow[];
 
-      // Fetch author profiles
       const userIds = [...new Set(typedRows.map((c) => c.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
@@ -127,7 +126,6 @@ export function CommentThread({ logId }: CommentThreadProps) {
     setDraft("");
     setSubmitting(true);
 
-    // Optimistic insert
     const optimisticId = `optimistic-${Date.now()}`;
     const optimistic: CommentWithAuthor = {
       id: optimisticId,
@@ -153,14 +151,12 @@ export function CommentThread({ logId }: CommentThreadProps) {
         .single();
 
       if (error || !data) {
-        // Roll back optimistic insert
         setComments((prev) => prev.filter((c) => c.id !== optimisticId));
         setDraft(content);
         return;
       }
 
       const row = data as CommentRow;
-      // Replace optimistic row with real row
       setComments((prev) =>
         prev.map((c) =>
           c.id === optimisticId
@@ -179,7 +175,6 @@ export function CommentThread({ logId }: CommentThreadProps) {
 
   const handleDelete = async (commentId: string) => {
     if (!user) return;
-    // Optimistic delete
     const target = comments.find((c) => c.id === commentId);
     if (!target) return;
     setComments((prev) => prev.filter((c) => c.id !== commentId));
@@ -191,7 +186,6 @@ export function CommentThread({ logId }: CommentThreadProps) {
       .eq("user_id", user.id);
 
     if (error) {
-      // Roll back
       setComments((prev) => {
         const next = [...prev];
         const insertIdx = next.findIndex((c) => c.created_at > target.created_at);
@@ -208,9 +202,9 @@ export function CommentThread({ logId }: CommentThreadProps) {
     <div>
       {/* Comments list */}
       {loading ? (
-        <div className="space-y-3 mt-4">
+        <div className="divide-y divide-border/30 mt-2">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="flex gap-3">
+            <div key={i} className="py-4 flex gap-2.5">
               <Skeleton className="size-7 rounded-full shrink-0" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-3 w-24" />
@@ -224,9 +218,9 @@ export function CommentThread({ logId }: CommentThreadProps) {
           No comments yet. Start the conversation
         </p>
       ) : (
-        <div className="space-y-3 mt-4">
+        <div className="divide-y divide-border/30 mt-2">
           {comments.map((c) => (
-            <div key={c.id} className="flex gap-3">
+            <div key={c.id} className="py-4 flex gap-2.5">
               <Link to={`/profile/${c.author_username}`} className="shrink-0">
                 {c.author_avatar_url ? (
                   <img
@@ -241,14 +235,17 @@ export function CommentThread({ logId }: CommentThreadProps) {
                 )}
               </Link>
               <div className="flex-1 min-w-0">
-                <div className="bg-secondary/30 rounded-lg px-3 py-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <Link
-                      to={`/profile/${c.author_username}`}
-                      className="text-xs font-medium text-foreground hover:underline"
-                    >
-                      {c.author_display_name || c.author_username}
-                    </Link>
+                <div className="flex items-center justify-between gap-2">
+                  <Link
+                    to={`/profile/${c.author_username}`}
+                    className="text-xs font-medium text-foreground hover:underline"
+                  >
+                    {c.author_display_name || c.author_username}
+                  </Link>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground">
+                      {timeAgo(c.created_at)}
+                    </span>
                     {user && c.user_id === user.id && (
                       <button
                         type="button"
@@ -260,13 +257,10 @@ export function CommentThread({ logId }: CommentThreadProps) {
                       </button>
                     )}
                   </div>
-                  <p className="text-sm text-foreground/80 mt-1 whitespace-pre-wrap break-words">
-                    {c.content}
-                  </p>
                 </div>
-                <span className="text-[10px] text-muted-foreground mt-1 inline-block">
-                  {timeAgo(c.created_at)}
-                </span>
+                <p className="text-sm text-foreground/80 mt-1 leading-7 whitespace-pre-wrap break-words">
+                  {c.content}
+                </p>
               </div>
             </div>
           ))}

@@ -44,7 +44,6 @@ export function ReviewFeed({ showId }: ReviewFeedProps) {
   const loadReviews = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Fetch logs with reviews
       const { data: logs } = await supabase
         .from("user_logs")
         .select("*")
@@ -61,7 +60,6 @@ export function ReviewFeed({ showId }: ReviewFeedProps) {
 
       const typedLogs = logs as LogRow[];
 
-      // 2. Fetch profiles for those user_ids
       const userIds = [...new Set(typedLogs.map((l) => l.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
@@ -74,7 +72,6 @@ export function ReviewFeed({ showId }: ReviewFeedProps) {
         profileMap.set(row.id, row);
       });
 
-      // 3. Fetch like counts
       const logIds = typedLogs.map((l) => l.id);
       const { data: likes } = await supabase
         .from("review_likes")
@@ -87,7 +84,6 @@ export function ReviewFeed({ showId }: ReviewFeedProps) {
         likeCounts.set(id, (likeCounts.get(id) ?? 0) + 1);
       });
 
-      // 4. Fetch comment counts
       const { data: comments } = await supabase
         .from("comments")
         .select("log_id")
@@ -99,7 +95,6 @@ export function ReviewFeed({ showId }: ReviewFeedProps) {
         commentCounts.set(id, (commentCounts.get(id) ?? 0) + 1);
       });
 
-      // 5. Merge
       const merged: ReviewWithAuthor[] = typedLogs.map((l) => {
         const profile = profileMap.get(l.user_id);
         return {
@@ -131,12 +126,10 @@ export function ReviewFeed({ showId }: ReviewFeedProps) {
     loadReviews();
   }, [loadReviews]);
 
-  // Reset to first page when tab changes
   useEffect(() => {
     setPage(1);
   }, [tab]);
 
-  // Filter / sort based on active tab
   const sortedReviews = useMemo(() => {
     let list = [...reviews];
     if (tab === "liked") {
@@ -159,17 +152,17 @@ export function ReviewFeed({ showId }: ReviewFeedProps) {
   ];
 
   return (
-    <div>
+    <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Sort tabs */}
-      <div className="flex items-center gap-1 mb-4">
+      <div className="flex items-center gap-3 mb-2">
         {tabs.map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
-            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+            className={`pb-1 text-xs font-medium transition-colors ${
               tab === t.key
-                ? "bg-secondary text-foreground"
+                ? "text-foreground border-b border-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -180,24 +173,19 @@ export function ReviewFeed({ showId }: ReviewFeedProps) {
 
       {/* Loading skeleton */}
       {loading ? (
-        <div className="space-y-4">
+        <div className="divide-y divide-border/30">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="bg-card border border-border rounded-lg p-4"
-            >
-              <div className="flex items-center gap-3">
-                <Skeleton className="size-9 rounded-full" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-3.5 w-32" />
-                  <Skeleton className="h-3 w-20" />
-                </div>
+            <div key={i} className="py-5">
+              <div className="flex items-center gap-2.5">
+                <Skeleton className="size-8 rounded-full" />
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="h-3 w-20" />
               </div>
               <div className="mt-3 space-y-2">
                 <Skeleton className="h-3 w-full" />
                 <Skeleton className="h-3 w-4/5" />
               </div>
-              <div className="mt-3 pt-3 border-t border-border/40 flex gap-4">
+              <div className="mt-4 flex gap-5">
                 <Skeleton className="h-4 w-12" />
                 <Skeleton className="h-4 w-12" />
               </div>
@@ -212,13 +200,12 @@ export function ReviewFeed({ showId }: ReviewFeedProps) {
         />
       ) : (
         <>
-          <div className="space-y-4">
+          <div className="divide-y divide-border/30">
             {visibleReviews.map((review) => (
               <ReviewCard
                 key={review.id}
                 review={review}
                 onExpand={(r) => {
-                  // Expand handled by parent via custom event; keep simple here
                   window.dispatchEvent(
                     new CustomEvent("open-comment-thread", { detail: r })
                   );

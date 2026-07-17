@@ -67,34 +67,33 @@ export function ReviewCard({ review, onExpand }: ReviewCardProps) {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-4">
+    <div className="py-5 border-b border-border/30 last:border-b-0">
       {/* Header: avatar + author + date */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <Link to={`/profile/${review.author_username}`} className="shrink-0">
           {review.author_avatar_url ? (
             <img
               src={review.author_avatar_url}
               alt={review.author_display_name}
-              className="size-9 rounded-full object-cover bg-muted"
+              className="size-8 rounded-full object-cover bg-muted"
             />
           ) : (
-            <div className="size-9 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold">
+            <div className="size-8 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold">
               {initials(review.author_display_name || review.author_username)}
             </div>
           )}
         </Link>
-        <div className="flex-1 min-w-0">
-          <Link
-            to={`/profile/${review.author_username}`}
-            className="text-sm font-medium text-foreground hover:underline"
-          >
-            {review.author_display_name || review.author_username}
-          </Link>
-          <div className="text-xs text-muted-foreground">
-            {formatDate(review.watched_date)}
-            {review.rewatch && <span className="ml-2">· Rewatched</span>}
-          </div>
-        </div>
+        <Link
+          to={`/profile/${review.author_username}`}
+          className="text-sm font-medium text-foreground hover:underline"
+        >
+          {review.author_display_name || review.author_username}
+        </Link>
+        <span className="text-muted-foreground/40 text-xs">·</span>
+        <span className="text-xs text-muted-foreground">
+          {formatDate(review.watched_date)}
+          {review.rewatch && <span className="ml-1.5">Rewatched</span>}
+        </span>
       </div>
 
       {/* Rating */}
@@ -106,10 +105,10 @@ export function ReviewCard({ review, onExpand }: ReviewCardProps) {
 
       {/* Review text (spoiler handling) */}
       {review.review && (
-        <div className="relative mt-2">
+        <div className="relative mt-3">
           {review.contains_spoiler && !revealed ? (
             <div className="relative">
-              <p className="text-sm text-foreground/80 leading-relaxed blur-sm select-none">
+              <p className="text-sm text-foreground/80 leading-7 blur-sm select-none">
                 {review.review}
               </p>
               <div className="absolute inset-0 flex items-center justify-center">
@@ -123,7 +122,7 @@ export function ReviewCard({ review, onExpand }: ReviewCardProps) {
               </div>
             </div>
           ) : (
-            <p className="text-sm text-foreground/80 leading-relaxed">
+            <p className="text-sm text-foreground/80 leading-7">
               {review.review}
             </p>
           )}
@@ -131,7 +130,7 @@ export function ReviewCard({ review, onExpand }: ReviewCardProps) {
       )}
 
       {/* Like + Comment row */}
-      <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/40">
+      <div className="flex items-center gap-5 mt-4">
         <button
           type="button"
           onClick={handleLike}

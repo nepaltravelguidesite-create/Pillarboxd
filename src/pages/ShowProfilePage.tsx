@@ -546,26 +546,26 @@ function CastList({ cast }: CastListProps) {
 
   if (!cast || cast.length === 0) return null;
 
-  const topCast = cast.slice(0, 12);
+  const topCast = cast.slice(0, 20);
 
   return (
     <section className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <h2 className="text-base font-bold text-foreground tracking-tight mb-4">
+      <h2 className="text-sm font-bold text-foreground tracking-tight mb-4">
         Cast
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+      <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin">
         {topCast.map((member) => {
           const errored = imgErrors[member.id];
           return (
             <Link
               key={member.id}
               to={`/person/${member.id}`}
-              className="flex flex-col gap-1.5 group"
+              className="flex flex-col items-center gap-1.5 group shrink-0 w-16 sm:w-20 snap-start"
             >
-              <div className="aspect-square rounded overflow-hidden bg-muted border border-border/50 group-hover:border-primary/50 transition-colors">
+              <div className="size-16 sm:size-20 rounded-full overflow-hidden bg-muted ring-1 ring-border/30 group-hover:ring-primary/50 transition-all">
                 {errored || !member.profile_path ? (
                   <div className="w-full h-full flex items-center justify-center bg-secondary/30">
-                    <Tv className="size-8 text-muted-foreground/30" strokeWidth={1} />
+                    <Tv className="size-6 text-muted-foreground/30" strokeWidth={1} />
                   </div>
                 ) : (
                   <img
@@ -579,10 +579,10 @@ function CastList({ cast }: CastListProps) {
                   />
                 )}
               </div>
-              <p className="text-xs font-medium text-foreground truncate leading-tight group-hover:text-primary transition-colors">
+              <p className="text-xs font-medium text-foreground truncate leading-tight text-center w-full group-hover:text-primary transition-colors">
                 {member.name}
               </p>
-              <p className="text-[11px] text-muted-foreground truncate leading-tight">
+              <p className="text-[11px] text-muted-foreground truncate leading-tight text-center w-full">
                 {member.character}
               </p>
             </Link>
@@ -750,6 +750,26 @@ export function ShowProfilePage() {
                   </Link>
                 ))}
               </div>
+            )}
+
+            {/* Created by */}
+            {showDetail.created_by && showDetail.created_by.length > 0 && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Created by{" "}
+                {showDetail.created_by.map((creator, i) => (
+                  <span key={creator.id}>
+                    <Link
+                      to={`/person/${creator.id}`}
+                      className="text-foreground/80 hover:text-foreground hover:underline"
+                    >
+                      {creator.name}
+                    </Link>
+                    {i < showDetail.created_by.length - 1 && (
+                      <span className="text-muted-foreground/40">{", "}</span>
+                    )}
+                  </span>
+                ))}
+              </p>
             )}
 
             {/* Tagline */}
