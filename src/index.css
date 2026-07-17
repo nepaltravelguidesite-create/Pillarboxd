@@ -81,6 +81,7 @@
 
   /* Core palette — deep indigo-navy */
   --background: #1F1D36;
+  --foreground: #F5F3FA;
   --nav: #16142A;
   --card: #29243C;
   --card-foreground: #FFFFFF;
@@ -141,6 +142,7 @@
 /* Force dark so shadcn tokens still work if ThemeProvider emits .dark */
 .dark {
   --background: #1F1D36;
+  --foreground: #F5F3FA;
   --nav: #16142A;
   --card: #29243C;
   --card-foreground: #FFFFFF;

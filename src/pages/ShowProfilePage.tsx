@@ -33,6 +33,12 @@ type LogRow = {
 };
 type ProfileRow = { id: string; username: string; display_name: string; avatar_url: string | null };
 
+type EditorialListPreview = {
+  id: string; title: string; description: string | null;
+  item_count: number; like_count: number;
+  preview_posters: { show_id: number; show_name: string; show_poster_path: string | null }[];
+};
+
 const GENRE_CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "#C4B8E8"];
 
 export function ShowProfilePage() {
@@ -44,6 +50,7 @@ export function ShowProfilePage() {
   const [activeTab, setActiveTab] = useState<"cast" | "crew" | "details">("cast");
   const [reviews, setReviews] = useState<ReviewWithAuthor[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [editorialLists, setEditorialLists] = useState<EditorialListPreview[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -85,6 +92,52 @@ export function ShowProfilePage() {
         });
         setReviews(merged);
       } finally { setReviewsLoading(false); }
+    })();
+  }, [numericId]);
+
+  // Fetch editorial lists that contain this show, with first-4-poster previews
+  useEffect(() => {
+    if (!numericId) return;
+    (async () => {
+      try {
+        // Find which editorial lists contain this show
+        const { data: membership } = await supabase
+          .from("list_items")
+          .select("list_id")
+          .eq("show_id", numericId);
+        if (!membership || membership.length === 0) { setEditorialLists([]); return; }
+        const listIds = [...new Set(membership.map((i: { list_id: string }) => i.list_id))];
+
+        // Fetch the editorial lists (up to 2, ordered by like_count desc)
+        const { data: lists } = await supabase
+          .from("lists")
+          .select("id, title, description, item_count, like_count")
+          .in("id", listIds)
+          .eq("is_editorial", true)
+          .order("like_count", { ascending: false })
+          .limit(2);
+        if (!lists || lists.length === 0) { setEditorialLists([]); return; }
+
+        // Fetch first 4 items of each list for the poster collage
+        const previews: EditorialListPreview[] = [];
+        for (const listRow of lists) {
+          const list = listRow as { id: string; title: string; description: string | null; item_count: number; like_count: number };
+          const { data: previewItems } = await supabase
+            .from("list_items")
+            .select("show_id, show_name, show_poster_path, position")
+            .eq("list_id", list.id)
+            .order("position", { ascending: true })
+            .limit(4);
+          previews.push({
+            id: list.id, title: list.title, description: list.description,
+            item_count: list.item_count, like_count: list.like_count,
+            preview_posters: (previewItems ?? []).map((i: { show_id: number; show_name: string; show_poster_path: string | null }) => ({
+              show_id: i.show_id, show_name: i.show_name, show_poster_path: i.show_poster_path,
+            })),
+          });
+        }
+        setEditorialLists(previews);
+      } catch { setEditorialLists([]); }
     })();
   }, [numericId]);
 
@@ -520,8 +573,62 @@ export function ShowProfilePage() {
             </div>
           )}
           {recommendations.length > 0 && (
-            <div className="py-4 pb-12">
+            <div className="py-4">
               <ShowCarousel title="Recommended" shows={recommendations} posterSize="md" />
+            </div>
+          )}
+
+          {/* Featured In — editorial lists containing this show */}
+          {editorialLists.length > 0 && (
+            <div className="py-4 pb-12">
+              <h3 className="font-display text-lg font-semibold text-foreground mb-3 px-4 sm:px-0">Featured In</h3>
+              <div className="flex gap-4 overflow-x-auto pb-2 px-4 sm:px-0 snap-x">
+                {editorialLists.map((list) => (
+                  <Link
+                    key={list.id}
+                    to={`/lists/${list.id}`}
+                    className="group flex-shrink-0 snap-start w-[280px] sm:w-[320px]"
+                  >
+                    <div className="rounded-xl border border-border bg-card/50 overflow-hidden transition-all hover:border-accent/40 hover:shadow-lg hover:shadow-accent/10">
+                      {/* Poster collage */}
+                      <div className="relative h-24 bg-secondary/30 overflow-hidden">
+                        {list.preview_posters.length > 0 ? (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            {list.preview_posters.slice(0, 4).map((poster, i) => (
+                              <img
+                                key={poster.show_id}
+                                src={posterUrl(poster.show_poster_path, "w92")}
+                                alt=""
+                                className="h-20 w-14 object-cover rounded-md border border-background/60 shadow-md"
+                                style={{
+                                  marginLeft: i === 0 ? 0 : -16,
+                                  zIndex: 4 - i,
+                                  transform: `rotate(${(i % 2 === 0 ? -1 : 1) * 2}deg)`,
+                                }}
+                                loading="lazy"
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-muted-foreground">
+                            <ListIcon className="size-6" />
+                          </div>
+                        )}
+                      </div>
+                      {/* List info */}
+                      <div className="p-3 space-y-1.5">
+                        <p className="font-medium text-sm text-foreground line-clamp-1 group-hover:text-accent transition-colors">{list.title}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-1">{list.description}</p>
+                        <div className="flex items-center gap-2 pt-1">
+                          <span className="text-xs text-muted-foreground">{list.item_count} shows</span>
+                          <span className="text-xs text-muted-foreground/60">·</span>
+                          <span className="text-xs font-medium text-accent/80">Curated by Aftershow</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
           )}
         </div>

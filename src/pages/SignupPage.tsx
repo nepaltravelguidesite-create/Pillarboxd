@@ -83,186 +83,327 @@ export function SignupPage() {
   }
 
   return (
-    <div className="flex min-h-svh flex-col bg-background">
-      {/* Top ~40%: diagonal image collage */}
-      <AuthCollage shows={trending?.results ?? []} />
-
-      {/* Bottom: form content */}
-      <div className="flex-1 flex flex-col items-center px-6 pt-6 pb-8 -mt-8 relative z-10">
-        <div className="w-full max-w-sm space-y-5">
-          {/* Logo */}
-          <div className="flex justify-center">
-            <AftershowLogo size={32} />
-          </div>
-
-          {/* Heading + subtext */}
-          <div className="text-center space-y-1">
-            <h1 className="font-display text-xl font-bold text-foreground tracking-tight">
-              Sign Up
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Create an account to continue.
-            </p>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-3">
-            {/* Honeypot */}
-            <div className="hidden" aria-hidden="true">
-              <label htmlFor="hp-website">Website (leave empty)</label>
-              <input
-                id="hp-website"
-                type="text"
-                name="website"
-                tabIndex={-1}
-                autoComplete="off"
-                value={honeypot}
-                onChange={(e) => setHoneypot(e.target.value)}
-              />
+    <>
+      {/* === Mobile layout (below md) — unchanged === */}
+      <div className="flex min-h-svh flex-col bg-background md:hidden">
+        <AuthCollage shows={trending?.results ?? []} />
+        <div className="flex-1 flex flex-col items-center px-6 pt-6 pb-8 -mt-8 relative z-10">
+          <div className="w-full max-w-sm space-y-5">
+            <div className="flex justify-center">
+              <AftershowLogo size={32} />
             </div>
-
-            {/* Username */}
-            <div className="space-y-1.5">
-              <label htmlFor="signup-username" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Username
-              </label>
-              <div className="relative">
-                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <div className="text-center space-y-1">
+              <h1 className="font-display text-xl font-bold text-foreground tracking-tight">
+                Sign Up
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Create an account to continue.
+              </p>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="hidden" aria-hidden="true">
+                <label htmlFor="hp-website">Website (leave empty)</label>
                 <input
-                  id="signup-username"
+                  id="hp-website"
                   type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  required
-                  className={cn(
-                    "h-11 w-full rounded-md border border-input bg-background/40",
-                    "pl-10 pr-3 text-sm text-foreground",
-                    "placeholder:text-muted-foreground",
-                    "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
-                    "transition-colors"
-                  )}
-                  placeholder="yourname"
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
                 />
               </div>
-            </div>
-
-            {/* Email */}
-            <div className="space-y-1.5">
-              <label htmlFor="signup-email" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <input
-                  id="signup-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                  required
-                  className={cn(
-                    "h-11 w-full rounded-md border border-input bg-background/40",
-                    "pl-10 pr-3 text-sm text-foreground",
-                    "placeholder:text-muted-foreground",
-                    "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
-                    "transition-colors"
-                  )}
-                  placeholder="you@example.com"
-                />
+              <div className="space-y-1.5">
+                <label htmlFor="signup-username" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Username
+                </label>
+                <div className="relative">
+                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <input
+                    id="signup-username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    autoComplete="username"
+                    required
+                    className={cn(
+                      "h-11 w-full rounded-md border border-input bg-background/40",
+                      "pl-10 pr-3 text-sm text-foreground",
+                      "placeholder:text-muted-foreground",
+                      "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
+                      "transition-colors"
+                    )}
+                    placeholder="yourname"
+                  />
+                </div>
               </div>
-            </div>
-
-            {/* Password */}
-            <div className="space-y-1.5">
-              <label htmlFor="signup-password" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <input
-                  id="signup-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="new-password"
-                  required
-                  className={cn(
-                    "h-11 w-full rounded-md border border-input bg-background/40",
-                    "pl-10 pr-3 text-sm text-foreground",
-                    "placeholder:text-muted-foreground",
-                    "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
-                    "transition-colors"
-                  )}
-                  placeholder="At least 6 characters"
-                />
+              <div className="space-y-1.5">
+                <label htmlFor="signup-email" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <input
+                    id="signup-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    required
+                    className={cn(
+                      "h-11 w-full rounded-md border border-input bg-background/40",
+                      "pl-10 pr-3 text-sm text-foreground",
+                      "placeholder:text-muted-foreground",
+                      "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
+                      "transition-colors"
+                    )}
+                    placeholder="you@example.com"
+                  />
+                </div>
               </div>
-            </div>
-
-            {/* Error */}
-            {(validationError || error) && (
-              <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2">
-                <AlertCircle className="size-4 text-destructive shrink-0 mt-0.5" />
-                <p className="text-xs text-destructive">{validationError ?? error}</p>
+              <div className="space-y-1.5">
+                <label htmlFor="signup-password" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <input
+                    id="signup-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                    required
+                    className={cn(
+                      "h-11 w-full rounded-md border border-input bg-background/40",
+                      "pl-10 pr-3 text-sm text-foreground",
+                      "placeholder:text-muted-foreground",
+                      "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
+                      "transition-colors"
+                    )}
+                    placeholder="At least 6 characters"
+                  />
+                </div>
               </div>
-            )}
-
-            {/* Primary CTA */}
+              {(validationError || error) && (
+                <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2">
+                  <AlertCircle className="size-4 text-destructive shrink-0 mt-0.5" />
+                  <p className="text-xs text-destructive">{validationError ?? error}</p>
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={loading || googleLoading}
+                className={cn(
+                  "flex items-center justify-center w-full h-11 rounded-md",
+                  "bg-primary text-primary-foreground font-semibold text-sm",
+                  "hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25",
+                  "active:translate-y-0 active:scale-[0.98]",
+                  "transition-all duration-150",
+                  "disabled:opacity-60 disabled:cursor-not-allowed"
+                )}
+              >
+                {loading ? <Loader2 className="size-4 animate-spin" /> : "Create Account"}
+              </button>
+            </form>
+            <div className="flex items-center gap-3 py-1">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+                or
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
             <button
-              type="submit"
-              disabled={loading || googleLoading}
+              type="button"
+              onClick={handleGoogle}
+              disabled={googleLoading || loading}
               className={cn(
-                "flex items-center justify-center w-full h-11 rounded-md",
-                "bg-primary text-primary-foreground font-semibold text-sm",
-                "hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25",
-                "active:translate-y-0 active:scale-[0.98]",
-                "transition-all duration-150",
+                "flex items-center justify-center gap-2.5 w-full h-11 rounded-md",
+                "border border-border bg-card hover:bg-secondary/50",
+                "text-sm font-medium text-foreground",
+                "transition-all duration-150 hover:-translate-y-px active:translate-y-0",
                 "disabled:opacity-60 disabled:cursor-not-allowed"
               )}
             >
-              {loading ? <Loader2 className="size-4 animate-spin" /> : "Create Account"}
+              {googleLoading ? (
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              ) : (
+                <GoogleIcon className="size-4" />
+              )}
+              <span>Sign up with Google</span>
             </button>
-          </form>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 py-1">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-              or
-            </span>
-            <div className="h-px flex-1 bg-border" />
+            <p className="text-center text-sm text-muted-foreground pt-2">
+              Already have an account?{" "}
+              <Link to="/login" className="font-medium text-accent hover:underline">
+                Login
+              </Link>
+            </p>
           </div>
-
-          {/* Google */}
-          <button
-            type="button"
-            onClick={handleGoogle}
-            disabled={googleLoading || loading}
-            className={cn(
-              "flex items-center justify-center gap-2.5 w-full h-11 rounded-md",
-              "border border-border bg-card hover:bg-secondary/50",
-              "text-sm font-medium text-foreground",
-              "transition-all duration-150 hover:-translate-y-px active:translate-y-0",
-              "disabled:opacity-60 disabled:cursor-not-allowed"
-            )}
-          >
-            {googleLoading ? (
-              <Loader2 className="size-4 animate-spin text-muted-foreground" />
-            ) : (
-              <GoogleIcon className="size-4" />
-            )}
-            <span>Sign up with Google</span>
-          </button>
-
-          {/* Bottom link */}
-          <p className="text-center text-sm text-muted-foreground pt-2">
-            Already have an account?{" "}
-            <Link to="/login" className="font-medium text-accent hover:underline">
-              Login
-            </Link>
-          </p>
         </div>
       </div>
-    </div>
+
+      {/* === Desktop layout (md and above) — two-column split === */}
+      <div className="hidden md:flex min-h-svh bg-background">
+        {/* Left: poster collage column (~55%) */}
+        <div className="w-[55%] h-svh">
+          <AuthCollage shows={trending?.results ?? []} variant="desktop" />
+        </div>
+
+        {/* Right: form column, vertically centered, left-aligned text */}
+        <div className="flex-1 h-svh flex items-center justify-center px-8 lg:px-12">
+          <div className="w-full max-w-[420px] space-y-5">
+            <div>
+              <AftershowLogo size={32} />
+            </div>
+            <div className="space-y-1">
+              <h1 className="font-display text-2xl font-bold text-foreground tracking-tight">
+                Sign Up
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Create an account to continue.
+              </p>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="hidden" aria-hidden="true">
+                <label htmlFor="hp-website-desktop">Website (leave empty)</label>
+                <input
+                  id="hp-website-desktop"
+                  type="text"
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="signup-username-desktop" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Username
+                </label>
+                <div className="relative">
+                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <input
+                    id="signup-username-desktop"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    autoComplete="username"
+                    required
+                    className={cn(
+                      "h-11 w-full rounded-md border border-input bg-background/40",
+                      "pl-10 pr-3 text-sm text-foreground",
+                      "placeholder:text-muted-foreground",
+                      "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
+                      "transition-colors"
+                    )}
+                    placeholder="yourname"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="signup-email-desktop" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <input
+                    id="signup-email-desktop"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    required
+                    className={cn(
+                      "h-11 w-full rounded-md border border-input bg-background/40",
+                      "pl-10 pr-3 text-sm text-foreground",
+                      "placeholder:text-muted-foreground",
+                      "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
+                      "transition-colors"
+                    )}
+                    placeholder="you@example.com"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="signup-password-desktop" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <input
+                    id="signup-password-desktop"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                    required
+                    className={cn(
+                      "h-11 w-full rounded-md border border-input bg-background/40",
+                      "pl-10 pr-3 text-sm text-foreground",
+                      "placeholder:text-muted-foreground",
+                      "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
+                      "transition-colors"
+                    )}
+                    placeholder="At least 6 characters"
+                  />
+                </div>
+              </div>
+              {(validationError || error) && (
+                <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2">
+                  <AlertCircle className="size-4 text-destructive shrink-0 mt-0.5" />
+                  <p className="text-xs text-destructive">{validationError ?? error}</p>
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={loading || googleLoading}
+                className={cn(
+                  "flex items-center justify-center w-full h-11 rounded-md",
+                  "bg-primary text-primary-foreground font-semibold text-sm",
+                  "hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25",
+                  "active:translate-y-0 active:scale-[0.98]",
+                  "transition-all duration-150",
+                  "disabled:opacity-60 disabled:cursor-not-allowed"
+                )}
+              >
+                {loading ? <Loader2 className="size-4 animate-spin" /> : "Create Account"}
+              </button>
+            </form>
+            <div className="flex items-center gap-3 py-1">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+                or
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <button
+              type="button"
+              onClick={handleGoogle}
+              disabled={googleLoading || loading}
+              className={cn(
+                "flex items-center justify-center gap-2.5 w-full h-11 rounded-md",
+                "border border-border bg-card hover:bg-secondary/50",
+                "text-sm font-medium text-foreground",
+                "transition-all duration-150 hover:-translate-y-px active:translate-y-0",
+                "disabled:opacity-60 disabled:cursor-not-allowed"
+              )}
+            >
+              {googleLoading ? (
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              ) : (
+                <GoogleIcon className="size-4" />
+              )}
+              <span>Sign up with Google</span>
+            </button>
+            <p className="text-sm text-muted-foreground pt-2">
+              Already have an account?{" "}
+              <Link to="/login" className="font-medium text-accent hover:underline">
+                Login
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
