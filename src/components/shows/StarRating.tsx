@@ -184,7 +184,7 @@ export function StarRating({
                     "absolute inset-0 transition-colors duration-150",
                     leftFilled
                       ? cn(
-                          "text-primary fill-primary",
+                          "text-rating fill-rating",
                           leftPop && "pb-star-pop"
                         )
                       : "text-transparent"
@@ -216,7 +216,7 @@ export function StarRating({
                     "absolute top-0 transition-colors duration-150",
                     rightFilled
                       ? cn(
-                          "text-primary fill-primary",
+                          "text-rating fill-rating",
                           rightPop && "pb-star-pop"
                         )
                       : "text-transparent"

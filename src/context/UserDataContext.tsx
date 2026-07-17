@@ -48,6 +48,7 @@ export interface UserLog {
   rewatch: boolean;
   rating: number | null;
   contains_spoiler: boolean;
+  vibe_tag: string | null;
   created_at: string;
 }
 

@@ -53,8 +53,8 @@ const MOCK_GENRES = [
 ] as const;
 
 const GENRE_COLORS = [
-  "var(--chart-1)", // amber
-  "var(--chart-2)", // cyan
+  "var(--chart-1)", // coral
+  "var(--chart-2)", // blue
   "var(--chart-3)", // purple
   "var(--chart-4)", // violet
   "var(--chart-5)", // red

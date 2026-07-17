@@ -33,7 +33,7 @@ export default function MembersPage() {
   }, [allProfiles, user, query]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground pb-page-enter">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Heading */}
         <header className="mb-8">

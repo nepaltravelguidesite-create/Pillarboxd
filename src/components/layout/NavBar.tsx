@@ -31,7 +31,7 @@ function DesktopNavLinks() {
               "px-3 py-1.5 text-xs font-semibold uppercase tracking-widest rounded",
               "transition-colors duration-150",
               isActive
-                ? "text-brand-amber"
+                ? "text-primary"
                 : "text-foreground/60 hover:text-foreground"
             )
           }
@@ -85,7 +85,7 @@ function UserArea({ className }: { className?: string }) {
             "flex items-center gap-2 shrink-0",
             "h-8 px-2.5 rounded border border-border",
             "text-xs font-medium text-foreground/80 hover:text-foreground",
-            "hover:border-brand-amber/50 transition-colors duration-150"
+            "hover:border-primary/50 transition-colors duration-150"
           )}
         >
           {user.avatarUrl ? (
@@ -284,7 +284,7 @@ function MobileDrawer({
                       "flex items-center px-3 py-2.5 rounded text-sm font-medium",
                       "transition-colors duration-100",
                       isActive
-                        ? "bg-primary/10 text-brand-amber"
+                        ? "bg-primary/10 text-primary"
                         : "text-foreground/70 hover:text-foreground hover:bg-secondary/50"
                     )
                   }
@@ -308,7 +308,7 @@ function MobileDrawer({
                         "flex items-center gap-2.5 px-3 py-2.5 rounded text-sm font-medium",
                         "transition-colors duration-100",
                         isActive
-                          ? "bg-primary/10 text-brand-amber"
+                          ? "bg-primary/10 text-primary"
                           : "text-foreground/70 hover:text-foreground hover:bg-secondary/50"
                       )
                     }
@@ -325,7 +325,7 @@ function MobileDrawer({
                       cn(
                         "flex items-center gap-2.5 w-full px-3 py-2.5 rounded text-sm font-medium",
                         isActive
-                          ? "bg-primary/10 text-brand-amber"
+                          ? "bg-primary/10 text-primary"
                           : "text-foreground/70 hover:text-foreground hover:bg-secondary/50"
                       )
                     }
@@ -411,7 +411,7 @@ export function NavBar() {
 
   useEffect(() => {
     function handleScroll() {
-      setScrolled(window.scrollY > 4);
+      setScrolled(window.scrollY > 40);
     }
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
@@ -424,8 +424,8 @@ export function NavBar() {
           "sticky top-0 z-30 w-full",
           "transition-all duration-200",
           scrolled
-            ? "bg-background/95 backdrop-blur-sm shadow-md shadow-black/30 border-b border-border/50"
-            : "bg-background border-b border-border/40"
+            ? "bg-nav/95 backdrop-blur-md shadow-md shadow-black/30 border-b border-border/50"
+            : "bg-transparent border-b border-transparent"
         )}
       >
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6">

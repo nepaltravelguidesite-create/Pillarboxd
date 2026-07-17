@@ -64,14 +64,14 @@ function ShowPosterCardInner({
       <div
         className={cn(
           "relative aspect-poster rounded-lg overflow-hidden bg-muted border border-border/50",
-          "transition-all duration-300 ease-out",
-          "group-hover:border-primary/60 group-hover:shadow-xl group-hover:shadow-black/40",
+          "transition-all duration-300 ease-out pb-poster-glow",
+          "group-hover:border-primary/60 group-hover:shadow-xl group-hover:shadow-primary/15",
           "group-hover:-translate-y-1"
         )}
       >
         {/* Skeleton shimmer while loading */}
         {!imgLoaded && !imgError && (
-          <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-muted to-secondary/50" />
+          <div className="absolute inset-0 pb-shimmer" />
         )}
 
         {/* Error fallback */}

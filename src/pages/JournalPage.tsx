@@ -136,18 +136,38 @@ export default function JournalPage() {
   }
 
   // -------------------------------------------------------------------------
-  // Feed
+  // Feed — grouped by month
   // -------------------------------------------------------------------------
+  const monthGroups = useMemo(() => {
+    const groups: Record<string, ActivityItem[]> = {};
+    activities.forEach((item) => {
+      const d = new Date(item.timestamp);
+      const monthKey = d.toLocaleDateString(undefined, { year: "numeric", month: "long" });
+      if (!groups[monthKey]) groups[monthKey] = [];
+      groups[monthKey].push(item);
+    });
+    return Object.entries(groups);
+  }, [activities]);
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground pb-page-enter">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <JournalHeader />
 
-        <ol className="mt-8 space-y-3">
-          {activities.map((item) => (
-            <ActivityRow key={item.id} item={item} />
+        <div className="mt-8 space-y-8">
+          {monthGroups.map(([month, items]) => (
+            <div key={month}>
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 pb-2 border-b border-border/40">
+                {month}
+              </h2>
+              <ol className="space-y-3">
+                {items.map((item) => (
+                  <ActivityRow key={item.id} item={item} />
+                ))}
+              </ol>
+            </div>
           ))}
-        </ol>
+        </div>
       </div>
     </div>
   );
@@ -232,7 +252,7 @@ const ICON_FOR_KIND: Record<ActivityKind, typeof Calendar> = {
 const ICON_CLASS_FOR_KIND: Record<ActivityKind, string> = {
   log: "bg-primary/10 text-primary",
   episode: "bg-emerald-500/10 text-emerald-500",
-  rating: "bg-amber-500/10 text-amber-500",
+  rating: "bg-rating/10 text-rating",
   like: "bg-rose-500/10 text-rose-500",
 };
 

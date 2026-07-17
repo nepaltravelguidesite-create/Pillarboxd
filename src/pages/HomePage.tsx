@@ -1,199 +1,392 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useTrendingShows, usePopularShows, useTopRatedShows, useOnTheAirShows } from "@/hooks/use-tmdb";
-import { HeroBackdropBanner } from "@/components/shows/HeroBackdropBanner";
-import { ShowCarousel } from "@/components/shows/ShowCarousel";
-import { UpcomingEpisodes } from "@/components/shows/UpcomingEpisodes";
-import { getShowDetail, type TVShow } from "@/lib/tmdb";
+import { useCallback, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
-import { useUserData } from "@/context/UserDataContext";
-import { useUI } from "@/context/UIContext";
-import { SEOMeta } from "@/components/SEOMeta";
-import { Eye, Star, BarChart3, List, Users } from "lucide-react";
+import { useSocial } from "@/context/SocialContext";
+import { useTrendingShows, usePopularShows } from "@/hooks/use-tmdb";
+import { type TVShow } from "@/lib/tmdb";
+import { ShowPosterCard } from "@/components/shows/ShowPosterCard";
+import { MobileListCard } from "@/components/shows/MobileListCard";
+import { MobileReviewCard } from "@/components/shows/MobileReviewCard";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import type { ReviewWithAuthor } from "@/components/shows/ReviewCard";
+
+type LogRow = {
+  id: string;
+  user_id: string;
+  show_id: number;
+  show_name: string;
+  show_poster_path: string | null;
+  show_first_air_date: string | null;
+  watched_date: string;
+  rating: number | null;
+  review: string;
+  rewatch: boolean;
+  contains_spoiler: boolean;
+  vibe_tag: string | null;
+  created_at: string;
+};
+
+type ProfileRow = {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+};
+
+type ListRow = {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  is_public: boolean;
+  like_count: number;
+  item_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type ListItemRow = {
+  show_poster_path: string | null;
+};
 
 export function HomePage() {
-  const trending = useTrendingShows("week");
-  const popular = usePopularShows();
-  const topRated = useTopRatedShows();
-  const onTheAir = useOnTheAirShows();
-
   const { user } = useAuth();
-  const { userShows } = useUserData();
-  const { openAuthModal } = useUI();
+  const { following, isListLiked } = useSocial();
+  const { data: trending } = useTrendingShows("week");
+  const { data: popular } = usePopularShows();
 
-  const isSignedIn = !!user;
+  const [reviews, setReviews] = useState<ReviewWithAuthor[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [lists, setLists] = useState<ListRow[]>([]);
+  const [listItems, setListItems] = useState<Record<string, (string | null)[]>>({});
+  const [listCurators, setListCurators] = useState<Record<string, ProfileRow>>({});
+  const [listsLoading, setListsLoading] = useState(true);
 
-  const ratedShows = userShows
-    .filter((s) => s.rating !== null && (s.rating ?? 0) > 0)
-    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-  const topRatedShow = ratedShows[0] ?? null;
+  // Fetch friends' reviews
+  const loadReviews = useCallback(async () => {
+    setReviewsLoading(true);
+    try {
+      const { data: logs } = await supabase
+        .from("user_logs")
+        .select("*")
+        .not("review", "is", null)
+        .neq("review", "")
+        .order("created_at", { ascending: false })
+        .limit(20);
 
-  const [recommendations, setRecommendations] = useState<TVShow[]>([]);
-  const [loadingRecs, setLoadingRecs] = useState(false);
+      if (!logs || logs.length === 0) {
+        setReviews([]);
+        return;
+      }
+
+      const typedLogs = logs as LogRow[];
+
+      // Filter to friends + own
+      const visibleLogs = typedLogs.filter(
+        (l) => following.has(l.user_id) || l.user_id === user?.id
+      );
+
+      if (visibleLogs.length === 0) {
+        setReviews([]);
+        return;
+      }
+
+      const userIds = [...new Set(visibleLogs.map((l) => l.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", userIds);
+
+      const profileMap = new Map<string, ProfileRow>();
+      (profiles ?? []).forEach((p) => {
+        profileMap.set(p.id, p as ProfileRow);
+      });
+
+      const logIds = visibleLogs.map((l) => l.id);
+      const { data: likes } = await supabase
+        .from("review_likes")
+        .select("log_id")
+        .in("log_id", logIds);
+
+      const likeCounts = new Map<string, number>();
+      (likes ?? []).forEach((l) => {
+        const id = (l as { log_id: string }).log_id;
+        likeCounts.set(id, (likeCounts.get(id) ?? 0) + 1);
+      });
+
+      const { data: comments } = await supabase
+        .from("comments")
+        .select("log_id")
+        .in("log_id", logIds);
+
+      const commentCounts = new Map<string, number>();
+      (comments ?? []).forEach((c) => {
+        const id = (c as { log_id: string }).log_id;
+        commentCounts.set(id, (commentCounts.get(id) ?? 0) + 1);
+      });
+
+      const merged: ReviewWithAuthor[] = visibleLogs.map((l) => {
+        const profile = profileMap.get(l.user_id);
+        return {
+          id: l.id,
+          user_id: l.user_id,
+          show_id: l.show_id,
+          show_name: l.show_name,
+          show_poster_path: l.show_poster_path,
+          show_first_air_date: l.show_first_air_date,
+          watched_date: l.watched_date,
+          rating: l.rating == null ? null : Number(l.rating),
+          review: l.review,
+          rewatch: l.rewatch,
+          contains_spoiler: l.contains_spoiler,
+          vibe_tag: l.vibe_tag,
+          created_at: l.created_at,
+          author_username: profile?.username ?? "unknown",
+          author_display_name: profile?.display_name ?? profile?.username ?? "Unknown",
+          author_avatar_url: profile?.avatar_url ?? null,
+          like_count: likeCounts.get(l.id) ?? 0,
+          comment_count: commentCounts.get(l.id) ?? 0,
+        };
+      });
+
+      setReviews(merged);
+    } finally {
+      setReviewsLoading(false);
+    }
+  }, [following, user?.id]);
+
+  // Fetch popular lists
+  const loadLists = useCallback(async () => {
+    setListsLoading(true);
+    try {
+      const { data: listData } = await supabase
+        .from("lists")
+        .select("*")
+        .eq("is_public", true)
+        .order("like_count", { ascending: false })
+        .limit(10);
+
+      if (!listData || listData.length === 0) {
+        setLists([]);
+        return;
+      }
+
+      const typedLists = listData as ListRow[];
+      setLists(typedLists);
+
+      // Fetch curator profiles
+      const userIds = [...new Set(typedLists.map((l) => l.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", userIds);
+
+      const profileMap: Record<string, ProfileRow> = {};
+      (profiles ?? []).forEach((p) => {
+        const row = p as ProfileRow;
+        profileMap[row.id] = row;
+      });
+      setListCurators(profileMap);
+
+      // Fetch first 3 poster paths for each list
+      const itemsPromises = typedLists.map(async (list) => {
+        const { data: items } = await supabase
+          .from("list_items")
+          .select("show_poster_path")
+          .eq("list_id", list.id)
+          .order("position", { ascending: true })
+          .limit(3);
+
+        const paths = (items ?? []).map(
+          (item) => (item as ListItemRow).show_poster_path
+        );
+        return { listId: list.id, paths };
+      });
+
+      const results = await Promise.all(itemsPromises);
+      const itemsMap: Record<string, (string | null)[]> = {};
+      results.forEach((r) => {
+        itemsMap[r.listId] = r.paths;
+      });
+      setListItems(itemsMap);
+    } finally {
+      setListsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    loadReviews();
+  }, [loadReviews]);
 
-    if (!topRatedShow) {
-      setRecommendations([]);
-      return;
-    }
+  useEffect(() => {
+    loadLists();
+  }, [loadLists]);
 
-    setLoadingRecs(true);
-
-    (async () => {
-      try {
-        const detail = await getShowDetail(topRatedShow.show_id);
-        if (cancelled) return;
-        setRecommendations(detail.recommendations?.results ?? []);
-      } catch {
-        if (!cancelled) setRecommendations([]);
-      } finally {
-        if (!cancelled) setLoadingRecs(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [topRatedShow?.show_id]);
-
-  const showRecommendations = isSignedIn && topRatedShow !== null;
+  const firstName = user?.displayName?.split(" ")[0] ?? "there";
 
   return (
-    <div className="flex flex-col w-full">
-      <SEOMeta
-        title="Aftershow. Track every show you watch"
-        description="Log episodes, rate shows, discover what's next. The TV tracker for people who care about what they watch."
-        ogImage="/og-default.webp"
-      />
-
-      {/* 1. Hero banner — trending */}
-      <HeroBackdropBanner
-        shows={trending.data?.results ?? []}
-        loading={trending.loading}
-      />
-
-      {/* Logged-out pitch — only shows for non-signed-in visitors */}
-      {!isSignedIn && (
-        <section className="w-full px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-          <div className="max-w-screen-xl mx-auto">
-            <div className="flex flex-col items-center text-center gap-6 mb-10">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground tracking-tight font-display max-w-2xl leading-tight">
-                The TV tracker for people who actually watch TV.
-              </h2>
-              <p className="text-sm sm:text-base text-muted-foreground max-w-xl leading-relaxed">
-                Not just "did you see it." Episode-by-episode tracking, season progress,
-                ratings, reviews, and a calendar of what's airing next, for the shows you follow.
-              </p>
-              <div className="flex items-center gap-3 mt-2">
-                <button
-                  onClick={() => openAuthModal("signup")}
-                  className="flex items-center gap-2 h-11 px-6 rounded bg-primary text-primary-foreground font-bold text-sm uppercase tracking-widest hover:bg-primary/90 active:scale-95 transition-all duration-150"
-                >
-                  Start tracking, it's free
-                </button>
-                <Link
-                  to="/shows"
-                  className="flex items-center gap-2 h-11 px-6 rounded border border-border bg-background/50 text-foreground/80 hover:text-foreground hover:border-foreground/30 font-medium text-sm uppercase tracking-widest transition-all duration-150"
-                >
-                  Browse shows
-                </Link>
-              </div>
-            </div>
-
-            {/* Feature highlights */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-              {[
-                { icon: Eye, title: "Episode Tracking", desc: "Mark episodes watched, season by season. Know exactly where you left off." },
-                { icon: Star, title: "Rate & Review", desc: "Five-star ratings, written reviews, spoiler tags. See what friends thought." },
-                { icon: BarChart3, title: "Your Stats", desc: "Episodes watched, hours spent, genre breakdown. A year-in-review worth sharing." },
-                { icon: List, title: "Lists & Discovery", desc: "Build curated lists. Get recommendations based on what you've loved." },
-              ].map((f) => (
-                <div
-                  key={f.title}
-                  className="flex flex-col gap-2 p-5 rounded-lg bg-card border border-border"
-                >
-                  <f.icon className="size-5 text-primary" />
-                  <h3 className="text-sm font-bold text-foreground font-display">{f.title}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
-                </div>
-              ))}
-            </div>
+    <div className="w-full max-w-screen-lg mx-auto px-4 py-4 space-y-6 md:px-6 md:py-8 md:space-y-8">
+      {/* Header row */}
+      <div className="flex items-start justify-between">
+        <div className="space-y-0.5">
+          <h1 className="font-display text-xl font-bold text-foreground tracking-tight">
+            Hello, {firstName}!
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            What are you watching today?
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Avatar className="size-9 border border-border/40">
+              <AvatarImage src={user?.avatarUrl} alt={user?.displayName} />
+              <AvatarFallback className="bg-secondary text-foreground text-xs font-semibold">
+                {user?.displayName?.charAt(0).toUpperCase() ?? "?"}
+              </AvatarFallback>
+            </Avatar>
+            {/* Online status dot */}
+            <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-status-watched border-2 border-nav" />
           </div>
-        </section>
-      )}
-
-      {/* 2. Trending this week */}
-      <div className="px-4 sm:px-6 lg:px-8 py-6 flex flex-col w-full gap-8">
-        <ShowCarousel
-          title="Trending This Week"
-          shows={trending.data?.results ?? []}
-          loading={trending.loading}
-          viewAllLink="/shows/trending"
-          posterSize="md"
-        />
-
-        {/* 3. Recommended for you — only if signed in + has rated shows */}
-        {showRecommendations && (
-          <ShowCarousel
-            title={`Because you rated ${topRatedShow!.show_name}`}
-            shows={recommendations}
-            loading={loadingRecs}
-            posterSize="md"
-          />
-        )}
-
-        {/* 4. Upcoming episodes — only if signed in */}
-        {isSignedIn && <UpcomingEpisodes />}
-
-        {/* 5. Popular */}
-        <ShowCarousel
-          title="Popular Shows"
-          shows={popular.data?.results ?? []}
-          loading={popular.loading}
-          viewAllLink="/shows/popular"
-          posterSize="md"
-        />
-
-        {/* 6. On the air */}
-        <ShowCarousel
-          title="Currently Airing"
-          shows={onTheAir.data?.results ?? []}
-          loading={onTheAir.loading}
-          viewAllLink="/shows/on-the-air"
-          posterSize="md"
-        />
-
-        {/* 7. Top rated */}
-        <ShowCarousel
-          title="Top Rated Shows"
-          shows={topRated.data?.results ?? []}
-          loading={topRated.loading}
-          viewAllLink="/shows/top-rated"
-          posterSize="md"
-        />
-
-        {/* Logged-out social proof CTA at the bottom */}
-        {!isSignedIn && (
-          <section className="flex flex-col items-center text-center gap-4 py-10 border-t border-border">
-            <Users className="size-8 text-primary" />
-            <h3 className="text-xl font-bold text-foreground font-display">
-              Join the community
-            </h3>
-            <p className="text-sm text-muted-foreground max-w-md">
-              Follow other viewers, share reviews, and build lists together.
-              Your next favorite show is one follow away.
-            </p>
-            <button
-              onClick={() => openAuthModal("signup")}
-              className="flex items-center gap-2 h-10 px-6 rounded bg-primary text-primary-foreground font-bold text-xs uppercase tracking-widest hover:bg-primary/90 active:scale-95 transition-all duration-150"
-            >
-              Create your account
-            </button>
-          </section>
-        )}
+        </div>
       </div>
+
+      {/* Popular This Month — horizontal scroll-snap row */}
+      <section className="space-y-3">
+        <SectionHeader title="Popular This Month" />
+        <HorizontalScrollRow>
+          {(trending?.results ?? []).slice(0, 10).map((show: TVShow) => (
+            <ShowPosterCard
+              key={show.id}
+              show={show}
+              size="sm"
+              showRating={false}
+              className="shrink-0"
+            />
+          ))}
+          {trending === undefined && (
+            <ScrollSkeletonRow count={6} />
+          )}
+        </HorizontalScrollRow>
+      </section>
+
+      {/* Popular Lists This Month */}
+      <section className="space-y-3">
+        <SectionHeader title="Popular Lists This Month" />
+        {listsLoading ? (
+          <HorizontalScrollRow>
+            <ScrollSkeletonRow count={3} cardWidth="w-44" />
+          </HorizontalScrollRow>
+        ) : lists.length === 0 ? (
+          <p className="text-sm text-muted-foreground px-1">No lists yet.</p>
+        ) : (
+          <HorizontalScrollRow>
+            {lists.slice(0, 6).map((list) => {
+              const curator = listCurators[list.user_id];
+              return (
+                <MobileListCard
+                  key={list.id}
+                  list={list}
+                  curatorName={curator?.display_name ?? curator?.username ?? "Unknown"}
+                  curatorAvatarUrl={curator?.avatar_url}
+                  posterPaths={listItems[list.id] ?? []}
+                  isLiked={isListLiked(list.id)}
+                  className="shrink-0"
+                />
+              );
+            })}
+          </HorizontalScrollRow>
+        )}
+      </section>
+
+      {/* Recent Friends' Reviews */}
+      <section className="space-y-3">
+        <SectionHeader title="Recent Friends' Reviews" />
+        {reviewsLoading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex gap-3 rounded-xl border border-border/50 bg-card p-3">
+                <Skeleton className="size-9 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-3 w-32" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+                <Skeleton className="w-12 h-18 rounded-md" />
+              </div>
+            ))}
+          </div>
+        ) : reviews.length === 0 ? (
+          <p className="text-sm text-muted-foreground px-1">
+            No reviews from friends yet. Follow people to see their reviews here.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {reviews.slice(0, 5).map((review) => (
+              <MobileReviewCard
+                key={review.id}
+                review={review}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Popular Shows (desktop only, hidden on mobile to keep it clean) */}
+      <section className="hidden md:block space-y-3">
+        <SectionHeader title="Popular Shows" />
+        <HorizontalScrollRow>
+          {(popular?.results ?? []).slice(0, 10).map((show: TVShow) => (
+            <ShowPosterCard
+              key={show.id}
+              show={show}
+              size="md"
+              className="shrink-0"
+            />
+          ))}
+        </HorizontalScrollRow>
+      </section>
     </div>
+  );
+}
+
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+function HorizontalScrollRow({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0"
+      style={{
+        scrollSnapType: "x mandatory",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
+      }}
+    >
+      <style>{`div::-webkit-scrollbar { display: none; }`}</style>
+      {children}
+    </div>
+  );
+}
+
+function ScrollSkeletonRow({ count, cardWidth = "w-24" }: { count: number; cardWidth?: string }) {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className={cn("shrink-0", cardWidth)}>
+          <Skeleton className={cn("aspect-poster w-full rounded-lg", cardWidth)} />
+          <Skeleton className="h-3 w-3/4 mt-2" />
+        </div>
+      ))}
+    </>
   );
 }

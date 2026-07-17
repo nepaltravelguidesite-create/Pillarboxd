@@ -1,46 +1,53 @@
-import { useState, useEffect } from "react";
-import { Outlet, ScrollRestoration } from "react-router-dom";
+import { useState } from "react";
+import { Outlet, ScrollRestoration, useLocation } from "react-router-dom";
 import { NavBar } from "@/components/layout/NavBar";
 import { Footer } from "@/components/layout/Footer";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { SlideOutMenu } from "@/components/layout/SlideOutMenu";
+import { MobileTopBar } from "@/components/layout/MobileTopBar";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Toaster } from "@/components/ui/sonner";
 import { useUI } from "@/context/UIContext";
-import { useAuth } from "@/context/AuthContext";
-import { AftershowLogoAnimated } from "@/components/brand/AftershowLogoAnimated";
-
-const MIN_SPLASH_MS = 900;
 
 export function RootLayout() {
   const { authModalOpen, authModalMode, closeAuthModal } = useUI();
-  const { authState } = useAuth();
-
-  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMinTimeElapsed(true), MIN_SPLASH_MS);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const authResolved = authState !== "loading";
-  const showSplash = !authResolved || !minTimeElapsed;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
       <a href="#main-content" className="skip-link">Skip to content</a>
 
-      {showSplash && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background">
-          <AftershowLogoAnimated size={48} loop />
-        </div>
-      )}
+      {/* Desktop nav (md+) */}
+      <div className="hidden md:block">
+        <NavBar />
+      </div>
 
-      <NavBar />
+      {/* Mobile top bar (below md) */}
+      <div className="md:hidden">
+        <MobileTopBar onMenuClick={() => setMenuOpen(true)} />
+      </div>
 
-      <main id="main-content" className="flex-1 flex flex-col w-full">
+      {/* Slide-out menu */}
+      <SlideOutMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      <main
+        id="main-content"
+        className="flex-1 flex flex-col w-full pb-14 md:pb-0 pb-page-enter"
+        key={location.key}
+      >
         <Outlet />
       </main>
 
-      <Footer />
+      {/* Desktop footer */}
+      <div className="hidden md:block">
+        <Footer />
+      </div>
+
+      {/* Mobile bottom nav */}
+      <div className="md:hidden">
+        <MobileBottomNav />
+      </div>
 
       <AuthModal
         open={authModalOpen}

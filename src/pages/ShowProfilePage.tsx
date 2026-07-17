@@ -1,595 +1,102 @@
-import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useShowDetail } from "@/hooks/use-tmdb";
 import { useUserData } from "@/context/UserDataContext";
-import { useSocial } from "@/context/SocialContext";
-import { useUI } from "@/context/UIContext";
-import { useAuth } from "@/context/AuthContext";
 import {
   posterUrl,
   backdropUrl,
   profileUrl,
-  getShowSeason,
-  getWatchProviders,
   type TVShow,
   type TVShowDetail,
   type CastMember,
-  type SeasonDetail,
-  type WatchProvider,
+  type CrewMember,
 } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
 import { SEOMeta } from "@/components/SEOMeta";
 import { StarRating } from "@/components/shows/StarRating";
-import { getShowRatingIcon } from "@/lib/showRatingIcons";
 import { LogEntryModal } from "@/components/shows/LogEntryModal";
 import { ShowCarousel } from "@/components/shows/ShowCarousel";
-import { ReviewFeed } from "@/components/shows/ReviewFeed";
+import { MobileReviewCard } from "@/components/shows/MobileReviewCard";
+import { ReviewCard } from "@/components/shows/ReviewCard";
+import { supabase } from "@/lib/supabase";
 import {
-  Loader2,
-  Heart,
-  Bookmark,
-  Plus,
-  ChevronDown,
-  ChevronUp,
-  Star,
-  Tv,
-  Check,
+  Loader2, Heart, Bookmark, Plus, ChevronLeft, Eye, List as ListIcon,
+  Tv, CheckCircle,
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import type { ReviewWithAuthor } from "@/components/shows/ReviewCard";
 
-// ---------------------------------------------------------------------------
-// Watch Providers section
-// ---------------------------------------------------------------------------
+type LogRow = {
+  id: string; user_id: string; show_id: number; show_name: string;
+  show_poster_path: string | null; show_first_air_date: string | null;
+  watched_date: string; rating: number | null; review: string;
+  rewatch: boolean; contains_spoiler: boolean; vibe_tag: string | null; created_at: string;
+};
+type ProfileRow = { id: string; username: string; display_name: string; avatar_url: string | null };
 
-function WatchProviders({ showId }: { showId: number }) {
-  const [providers, setProviders] = useState<WatchProvider[]>([]);
-  const [link, setLink] = useState<string>("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    getWatchProviders(showId)
-      .then((data) => {
-        if (cancelled) return;
-        // Combine flatrate + free + ads for display
-        const all = [
-          ...(data.flatrate ?? []),
-          ...(data.free ?? []),
-          ...(data.ads ?? []),
-        ];
-        // Dedupe by provider_id
-        const seen = new Set<number>();
-        const deduped = all.filter((p) => {
-          if (seen.has(p.provider_id)) return false;
-          seen.add(p.provider_id);
-          return true;
-        });
-        setProviders(deduped.slice(0, 8));
-        setLink(data.link ?? "");
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [showId]);
-
-  if (loading || providers.length === 0) return null;
-
-  const inner = (
-    <div className="flex flex-wrap gap-x-3 gap-y-2">
-      {providers.map((p) => (
-        <div key={p.provider_id} className="flex items-center gap-1.5">
-          <div className="size-5 rounded bg-muted overflow-hidden shrink-0">
-            {p.logo_path ? (
-              <img
-                src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
-                alt={p.provider_name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-[7px] text-muted-foreground">
-                {p.provider_name.slice(0, 2)}
-              </div>
-            )}
-          </div>
-          <span className="text-xs text-muted-foreground">{p.provider_name}</span>
-        </div>
-      ))}
-    </div>
-  );
-
-  return (
-    <div className="pt-2 border-t border-border/50">
-      <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-1.5">
-        Where to Watch
-      </p>
-      {link ? (
-        <a
-          href={link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block group cursor-pointer hover:opacity-80 transition-opacity"
-        >
-          {inner}
-        </a>
-      ) : (
-        inner
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Action Panel (right-hand side)
-// ---------------------------------------------------------------------------
-
-interface ActionPanelProps {
-  show: TVShow;
-  showDetail: TVShowDetail | null;
-  onLogClick: () => void;
-}
-
-function ActionPanel({ show, showDetail, onLogClick }: ActionPanelProps) {
-  const { getShowData, setRating, toggleLike, toggleWatchlist, setShowStatus } = useUserData();
-  const { getShowProgress } = useSocial();
-  const { openAuthModal } = useUI();
-  const { user } = useAuth();
-
-  const showData = getShowData(show.id);
-  const rating = showData?.rating ?? null;
-  const liked = showData?.liked ?? false;
-  const watchlisted = showData?.watchlisted ?? false;
-  const status = showData?.status ?? null;
-  const progress = getShowProgress(show.id);
-
-  function guard(fn: () => void) {
-    if (!user) {
-      openAuthModal("signin");
-      return;
-    }
-    fn();
-  }
-
-  return (
-    <div className="flex flex-col gap-3">
-      {/* Rating */}
-      <div className="flex flex-col items-center gap-1.5 py-2">
-        <StarRating
-          value={rating}
-          onChange={(v) => guard(() => setRating(show, v))}
-          icon={getShowRatingIcon(show.id)}
-          size="lg"
-        />
-        <span className="text-[11px] text-muted-foreground uppercase tracking-widest">
-          {rating !== null ? "Rated" : "Rate"}
-        </span>
-      </div>
-
-      {/* Like / Watchlist / Log buttons */}
-      <div className="grid grid-cols-3 gap-2">
-        <button
-          type="button"
-          onClick={() => guard(() => toggleLike(show))}
-          className={cn(
-            "flex flex-col items-center justify-center gap-1 h-16 rounded",
-            "border transition-colors duration-150",
-            liked
-              ? "border-primary/50 bg-primary/10 text-primary"
-              : "border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/30"
-          )}
-        >
-          <Heart className={cn("size-5", liked && "fill-primary")} />
-          <span className="text-[10px] uppercase tracking-widest font-semibold">
-            {liked ? "Liked" : "Like"}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => guard(() => toggleWatchlist(show))}
-          className={cn(
-            "flex flex-col items-center justify-center gap-1 h-16 rounded",
-            "border transition-colors duration-150",
-            watchlisted
-              ? "border-primary/50 bg-primary/10 text-primary"
-              : "border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/30"
-          )}
-        >
-          <Bookmark className={cn("size-5", watchlisted && "fill-primary")} />
-          <span className="text-[10px] uppercase tracking-widest font-semibold">
-            {watchlisted ? "Saved" : "Watchlist"}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => guard(onLogClick)}
-          className={cn(
-            "flex flex-col items-center justify-center gap-1 h-16 rounded",
-            "border border-border/60 text-muted-foreground",
-            "hover:text-foreground hover:border-foreground/30 transition-colors duration-150"
-          )}
-        >
-          <Plus className="size-5" strokeWidth={2} />
-          <span className="text-[10px] uppercase tracking-widest font-semibold">
-            Log
-          </span>
-        </button>
-      </div>
-
-      {/* Watch status */}
-      <div className="pt-2 border-t border-border/50">
-        <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-1.5">
-          Status
-        </p>
-        <Select
-          value={status ?? "none"}
-          onValueChange={(v) =>
-            guard(() => setShowStatus(show, v === "none" ? null : v as typeof status))
-          }
-        >
-          <SelectTrigger className="h-8 text-xs" aria-label="Watch status">
-            <SelectValue placeholder="Set status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Not set</SelectItem>
-            <SelectItem value="watching">Watching</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="want_to_watch">Want to Watch</SelectItem>
-            <SelectItem value="on_hold">On Hold</SelectItem>
-            <SelectItem value="dropped">Dropped</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Progress bar */}
-      {showDetail && progress.watched > 0 && (
-        <div className="pt-2 border-t border-border/50">
-          <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-muted-foreground">Progress</span>
-            <span className="font-medium text-primary">
-              {progress.watched}/{showDetail.number_of_episodes} eps
-            </span>
-          </div>
-          <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full transition-all duration-300"
-              style={{
-                width: `${Math.min(
-                  (progress.watched / showDetail.number_of_episodes) * 100,
-                  100
-                )}%`,
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Quick stats */}
-      {showDetail && (
-        <div className="flex flex-col gap-1.5 pt-2 border-t border-border/50">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">TMDB Rating</span>
-            <div className="flex items-center gap-1">
-              <Star className="size-3 text-primary fill-primary" />
-              <span className="font-medium text-foreground">
-                {showDetail.vote_average > 0
-                  ? showDetail.vote_average.toFixed(1)
-                  : "N/A"}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Seasons</span>
-            <span className="font-medium text-foreground">
-              {showDetail.number_of_seasons}
-            </span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Episodes</span>
-            <span className="font-medium text-foreground">
-              {showDetail.number_of_episodes}
-            </span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Status</span>
-            <span className="font-medium text-foreground">
-              {showDetail.status}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Watch providers */}
-      <WatchProviders showId={show.id} />
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Season Drawer with episode checkboxes
-// ---------------------------------------------------------------------------
-
-interface SeasonDrawerProps {
-  show: TVShow;
-  showDetail: TVShowDetail;
-}
-
-function SeasonDrawer({ show, showDetail }: SeasonDrawerProps) {
-  const [open, setOpen] = useState(true);
-  const [selectedSeason, setSelectedSeason] = useState(0);
-  const [seasonDetail, setSeasonDetail] = useState<SeasonDetail | null>(null);
-  const [loadingSeason, setLoadingSeason] = useState(false);
-
-  const { isEpisodeWatched, toggleEpisode, getShowProgress } = useSocial();
-  const { openAuthModal } = useUI();
-  const { user } = useAuth();
-
-  const seasons = showDetail.seasons.filter(
-    (s) => s.season_number > 0 && s.episode_count > 0
-  );
-
-  const current = seasons[selectedSeason];
-  const progress = getShowProgress(show.id);
-  const seasonProgress = progress.perSeason.get(current?.season_number ?? 0);
-
-  // Load season details (episode names) when selected
-  useEffect(() => {
-    if (!current) return;
-    setLoadingSeason(true);
-    setSeasonDetail(null);
-    getShowSeason(show.id, current.season_number)
-      .then((data) => setSeasonDetail(data))
-      .catch(() => {})
-      .finally(() => setLoadingSeason(false));
-  }, [show.id, current?.season_number]);
-
-  function guard(fn: () => void) {
-    if (!user) {
-      openAuthModal("signin");
-      return;
-    }
-    fn();
-  }
-
-  return (
-    <div className="w-full">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className={cn(
-          "flex items-center justify-between w-full px-3 py-2.5 rounded",
-          "bg-secondary/30 border border-border",
-          "text-sm font-medium text-foreground",
-          "hover:bg-secondary/50 transition-colors duration-150"
-        )}
-      >
-        <span className="flex items-center gap-2">
-          <Tv className="size-4 text-muted-foreground" />
-          {current ? current.name : "Seasons"}
-          {seasonProgress && (
-            <span className="text-xs text-primary font-medium">
-              ({seasonProgress.watched}/{current?.episode_count ?? 0})
-            </span>
-          )}
-        </span>
-        {open ? (
-          <ChevronUp className="size-4 text-muted-foreground" />
-        ) : (
-          <ChevronDown className="size-4 text-muted-foreground" />
-        )}
-      </button>
-
-      {open && (
-        <div className="mt-2 rounded border border-border bg-secondary/20 overflow-hidden">
-          {/* Season selector tabs */}
-          <div className="flex gap-1 p-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {seasons.map((season, idx) => {
-              const sp = progress.perSeason.get(season.season_number);
-              return (
-                <button
-                  key={season.id}
-                  type="button"
-                  onClick={() => setSelectedSeason(idx)}
-                  className={cn(
-                    "shrink-0 px-2.5 py-1 rounded text-xs font-medium",
-                    "transition-colors duration-150",
-                    idx === selectedSeason
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                  )}
-                >
-                  {season.name}
-                  {sp && sp.watched > 0 && (
-                    <span className="ml-1 opacity-70">{sp.watched}/{season.episode_count}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Per-season progress bar */}
-          {current && seasonProgress && (
-            <div className="px-3 pb-2">
-              <div className="h-1 rounded-full bg-secondary overflow-hidden">
-                <div
-                  className="h-full bg-primary rounded-full transition-all duration-300"
-                  style={{
-                    width: `${Math.min(
-                      (seasonProgress.watched / current.episode_count) * 100,
-                      100
-                    )}%`,
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Episode list */}
-          <div className="max-h-80 overflow-y-auto border-t border-border">
-            {loadingSeason ? (
-              <div className="p-4 flex justify-center">
-                <Loader2 className="size-4 animate-spin text-muted-foreground" />
-              </div>
-            ) : seasonDetail?.episodes ? (
-              <div className="p-2 space-y-0.5">
-                {seasonDetail.episodes.map((ep) => {
-                  const watched = isEpisodeWatched(
-                    show.id,
-                    current.season_number,
-                    ep.episode_number
-                  );
-                  return (
-                    <button
-                      key={ep.id}
-                      type="button"
-                      onClick={() =>
-                        guard(() =>
-                          toggleEpisode(
-                            show,
-                            current.season_number,
-                            ep.episode_number,
-                            ep.name
-                          )
-                        )
-                      }
-                      className={cn(
-                        "flex items-start gap-2.5 w-full text-left px-2 py-2 rounded",
-                        "hover:bg-secondary/40 transition-colors",
-                        watched && "bg-primary/5"
-                      )}
-                    >
-                      {/* Checkbox */}
-                      <div
-                        className={cn(
-                          "shrink-0 mt-0.5 flex items-center justify-center size-4 rounded border",
-                          "transition-all duration-150",
-                          watched
-                            ? "bg-primary border-primary"
-                            : "border-border bg-transparent"
-                        )}
-                      >
-                        {watched && (
-                          <Check className="size-3 text-primary-foreground" strokeWidth={3} />
-                        )}
-                      </div>
-
-                      {/* Episode number */}
-                      <span className="shrink-0 text-xs font-mono text-muted-foreground w-6 text-right mt-0.5">
-                        {ep.episode_number}
-                      </span>
-
-                      {/* Episode info */}
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className={cn(
-                            "text-xs font-medium truncate leading-tight",
-                            watched ? "text-primary" : "text-foreground/80"
-                          )}
-                        >
-                          {ep.name}
-                        </p>
-                        {ep.air_date && (
-                          <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                            {ep.air_date}
-                          </p>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="p-4 text-xs text-muted-foreground text-center">
-                No episode data
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Cast List
-// ---------------------------------------------------------------------------
-
-interface CastListProps {
-  cast: CastMember[];
-}
-
-function CastList({ cast }: CastListProps) {
-  const [imgErrors, setImgErrors] = useState<Record<number, boolean>>({});
-
-  if (!cast || cast.length === 0) return null;
-
-  const topCast = cast.slice(0, 20);
-
-  return (
-    <section className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <h2 className="text-sm font-bold text-foreground tracking-tight mb-4">
-        Cast
-      </h2>
-      <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin">
-        {topCast.map((member) => {
-          const errored = imgErrors[member.id];
-          return (
-            <Link
-              key={member.id}
-              to={`/person/${member.id}`}
-              className="flex flex-col items-center gap-1.5 group shrink-0 w-16 sm:w-20 snap-start"
-            >
-              <div className="size-16 sm:size-20 rounded-full overflow-hidden bg-muted ring-1 ring-border/30 group-hover:ring-primary/50 transition-all">
-                {errored || !member.profile_path ? (
-                  <div className="w-full h-full flex items-center justify-center bg-secondary/30">
-                    <Tv className="size-6 text-muted-foreground/30" strokeWidth={1} />
-                  </div>
-                ) : (
-                  <img
-                    src={profileUrl(member.profile_path, "w185")}
-                    alt={member.name}
-                    loading="lazy"
-                    onError={() =>
-                      setImgErrors((prev) => ({ ...prev, [member.id]: true }))
-                    }
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                )}
-              </div>
-              <p className="text-xs font-medium text-foreground truncate leading-tight text-center w-full group-hover:text-primary transition-colors">
-                {member.name}
-              </p>
-              <p className="text-[11px] text-muted-foreground truncate leading-tight text-center w-full">
-                {member.character}
-              </p>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Main ShowProfilePage
-// ---------------------------------------------------------------------------
+const GENRE_CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "#C4B8E8"];
 
 export function ShowProfilePage() {
   const { showId } = useParams<{ showId: string }>();
   const numericId = showId ? parseInt(showId, 10) : null;
   const { data: showDetail, loading, error } = useShowDetail(numericId);
+  const { toggleWatchlist, toggleLike, getShowData } = useUserData();
   const [logModalOpen, setLogModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"cast" | "crew" | "details">("cast");
+  const [reviews, setReviews] = useState<ReviewWithAuthor[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!numericId) return;
+    setReviewsLoading(true);
+    (async () => {
+      try {
+        const { data: logs } = await supabase
+          .from("user_logs")
+          .select("*")
+          .eq("show_id", numericId)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        if (!logs) { setReviews([]); return; }
+        const typedLogs = logs as LogRow[];
+        const userIds = [...new Set(typedLogs.map((l) => l.user_id))];
+        const { data: profiles } = await supabase.from("profiles").select("*").in("id", userIds);
+        const profileMap = new Map<string, ProfileRow>();
+        (profiles ?? []).forEach((p) => profileMap.set((p as ProfileRow).id, p as ProfileRow));
+        const logIds = typedLogs.map((l) => l.id);
+        const { data: likes } = await supabase.from("review_likes").select("log_id").in("log_id", logIds);
+        const likeCounts = new Map<string, number>();
+        (likes ?? []).forEach((l) => { const id = (l as { log_id: string }).log_id; likeCounts.set(id, (likeCounts.get(id) ?? 0) + 1); });
+        const { data: comments } = await supabase.from("comments").select("log_id").in("log_id", logIds);
+        const commentCounts = new Map<string, number>();
+        (comments ?? []).forEach((c) => { const id = (c as { log_id: string }).log_id; commentCounts.set(id, (commentCounts.get(id) ?? 0) + 1); });
+        const merged: ReviewWithAuthor[] = typedLogs.map((l) => {
+          const profile = profileMap.get(l.user_id);
+          return {
+            id: l.id, user_id: l.user_id, show_id: l.show_id, show_name: l.show_name,
+            show_poster_path: l.show_poster_path, show_first_air_date: l.show_first_air_date,
+            watched_date: l.watched_date, rating: l.rating == null ? null : Number(l.rating),
+            review: l.review, rewatch: l.rewatch, contains_spoiler: l.contains_spoiler, vibe_tag: l.vibe_tag,
+            created_at: l.created_at, author_username: profile?.username ?? "unknown",
+            author_display_name: profile?.display_name ?? profile?.username ?? "Unknown",
+            author_avatar_url: profile?.avatar_url ?? null,
+            like_count: likeCounts.get(l.id) ?? 0, comment_count: commentCounts.get(l.id) ?? 0,
+          };
+        });
+        setReviews(merged);
+      } finally { setReviewsLoading(false); }
+    })();
+  }, [numericId]);
+
+  // useMemo must be called unconditionally before any early returns
+  const genreData = useMemo(() => {
+    if (!showDetail?.genres || showDetail.genres.length === 0) return [];
+    return showDetail.genres.map((g, i) => ({
+      name: g.name,
+      value: 1,
+      color: GENRE_CHART_COLORS[i % GENRE_CHART_COLORS.length],
+    }));
+  }, [showDetail?.genres]);
 
   if (loading) {
     return (
@@ -603,232 +110,605 @@ export function ShowProfilePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 px-4">
         <Tv className="size-12 text-muted-foreground/30" strokeWidth={1} />
-        <p className="text-sm text-muted-foreground">
-          {error ? `Error: ${error}` : "Show not found"}
-        </p>
-        <Link to="/" className="text-xs text-accent hover:underline">
-          Back to home
-        </Link>
+        <p className="text-sm text-muted-foreground">{error ? `Error: ${error}` : "Show not found"}</p>
+        <Link to="/" className="text-xs text-accent hover:underline">Back to home</Link>
       </div>
     );
   }
 
-  const year = showDetail.first_air_date
-    ? showDetail.first_air_date.slice(0, 4)
-    : "TBA";
-  const networkName = showDetail.networks?.[0]?.name;
+  const year = showDetail.first_air_date ? showDetail.first_air_date.slice(0, 4) : "TBA";
   const cast = showDetail.credits?.cast ?? [];
+  const crew = showDetail.credits?.crew ?? [];
   const similar = showDetail.similar?.results ?? [];
   const recommendations = showDetail.recommendations?.results ?? [];
+  const watchProviders: { provider_id: number; provider_name: string; logo_path: string | null }[] = [];
 
   const show: TVShow = {
-    id: showDetail.id,
-    name: showDetail.name,
-    original_name: showDetail.original_name,
-    overview: showDetail.overview,
-    poster_path: showDetail.poster_path,
-    backdrop_path: showDetail.backdrop_path,
-    first_air_date: showDetail.first_air_date,
-    vote_average: showDetail.vote_average,
-    vote_count: showDetail.vote_count,
-    popularity: showDetail.popularity,
-    genre_ids: [],
-    origin_country: showDetail.origin_country,
+    id: showDetail.id, name: showDetail.name, original_name: showDetail.original_name,
+    overview: showDetail.overview, poster_path: showDetail.poster_path,
+    backdrop_path: showDetail.backdrop_path, first_air_date: showDetail.first_air_date,
+    vote_average: showDetail.vote_average, vote_count: showDetail.vote_count,
+    popularity: showDetail.popularity, genre_ids: [], origin_country: showDetail.origin_country,
     original_language: showDetail.original_language,
   };
+
+  const ratedReviews = reviews.filter((r) => r.rating !== null);
+  const histogram = [0, 0, 0, 0, 0];
+  ratedReviews.forEach((r) => {
+    if (r.rating && r.rating >= 1 && r.rating <= 5) {
+      histogram[Math.ceil(r.rating) - 1]++;
+    }
+  });
+  const maxHist = Math.max(...histogram, 1);
+  const avgRating = ratedReviews.length > 0
+    ? ratedReviews.reduce((sum, r) => sum + (r.rating ?? 0), 0) / ratedReviews.length
+    : null;
+
+  const showData = getShowData(show.id);
+  const communityScore = showDetail.vote_average > 0
+    ? Math.round((showDetail.vote_average / 10) * 100)
+    : null;
 
   return (
     <>
       <SEOMeta
         title={showDetail.name}
         description={showDetail.overview?.slice(0, 160)}
-        ogImage={
-          showDetail.backdrop_path
-            ? `https://image.tmdb.org/t/p/w1280${showDetail.backdrop_path}`
-            : undefined
-        }
+        ogImage={showDetail.backdrop_path ? `https://image.tmdb.org/t/p/w1280${showDetail.backdrop_path}` : undefined}
         ogType="video.show"
       />
-      <div className="flex flex-col w-full">
-      {/* Full-screen backdrop behind header */}
-      <div className="relative w-full h-[40vh] sm:h-[50vh] min-h-[300px] max-h-[500px] overflow-hidden">
-        {showDetail.backdrop_path ? (
-          <img
-            src={backdropUrl(showDetail.backdrop_path, "w1280")}
-            alt={`${showDetail.name} backdrop`}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-secondary/30" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-transparent" />
-      </div>
+      <div className="flex flex-col w-full pb-page-enter">
+        {/* === MOBILE LAYOUT (below md) === */}
+        <div className="md:hidden">
+          {/* Backdrop banner with angled bottom clip */}
+          <div className="relative w-full h-[35vh] min-h-[240px] max-h-[400px] overflow-hidden">
+            {showDetail.backdrop_path ? (
+              <img src={backdropUrl(showDetail.backdrop_path, "w780")} alt={`${showDetail.name} backdrop`} className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 bg-secondary/30" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" style={{ paddingBottom: "15%" }} />
+            <div className="absolute bottom-0 left-0 right-0 h-[20%]" style={{ background: "var(--background)", clipPath: "polygon(0 100%, 100% 100%, 100% 30%, 0 100%)" }} />
+            <button
+              onClick={() => navigate(-1)}
+              className="absolute top-4 left-4 size-9 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors z-10"
+              aria-label="Go back"
+              style={{ marginTop: "env(safe-area-inset-top, 0px)" }}
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+          </div>
 
-      {/* Main content — poster + info + action panel */}
-      <div className="relative -mt-32 sm:-mt-40 z-10 w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Left: Poster */}
-          <div className="shrink-0 mx-auto md:mx-0">
-            <div className="w-32 sm:w-40 md:w-48 lg:w-52">
-              <div className="aspect-poster rounded overflow-hidden bg-muted border border-border/50 shadow-xl shadow-black/40">
-                {showDetail.poster_path ? (
-                  <img
-                    src={posterUrl(showDetail.poster_path, "w500")}
-                    alt={`${showDetail.name} poster`}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-secondary/30">
-                    <Tv className="size-12 text-muted-foreground/30" strokeWidth={1} />
-                  </div>
+          <div className="relative -mt-16 px-4 z-10">
+            <div className="flex gap-3">
+              <div className="w-24 shrink-0">
+                <div className="aspect-poster rounded-lg overflow-hidden bg-muted border border-border/50 shadow-xl shadow-black/40">
+                  {showDetail.poster_path ? (
+                    <img src={posterUrl(showDetail.poster_path, "w342")} alt={`${showDetail.name} poster`} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><Tv className="size-8 text-muted-foreground/30" strokeWidth={1} /></div>
+                  )}
+                </div>
+              </div>
+              <div className="flex-1 min-w-0 pt-1">
+                <h1 className="font-display text-lg font-bold text-foreground tracking-tight leading-tight">{showDetail.name}</h1>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-xs text-muted-foreground">
+                  <span>{year}</span>
+                  {showDetail.episode_run_time?.[0] > 0 && (<><span className="text-muted-foreground/40">·</span><span>{showDetail.episode_run_time[0]}m</span></>)}
+                  {showDetail.number_of_seasons > 0 && (<><span className="text-muted-foreground/40">·</span><span>{showDetail.number_of_seasons} {showDetail.number_of_seasons === 1 ? "Season" : "Seasons"}</span></>)}
+                </div>
+                {showDetail.created_by && showDetail.created_by.length > 0 && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Created by{" "}
+                    {showDetail.created_by.map((c, i) => (
+                      <span key={c.id}>
+                        <Link to={`/person/${c.id}`} className="text-foreground/80 hover:text-accent">{c.name}</Link>
+                        {i < showDetail.created_by!.length - 1 && ", "}
+                      </span>
+                    ))}
+                  </p>
                 )}
+                {showDetail.tagline && <p className="mt-1.5 text-xs italic text-muted-foreground">{showDetail.tagline}</p>}
+              </div>
+            </div>
+
+            {showDetail.overview && (
+              <p className="mt-3 text-sm text-foreground/80 leading-relaxed">{showDetail.overview}</p>
+            )}
+
+            <div className="flex items-center gap-4 mt-3 py-2">
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Eye className="size-3.5" />{showDetail.vote_count.toLocaleString()}
+              </span>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Heart className="size-3.5" />{ratedReviews.filter(r => r.rating && r.rating >= 4).length}
+              </span>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <ListIcon className="size-3.5" />{reviews.length}
+              </span>
+            </div>
+
+            <div className="mt-3 rounded-xl border border-border/50 bg-card p-4">
+              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">Ratings</h3>
+              <div className="flex gap-4">
+                <div className="flex items-end gap-1.5 h-20 flex-1">
+                  {histogram.map((count, i) => (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                      <div className="w-full flex-1 flex items-end">
+                        <div className="w-full rounded-t-sm bg-primary/70 transition-all duration-300" style={{ height: `${(count / maxHist) * 100}%`, minHeight: count > 0 ? "4px" : "0" }} />
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">{i + 1}★</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-col items-center justify-center gap-1 shrink-0 w-20">
+                  <span className="font-display text-3xl font-bold text-foreground">{avgRating !== null ? avgRating.toFixed(1) : "—"}</span>
+                  <StarRating value={avgRating} readOnly size="sm" />
+                  <span className="text-[10px] text-muted-foreground">{ratedReviews.length} ratings</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 space-y-2">
+              <button onClick={() => setLogModalOpen(true)} className="flex items-center justify-center gap-2 w-full h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150">
+                <Plus className="size-4" /> Rate or Review
+              </button>
+              <Link to="/lists" className="flex items-center justify-center gap-2 w-full h-11 rounded-full border border-border text-foreground font-medium text-sm hover:bg-secondary/50 hover:-translate-y-px active:translate-y-0 transition-all duration-150">
+                <ListIcon className="size-4" /> Add to Lists
+              </Link>
+              <button onClick={() => toggleWatchlist(show)} className={cn("flex items-center justify-center gap-2 w-full h-11 rounded-full border font-medium text-sm hover:-translate-y-px active:translate-y-0 transition-all duration-150", showData?.watchlisted ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground hover:bg-secondary/50")}>
+                <Bookmark className={cn("size-4", showData?.watchlisted && "fill-primary")} /> {showData?.watchlisted ? "In Watchlist" : "Add to Watchlist"}
+              </button>
+            </div>
+
+            <div className="mt-5">
+              <div className="flex gap-1 border-b border-border/40">
+                {(["cast", "crew", "details"] as const).map((tab) => (
+                  <button key={tab} onClick={() => setActiveTab(tab)} className={cn("px-3 py-2 text-sm font-medium capitalize transition-colors relative", activeTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
+                    {tab}
+                    {activeTab === tab && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
+                  </button>
+                ))}
+              </div>
+              <div className="pt-3">
+                {activeTab === "cast" && <CastRow cast={cast} />}
+                {activeTab === "crew" && <CrewList crew={crew} />}
+                {activeTab === "details" && <DetailsBlock showDetail={showDetail} />}
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">All Reviews</h3>
+                {reviews.length > 3 && <Link to="#" className="text-xs text-accent hover:underline">See All</Link>}
+              </div>
+              {reviewsLoading ? (
+                <div className="py-8 flex justify-center"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
+              ) : reviews.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No reviews yet. Be the first to review!</p>
+              ) : (
+                <div className="space-y-3">
+                  {reviews.slice(0, 3).map((review) => (
+                    <MobileReviewCard key={review.id} review={review} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* === DESKTOP LAYOUT (md+) === */}
+        <div className="hidden md:block">
+          {/* Blurred backdrop hero */}
+          <div className="relative w-full h-[50vh] min-h-[400px] max-h-[600px] overflow-hidden">
+            {showDetail.backdrop_path ? (
+              <>
+                <img src={backdropUrl(showDetail.backdrop_path, "w1280")} alt="" className="absolute inset-0 w-full h-full object-cover blur-sm scale-105" />
+                <div className="absolute inset-0 bg-background/60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
+              </>
+            ) : (
+              <div className="absolute inset-0 bg-secondary/30" />
+            )}
+
+            {/* Back button */}
+            <button onClick={() => navigate(-1)} className="absolute top-6 left-6 size-10 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors z-10" aria-label="Go back">
+              <ChevronLeft className="size-5" />
+            </button>
+
+            {/* Hero content: poster + title */}
+            <div className="absolute bottom-0 left-0 right-0 px-8 pb-8 flex items-end gap-6">
+              <div className="w-48 shrink-0">
+                <div className="aspect-poster rounded-xl overflow-hidden bg-muted border border-border/50 shadow-2xl shadow-black/50">
+                  {showDetail.poster_path ? (
+                    <img src={posterUrl(showDetail.poster_path, "w500")} alt={`${showDetail.name} poster`} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><Tv className="size-12 text-muted-foreground/30" strokeWidth={1} /></div>
+                  )}
+                </div>
+              </div>
+              <div className="flex-1 pb-2">
+                <h1 className="font-display text-4xl font-bold text-foreground tracking-tight leading-tight">{showDetail.name}</h1>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-sm text-muted-foreground">
+                  <span>{year}</span>
+                  {showDetail.episode_run_time?.[0] > 0 && <span>· {showDetail.episode_run_time[0]}m</span>}
+                  {showDetail.number_of_seasons > 0 && <span>· {showDetail.number_of_seasons} {showDetail.number_of_seasons === 1 ? "Season" : "Seasons"}</span>}
+                  {showDetail.genres.slice(0, 3).map((g) => <span key={g.id} className="text-foreground/60">· {g.name}</span>)}
+                </div>
+                {showDetail.created_by && showDetail.created_by.length > 0 && (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Created by{" "}
+                    {showDetail.created_by.map((c, i) => (
+                      <span key={c.id}>
+                        <Link to={`/person/${c.id}`} className="text-foreground/80 hover:text-accent">{c.name}</Link>
+                        {i < showDetail.created_by!.length - 1 && ", "}
+                      </span>
+                    ))}
+                  </p>
+                )}
+                {showDetail.tagline && <p className="mt-2 text-base italic text-foreground/70">{showDetail.tagline}</p>}
               </div>
             </div>
           </div>
 
-          {/* Center: Title + meta + overview */}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
-              {showDetail.name}
-            </h1>
+          {/* Two-column body */}
+          <div className="max-w-7xl mx-auto px-8 py-8 flex gap-8">
+            {/* Left column ~65% */}
+            <div className="flex-1 min-w-0 space-y-8" style={{ flexBasis: "65%" }}>
+              {/* Synopsis */}
+              {showDetail.overview && (
+                <section>
+                  <h2 className="text-lg font-display font-semibold text-foreground mb-3">Synopsis</h2>
+                  <p className="text-sm text-foreground/80 leading-relaxed">{showDetail.overview}</p>
+                </section>
+              )}
 
-            {/* Meta row */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
-              {year && (
-                <span className="text-sm text-muted-foreground">{year}</span>
-              )}
-              {networkName && (
-                <>
-                  <span className="text-muted-foreground/40">·</span>
-                  <span className="text-sm text-muted-foreground">
-                    {networkName}
-                  </span>
-                </>
-              )}
-              {showDetail.number_of_seasons > 0 && (
-                <>
-                  <span className="text-muted-foreground/40">·</span>
-                  <span className="text-sm text-muted-foreground">
-                    {showDetail.number_of_seasons}{" "}
-                    {showDetail.number_of_seasons === 1 ? "Season" : "Seasons"}
-                  </span>
-                </>
-              )}
-              {showDetail.episode_run_time?.[0] > 0 && (
-                <>
-                  <span className="text-muted-foreground/40">·</span>
-                  <span className="text-sm text-muted-foreground">
-                    {showDetail.episode_run_time[0]}m
-                  </span>
-                </>
-              )}
+              {/* Cast grid */}
+              <section>
+                <h2 className="text-lg font-display font-semibold text-foreground mb-4">Cast</h2>
+                <CastGrid cast={cast} />
+              </section>
+
+              {/* Crew grid */}
+              <section>
+                <h2 className="text-lg font-display font-semibold text-foreground mb-4">Crew</h2>
+                <CrewList crew={crew} />
+              </section>
+
+              {/* Reviews */}
+              <section>
+                <h2 className="text-lg font-display font-semibold text-foreground mb-4">Reviews</h2>
+                {reviewsLoading ? (
+                  <div className="space-y-4">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="rounded-xl border border-border/50 bg-card p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-full bg-muted animate-pulse" />
+                          <div className="space-y-1.5">
+                            <div className="h-3 w-32 rounded bg-muted animate-pulse" />
+                            <div className="h-2.5 w-24 rounded bg-muted animate-pulse" />
+                          </div>
+                        </div>
+                        <div className="mt-3 space-y-1.5">
+                          <div className="h-3 w-full rounded bg-muted animate-pulse" />
+                          <div className="h-3 w-4/5 rounded bg-muted animate-pulse" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : reviews.length === 0 ? (
+                  <div className="rounded-xl border border-border/40 bg-card/50 p-8 text-center">
+                    <Tv className="size-10 mx-auto text-muted-foreground/30 mb-3" strokeWidth={1} />
+                    <p className="text-sm text-muted-foreground">No reviews yet. Be the first to share your thoughts!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reviews.map((review) => (
+                      <ReviewCard
+                        key={review.id}
+                        review={review}
+                        onExpand={(r) => window.dispatchEvent(new CustomEvent("open-comment-thread", { detail: r }))}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
             </div>
 
-            {/* Genres */}
-            {showDetail.genres.length > 0 && (
-              <p className="mt-2 text-sm text-muted-foreground">
-                {showDetail.genres.map((genre, i) => (
-                  <span key={genre.id}>
-                    <Link
-                      to={`/shows?genre=${genre.id}`}
-                      className="text-foreground/70 hover:text-foreground hover:underline transition-colors"
-                    >
-                      {genre.name}
-                    </Link>
-                    {i < showDetail.genres.length - 1 && (
-                      <span className="text-muted-foreground/40 mx-1">·</span>
-                    )}
-                  </span>
-                ))}
-              </p>
-            )}
+            {/* Right column ~35% — sticky sidebar */}
+            <aside className="w-80 shrink-0">
+              <div className="sticky top-20 space-y-4">
+                {/* Toggle row + rating */}
+                <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
+                  <div className="flex items-center justify-around">
+                    <ToggleIcon
+                      icon={CheckCircle}
+                      label="Watched"
+                      active={showData?.status === "completed"}
+                      onClick={() => {}}
+                    />
+                    <ToggleIcon
+                      icon={Heart}
+                      label="Liked"
+                      active={showData?.liked ?? false}
+                      onClick={() => toggleLike(show)}
+                    />
+                    <ToggleIcon
+                      icon={Bookmark}
+                      label="Watchlist"
+                      active={showData?.watchlisted ?? false}
+                      onClick={() => toggleWatchlist(show)}
+                    />
+                  </div>
+                  <div className="border-t border-border/40 pt-3">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Your Rating</p>
+                    <StarRating
+                      value={showData?.rating ?? null}
+                      onChange={() => setLogModalOpen(true)}
+                      size="lg"
+                    />
+                  </div>
+                  <button onClick={() => setLogModalOpen(true)} className="flex items-center justify-center gap-2 w-full h-10 rounded-md bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150">
+                    <Plus className="size-4" /> Rate or Review
+                  </button>
+                </div>
 
-            {/* Created by */}
-            {showDetail.created_by && showDetail.created_by.length > 0 && (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Created by{" "}
-                {showDetail.created_by.map((creator, i) => (
-                  <span key={creator.id}>
-                    <Link
-                      to={`/person/${creator.id}`}
-                      className="text-foreground/80 hover:text-foreground hover:underline"
-                    >
-                      {creator.name}
-                    </Link>
-                    {i < showDetail.created_by.length - 1 && (
-                      <span className="text-muted-foreground/40">{", "}</span>
-                    )}
-                  </span>
-                ))}
-              </p>
-            )}
+                {/* Ratings histogram */}
+                <div className="rounded-xl border border-border/50 bg-card p-4">
+                  <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">Ratings</h3>
+                  <div className="flex gap-4">
+                    <div className="flex items-end gap-1.5 h-20 flex-1">
+                      {histogram.map((count, i) => (
+                        <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                          <div className="w-full flex-1 flex items-end">
+                            <div className="w-full rounded-t-sm bg-primary/70 transition-all duration-300" style={{ height: `${(count / maxHist) * 100}%`, minHeight: count > 0 ? "4px" : "0" }} />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">{i + 1}★</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex flex-col items-center justify-center gap-1 shrink-0 w-20">
+                      <span className="font-display text-3xl font-bold text-foreground">{avgRating !== null ? avgRating.toFixed(1) : "—"}</span>
+                      <StarRating value={avgRating} readOnly size="sm" />
+                      <span className="text-[10px] text-muted-foreground">{ratedReviews.length} ratings</span>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Tagline */}
-            {showDetail.tagline && (
-              <p className="mt-3 text-sm italic text-muted-foreground">
-                {showDetail.tagline}
-              </p>
-            )}
+                {/* Vibe Chart — genre donut */}
+                {genreData.length > 0 && (
+                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                    <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">Vibe Chart</h3>
+                    <VibeChart data={genreData} />
+                  </div>
+                )}
 
-            {/* Overview */}
-            {showDetail.overview && (
-              <p className="mt-3 text-sm text-foreground/80 leading-relaxed max-w-2xl">
-                {showDetail.overview}
-              </p>
-            )}
+                {/* Community score gauge */}
+                {communityScore !== null && (
+                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                    <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">Community Score</h3>
+                    <div className="flex items-center gap-4">
+                      <CommunityScoreGauge score={communityScore} votes={showDetail.vote_count} />
+                    </div>
+                  </div>
+                )}
 
-            {/* Season drawer */}
-            <div className="mt-4 max-w-md">
-              <SeasonDrawer show={show} showDetail={showDetail} />
-            </div>
+                {/* Where to watch */}
+                {watchProviders && watchProviders.length > 0 && (
+                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                    <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">Where to Watch</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {watchProviders.slice(0, 6).map((provider: { provider_id: number; provider_name: string; logo_path: string | null }) => (
+                        <div key={provider.provider_id} className="flex items-center gap-2 rounded-lg border border-border/40 bg-secondary/30 px-2.5 py-1.5">
+                          {provider.logo_path && (
+                            <img src={posterUrl(provider.logo_path, "w92")} alt={provider.provider_name} className="size-6 rounded" />
+                          )}
+                          <span className="text-xs text-foreground">{provider.provider_name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </aside>
           </div>
 
-          {/* Right: Action panel */}
-          <div className="shrink-0 w-full md:w-48 lg:w-52">
-            <div className="rounded border border-border/50 bg-card/80 backdrop-blur-sm p-3">
-              <ActionPanel
-                show={show}
-                showDetail={showDetail}
-                onLogClick={() => setLogModalOpen(true)}
-              />
+          {/* Similar shows */}
+          {similar.length > 0 && (
+            <div className="py-4">
+              <ShowCarousel title="Similar Shows" shows={similar} posterSize="md" />
             </div>
-          </div>
+          )}
+          {recommendations.length > 0 && (
+            <div className="py-4 pb-12">
+              <ShowCarousel title="Recommended" shows={recommendations} posterSize="md" />
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* Reviews */}
-      <ReviewFeed showId={showDetail.id} />
-
-      {/* Cast list */}
-      {cast.length > 0 && <CastList cast={cast} />}
-
-      {/* Similar shows */}
-      {similar.length > 0 && (
-        <div className="py-4">
-          <ShowCarousel title="Similar Shows" shows={similar} posterSize="md" />
-        </div>
-      )}
-
-      {/* Recommended shows */}
-      {recommendations.length > 0 && (
-        <div className="py-4 pb-12">
-          <ShowCarousel
-            title="Recommended"
-            shows={recommendations}
-            posterSize="md"
-          />
-        </div>
-      )}
-
-      {/* Log Entry Modal */}
-      <LogEntryModal
-        open={logModalOpen}
-        onOpenChange={setLogModalOpen}
-        show={show}
-      />
+        <LogEntryModal open={logModalOpen} onOpenChange={setLogModalOpen} show={show} />
       </div>
     </>
+  );
+}
+
+function ToggleIcon({ icon: Icon, label, active, onClick }: { icon: React.ComponentType<{ className?: string }>; label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-center gap-1.5 p-2 rounded-lg transition-all duration-150 hover:-translate-y-px",
+        active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+      )}
+    >
+      <Icon className={cn("size-6", active && "fill-primary")} />
+      <span className="text-[10px] font-medium">{label}</span>
+    </button>
+  );
+}
+
+function VibeChart({ data }: { data: { name: string; value: number; color: string }[] }) {
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  const radius = 50;
+  const circumference = 2 * Math.PI * radius;
+  let offset = 0;
+
+  return (
+    <div className="flex items-center gap-4">
+      <svg width="120" height="120" viewBox="0 0 120 120" className="shrink-0">
+        <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--muted)" strokeWidth="14" />
+        {data.map((d, i) => {
+          const dash = (d.value / total) * circumference;
+          const circle = (
+            <circle
+              key={i}
+              cx="60"
+              cy="60"
+              r={radius}
+              fill="none"
+              stroke={d.color}
+              strokeWidth="14"
+              strokeDasharray={`${dash} ${circumference - dash}`}
+              strokeDashoffset={-offset}
+              transform="rotate(-90 60 60)"
+            />
+          );
+          offset += dash;
+          return circle;
+        })}
+      </svg>
+      <div className="flex-1 space-y-1.5">
+        {data.map((d, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <span className="size-2.5 rounded-full shrink-0" style={{ background: d.color }} />
+            <span className="text-xs text-foreground truncate">{d.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CommunityScoreGauge({ score, votes }: { score: number; votes: number }) {
+  const radius = 40;
+  const circumference = 2 * Math.PI * radius;
+  const dash = (score / 100) * circumference;
+  const color = score >= 70 ? "var(--chart-3)" : score >= 40 ? "var(--chart-4)" : "var(--destructive)";
+
+  return (
+    <div className="flex items-center gap-4 w-full">
+      <div className="relative shrink-0">
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r={radius} fill="none" stroke="var(--muted)" strokeWidth="8" />
+          <circle
+            cx="50" cy="50" r={radius}
+            fill="none"
+            stroke={color}
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeDasharray={`${dash} ${circumference - dash}`}
+            transform="rotate(-90 50 50)"
+            className="transition-all duration-500"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="font-display text-xl font-bold text-foreground">{score}%</span>
+        </div>
+      </div>
+      <div className="flex flex-col">
+        <span className="text-sm font-medium text-foreground">{votes.toLocaleString()} votes</span>
+        <span className="text-xs text-muted-foreground">TMDB Community</span>
+      </div>
+    </div>
+  );
+}
+
+function CastRow({ cast }: { cast: CastMember[] }) {
+  const [imgErrors, setImgErrors] = useState<Record<number, boolean>>({});
+  if (!cast || cast.length === 0) return <p className="text-sm text-muted-foreground py-4">No cast data available.</p>;
+  return (
+    <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+      <style>{`div::-webkit-scrollbar{display:none}`}</style>
+      {cast.slice(0, 20).map((member) => {
+        const errored = imgErrors[member.id];
+        return (
+          <Link key={member.id} to={`/person/${member.id}`} className="flex flex-col items-center gap-1.5 shrink-0 w-16">
+            <div className="size-16 rounded-full overflow-hidden bg-muted ring-1 ring-border/30">
+              {errored || !member.profile_path ? (
+                <div className="w-full h-full flex items-center justify-center bg-secondary/30"><Tv className="size-6 text-muted-foreground/30" strokeWidth={1} /></div>
+              ) : (
+                <img src={profileUrl(member.profile_path, "w185")} alt={member.name} loading="lazy" onError={() => setImgErrors((p) => ({ ...p, [member.id]: true }))} className="w-full h-full object-cover" />
+              )}
+            </div>
+            <p className="text-xs font-medium text-foreground truncate text-center w-full">{member.name}</p>
+            <p className="text-[10px] text-muted-foreground truncate text-center w-full">{member.character}</p>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+function CastGrid({ cast }: { cast: CastMember[] }) {
+  const [imgErrors, setImgErrors] = useState<Record<number, boolean>>({});
+  if (!cast || cast.length === 0) return <p className="text-sm text-muted-foreground">No cast data available.</p>;
+  return (
+    <div className="grid grid-cols-4 lg:grid-cols-6 gap-4">
+      {cast.slice(0, 18).map((member) => {
+        const errored = imgErrors[member.id];
+        return (
+          <Link key={member.id} to={`/person/${member.id}`} className="flex flex-col items-center gap-2 group">
+            <div className="size-20 lg:size-24 rounded-full overflow-hidden bg-muted ring-1 ring-border/30 group-hover:ring-primary/50 transition-all pb-poster-glow">
+              {errored || !member.profile_path ? (
+                <div className="w-full h-full flex items-center justify-center bg-secondary/30"><Tv className="size-8 text-muted-foreground/30" strokeWidth={1} /></div>
+              ) : (
+                <img src={profileUrl(member.profile_path, "w185")} alt={member.name} loading="lazy" onError={() => setImgErrors((p) => ({ ...p, [member.id]: true }))} className="w-full h-full object-cover" />
+              )}
+            </div>
+            <div className="text-center">
+              <p className="text-xs font-medium text-foreground truncate w-full">{member.name}</p>
+              <p className="text-[10px] text-muted-foreground truncate w-full">{member.character}</p>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+function CrewList({ crew }: { crew: CrewMember[] }) {
+  if (!crew || crew.length === 0) return <p className="text-sm text-muted-foreground">No crew data available.</p>;
+  const topCrew = crew.filter((c) => ["Creator", "Director", "Producer", "Executive Producer", "Writer"].includes(c.job)).slice(0, 15);
+  if (topCrew.length === 0) return <p className="text-sm text-muted-foreground">No key crew data available.</p>;
+  return (
+    <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+      {topCrew.map((member, i) => (
+        <div key={`${member.id}-${i}`} className="flex items-center justify-between py-1">
+          <Link to={`/person/${member.id}`} className="text-sm text-foreground hover:text-accent transition-colors">{member.name}</Link>
+          <span className="text-xs text-muted-foreground">{member.job}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DetailsBlock({ showDetail }: { showDetail: TVShowDetail }) {
+  return (
+    <div className="space-y-2 py-2">
+      {showDetail.genres.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {showDetail.genres.map((g) => (
+            <span key={g.id} className="px-2 py-0.5 rounded-full bg-secondary text-xs text-foreground">{g.name}</span>
+          ))}
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-y-1.5 text-xs">
+        <span className="text-muted-foreground">Status</span><span className="text-foreground text-right">{showDetail.status}</span>
+        <span className="text-muted-foreground">Seasons</span><span className="text-foreground text-right">{showDetail.number_of_seasons}</span>
+        <span className="text-muted-foreground">Episodes</span><span className="text-foreground text-right">{showDetail.number_of_episodes}</span>
+        <span className="text-muted-foreground">Language</span><span className="text-foreground text-right">{showDetail.original_language.toUpperCase()}</span>
+        {showDetail.networks?.[0] && (<><span className="text-muted-foreground">Network</span><span className="text-foreground text-right">{showDetail.networks[0].name}</span></>)}
+      </div>
+    </div>
   );
 }

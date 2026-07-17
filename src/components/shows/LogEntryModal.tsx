@@ -1,17 +1,12 @@
 import { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { StarRating } from "@/components/shows/StarRating";
 import { useUserData } from "@/context/UserDataContext";
-import { useUI } from "@/context/UIContext";
-import { useAuth } from "@/context/AuthContext";
 import { posterUrl, type TVShow } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
-import { Loader2, X, Calendar, Eye, RotateCcw, Star, BookOpen } from "lucide-react";
+import { StarRating } from "@/components/shows/StarRating";
+import { getShowRatingIcon } from "@/lib/showRatingIcons";
+import { Loader2, Calendar } from "lucide-react";
+import { toast } from "sonner";
+import { VibeTagPicker, type VibeTagValue } from "@/components/shows/VibeTag";
 
 interface LogEntryModalProps {
   open: boolean;
@@ -21,37 +16,36 @@ interface LogEntryModalProps {
 
 export function LogEntryModal({ open, onOpenChange, show }: LogEntryModalProps) {
   const { addLog } = useUserData();
-  const { openAuthModal } = useUI();
-  const { user } = useAuth();
 
-  const [watchedDate, setWatchedDate] = useState(
-    new Date().toISOString().slice(0, 10)
-  );
-  const [seasonsWatched, setSeasonsWatched] = useState(0);
-  const [episodesWatched, setEpisodesWatched] = useState(1);
-  const [review, setReview] = useState("");
-  const [rewatch, setRewatch] = useState(false);
-  const [containsSpoilers, setContainsSpoilers] = useState(false);
+  const [watchedDate, setWatchedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [rating, setRating] = useState<number | null>(null);
+  const [review, setReview] = useState("");
+  const [containsSpoilers, setContainsSpoilers] = useState(false);
+  const [rewatch, setRewatch] = useState(false);
+  const [vibeTag, setVibeTag] = useState<VibeTagValue | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Reset form when modal opens
+  const ratingIcon = getShowRatingIcon(show.id);
+
   useEffect(() => {
     if (open) {
       setWatchedDate(new Date().toISOString().slice(0, 10));
-      setSeasonsWatched(0);
-      setEpisodesWatched(1);
-      setReview("");
-      setRewatch(false);
-      setContainsSpoilers(false);
       setRating(null);
+      setReview("");
+      setContainsSpoilers(false);
+      setRewatch(false);
+      setVibeTag(null);
+      setSubmitting(false);
     }
-  }, [open]);
+  }, [open, show.id]);
+
+  if (!open) return null;
+
+  const year = show.first_air_date ? new Date(show.first_air_date).getFullYear() : "";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!user) return;
-
+    if (rating === null) return;
     setSubmitting(true);
     try {
       await addLog({
@@ -59,224 +53,203 @@ export function LogEntryModal({ open, onOpenChange, show }: LogEntryModalProps) 
         show_name: show.name,
         show_poster_path: show.poster_path,
         show_backdrop_path: show.backdrop_path,
-        show_first_air_date: show.first_air_date || null,
+        show_first_air_date: show.first_air_date,
         watched_date: watchedDate,
-        seasons_watched: seasonsWatched,
-        episodes_watched: episodesWatched,
+        seasons_watched: 0,
+        episodes_watched: 1,
         review: review.trim() || null,
-        rewatch: rewatch,
-        rating: rating,
+        rewatch,
+        rating,
         contains_spoiler: containsSpoilers,
+        vibe_tag: vibeTag,
       });
+      toast.success("Review published!");
       onOpenChange(false);
     } catch (err) {
-      console.error("[LogEntry] Failed to save log:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to publish review");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px] p-0 gap-0 overflow-hidden bg-card border-border rounded-lg">
-        {/* Close */}
-        <button
-          type="button"
-          onClick={() => onOpenChange(false)}
-          aria-label="Close"
-          className="absolute right-3 top-3 z-10 flex items-center justify-center size-7 rounded text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <X className="size-4" />
-        </button>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      {/* Overlay */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={() => onOpenChange(false)}
+      />
 
-        {/* Header with show info */}
-        <DialogHeader className="px-5 pt-5 pb-3 space-y-2 text-left">
-          <DialogTitle className="text-base font-bold text-foreground tracking-tight">
-            Log: {show.name}
-          </DialogTitle>
-          <div className="flex items-center gap-3">
-            <img
-              src={posterUrl(show.poster_path, "w92")}
-              alt={show.name}
-              className="w-10 h-15 rounded object-cover shrink-0"
-              style={{ aspectRatio: "2/3" }}
-            />
+      {/* Modal — bottom sheet on mobile, centered on desktop */}
+      <div
+        className={cn(
+          "relative w-full sm:max-w-md bg-card border border-border/60 rounded-t-2xl sm:rounded-2xl shadow-xl shadow-black/40",
+          "max-h-[90vh] overflow-y-auto"
+        )}
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        {/* Drag handle (mobile only) */}
+        <div className="sm:hidden flex justify-center pt-2 pb-1">
+          <div className="w-10 h-1 rounded-full bg-border" />
+        </div>
+
+        {/* Header */}
+        <div className="px-5 pt-3 pb-2 flex items-center justify-between">
+          <h2 className="font-display text-base font-bold text-foreground">Write a Review</h2>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
+          {/* Selected show */}
+          <div className="flex items-center gap-3 py-2">
+            <div className="w-12 h-18 rounded-md overflow-hidden bg-muted shrink-0">
+              {show.poster_path ? (
+                <img src={posterUrl(show.poster_path, "w92")} alt={show.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-secondary/30" />
+              )}
+            </div>
             <div className="min-w-0">
-              <p className="text-xs text-muted-foreground truncate">
-                {show.first_air_date
-                  ? show.first_air_date.slice(0, 4)
-                  : "TBA"}{" "}
-                · {show.vote_average > 0 ? `${show.vote_average.toFixed(1)} TMDB` : "Unrated"}
-              </p>
-              <p className="text-[11px] text-muted-foreground/70 line-clamp-1 mt-0.5">
-                {show.overview}
-              </p>
+              <p className="text-sm font-semibold text-foreground truncate">{show.name}</p>
+              {year && <p className="text-xs text-muted-foreground">{year}</p>}
             </div>
           </div>
-        </DialogHeader>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="px-5 pb-5 pt-2 space-y-4">
           {/* Date watched */}
           <div className="space-y-1.5">
-            <label className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-              <Calendar className="size-3" />
+            <label htmlFor="log-date" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Date Watched
             </label>
-            <input
-              type="date"
-              value={watchedDate}
-              onChange={(e) => setWatchedDate(e.target.value)}
-              required
-              className="h-9 w-full rounded border border-border bg-background/50 px-3 text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-colors"
-            />
-          </div>
-
-          {/* Episodes / seasons watched */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                <Eye className="size-3" />
-                Seasons
-              </label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <input
-                type="number"
-                min={0}
-                max={100}
-                value={seasonsWatched}
-                onChange={(e) =>
-                  setSeasonsWatched(Math.max(0, parseInt(e.target.value) || 0))
-                }
-                className="h-9 w-full rounded border border-border bg-background/50 px-3 text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-colors"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                <Eye className="size-3" />
-                Episodes
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={9999}
-                value={episodesWatched}
-                onChange={(e) =>
-                  setEpisodesWatched(Math.max(1, parseInt(e.target.value) || 1))
-                }
-                className="h-9 w-full rounded border border-border bg-background/50 px-3 text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-colors"
+                id="log-date"
+                type="date"
+                value={watchedDate}
+                onChange={(e) => setWatchedDate(e.target.value)}
+                className={cn(
+                  "h-11 w-full rounded-md border border-input bg-background/40",
+                  "pl-10 pr-3 text-sm text-foreground",
+                  "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
+                  "transition-colors"
+                )}
               />
             </div>
           </div>
 
-          {/* Rating */}
+          {/* Quick-tag pills */}
           <div className="space-y-1.5">
-            <label className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-              <Star className="size-3" />
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Quick Tag <span className="normal-case text-muted-foreground/60">(optional)</span>
+            </label>
+            <VibeTagPicker value={vibeTag} onChange={setVibeTag} />
+          </div>
+
+          {/* Star rating — large, tappable */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Rating
             </label>
-            <div className="flex items-center gap-3 h-9">
-              <StarRating value={rating} onChange={setRating} size="lg" />
-              <span className="text-sm text-muted-foreground">
-                {rating !== null ? `${rating.toFixed(1)} stars` : "Not rated"}
-              </span>
+            <div className="flex items-center justify-center py-3 rounded-md border border-border/40 bg-background/20">
+              <StarRating
+                value={rating}
+                onChange={setRating}
+                size="lg"
+                icon={ratingIcon}
+              />
             </div>
+          </div>
+
+          {/* Review text */}
+          <div className="space-y-1.5">
+            <label htmlFor="log-review" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Review
+            </label>
+            <textarea
+              id="log-review"
+              value={review}
+              onChange={(e) => setReview(e.target.value)}
+              rows={4}
+              placeholder="Share your thoughts on this show..."
+              className={cn(
+                "w-full rounded-md border border-input bg-background/40",
+                "px-3 py-2.5 text-sm text-foreground",
+                "placeholder:text-muted-foreground resize-none",
+                "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
+                "transition-colors"
+              )}
+            />
           </div>
 
           {/* Rewatch toggle */}
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-              <RotateCcw className="size-3" />
-              Rewatch
-            </label>
+          <label className="flex items-center gap-2.5 cursor-pointer">
             <button
               type="button"
               role="switch"
               aria-checked={rewatch}
               onClick={() => setRewatch(!rewatch)}
               className={cn(
-                "relative w-10 h-5 rounded-full transition-colors duration-200",
-                rewatch ? "bg-primary" : "bg-border"
+                "relative h-5 w-9 rounded-full transition-colors",
+                rewatch ? "bg-primary" : "bg-secondary"
               )}
             >
-              <span
-                className={cn(
-                  "absolute top-0.5 size-4 rounded-full bg-foreground transition-transform duration-200",
-                  rewatch ? "translate-x-5" : "translate-x-0.5"
-                )}
-              />
+              <span className={cn(
+                "absolute top-0.5 left-0.5 size-4 rounded-full bg-white transition-transform",
+                rewatch && "translate-x-4"
+              )} />
             </button>
-          </div>
+            <span className="text-sm text-foreground">Rewatch</span>
+          </label>
 
-          {/* Review */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-              Review
-            </label>
-            <textarea
-              value={review}
-              onChange={(e) => setReview(e.target.value)}
-              rows={4}
-              placeholder="Share your thoughts..."
-              className="w-full rounded border border-border bg-background/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-colors resize-y min-h-[80px]"
-            />
-          </div>
-
-          {/* Contains spoilers toggle */}
-          {review.trim().length > 0 && (
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={containsSpoilers}
-                onChange={(e) => setContainsSpoilers(e.target.checked)}
-                className="size-4 rounded border-border accent-primary"
-              />
-              <span className="text-xs text-muted-foreground">Contains spoilers</span>
+          {/* Spoiler checkbox — only if review has text */}
+          {review.trim() && (
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={containsSpoilers}
+                onClick={() => setContainsSpoilers(!containsSpoilers)}
+                className={cn(
+                  "size-4.5 rounded border transition-colors flex items-center justify-center",
+                  containsSpoilers ? "bg-primary border-primary" : "border-input"
+                )}
+              >
+                {containsSpoilers && (
+                  <svg viewBox="0 0 12 12" className="size-3 text-primary-foreground"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                )}
+              </button>
+              <span className="text-sm text-foreground">Contains spoilers</span>
             </label>
           )}
 
-          {/* Submit */}
-          <div className="flex items-center gap-2 pt-1">
-            <button
-              type="submit"
-              disabled={submitting}
-              className={cn(
-                "flex items-center justify-center gap-2 flex-1 h-10 rounded",
-                "bg-primary text-primary-foreground font-bold text-xs uppercase tracking-widest",
-                "hover:bg-primary/90 active:scale-[0.98]",
-                "transition-all duration-150",
-                "disabled:opacity-60 disabled:cursor-not-allowed"
-              )}
-            >
-              {submitting ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <>
-                  <BookOpen className="size-3.5" />
-                  Save Log Entry
-                </>
-              )}
-            </button>
-          </div>
+          {/* Publish button — disabled until rating is set */}
+          <button
+            type="submit"
+            disabled={rating === null || submitting}
+            className={cn(
+              "flex items-center justify-center w-full h-11 rounded-md",
+              "bg-primary text-primary-foreground font-semibold text-sm",
+              "hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25",
+              "active:translate-y-0 active:scale-[0.98]",
+              "transition-all duration-150",
+              "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+            )}
+          >
+            {submitting ? <Loader2 className="size-4 animate-spin" /> : "Publish"}
+          </button>
 
-          {/* Not signed in hint */}
-          {!user && (
-            <p className="text-xs text-center text-muted-foreground pt-1">
-              You need to{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  onOpenChange(false);
-                  openAuthModal("signin");
-                }}
-                className="text-accent hover:underline"
-              >
-                sign in
-              </button>{" "}
-              to save log entries.
+          {rating === null && (
+            <p className="text-center text-xs text-muted-foreground">
+              Set a rating to publish your review
             </p>
           )}
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }

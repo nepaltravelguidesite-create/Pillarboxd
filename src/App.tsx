@@ -11,6 +11,10 @@ import { SocialProvider } from "@/context/SocialContext";
 import { NotificationsProvider } from "@/context/NotificationsContext";
 import { RootLayout } from "@/components/layout/RootLayout";
 import { OnboardingFlow } from "@/components/OnboardingFlow";
+import { RequireAuth } from "@/components/auth/RequireAuth";
+import { WelcomeScreen } from "@/components/auth/WelcomeScreen";
+import { LoginPage } from "@/pages/LoginPage";
+import { SignupPage } from "@/pages/SignupPage";
 import { HomePage } from "@/pages/HomePage";
 import AboutPage from "@/pages/AboutPage";
 import ContactPage from "@/pages/ContactPage";
@@ -29,27 +33,68 @@ import StatsPage from "@/pages/StatsPage";
 import SettingsPage from "@/pages/SettingsPage";
 
 // ---------------------------------------------------------------------------
+// Providers wrapper — shared by all routes
+// ---------------------------------------------------------------------------
+
+function AppProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <UIProvider>
+        <AppProvider>
+          <UserDataProvider>
+            <SocialProvider>
+              <NotificationsProvider>{children}</NotificationsProvider>
+            </SocialProvider>
+          </UserDataProvider>
+        </AppProvider>
+      </UIProvider>
+    </AuthProvider>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Router definition
 // ---------------------------------------------------------------------------
 
 const router = createBrowserRouter([
+  // Welcome — first-run only, shows before /login
+  {
+    path: "/welcome",
+    element: (
+      <AppProviders>
+        <WelcomeScreen onDone={() => {}} />
+      </AppProviders>
+    ),
+  },
+
+  // Auth routes — chrome-less, full-page, no NavBar/Footer
+  {
+    path: "/login",
+    element: (
+      <AppProviders>
+        <LoginPage />
+      </AppProviders>
+    ),
+  },
+  {
+    path: "/signup",
+    element: (
+      <AppProviders>
+        <SignupPage />
+      </AppProviders>
+    ),
+  },
+
+  // Main app — gated by RequireAuth
   {
     path: "/",
     element: (
-      <AuthProvider>
-        <UIProvider>
-          <AppProvider>
-            <UserDataProvider>
-              <SocialProvider>
-                <NotificationsProvider>
-                  <OnboardingFlow />
-                  <RootLayout />
-                </NotificationsProvider>
-              </SocialProvider>
-            </UserDataProvider>
-          </AppProvider>
-        </UIProvider>
-      </AuthProvider>
+      <AppProviders>
+        <RequireAuth>
+          <OnboardingFlow />
+          <RootLayout />
+        </RequireAuth>
+      </AppProviders>
     ),
     children: [
       { index: true, element: <HomePage /> },
@@ -67,9 +112,9 @@ const router = createBrowserRouter([
       // Person (cast/crew)
       { path: "person/:personId", element: <PersonPage /> },
 
-      // User flow (auth handled by modal, but keep routes for deep links)
-      { path: "sign-in", element: <Navigate to="/" replace /> },
-      { path: "create-account", element: <Navigate to="/" replace /> },
+      // User flow
+      { path: "sign-in", element: <Navigate to="/login" replace /> },
+      { path: "create-account", element: <Navigate to="/signup" replace /> },
       { path: "profile", element: <UserProfilePage /> },
       { path: "profile/:username", element: <UserProfilePage /> },
 

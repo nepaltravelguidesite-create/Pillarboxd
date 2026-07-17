@@ -44,7 +44,7 @@ function NotificationIcon({ type }: { type: Notification["type"] }) {
     case "follow":
       return <UserPlus className={cn(base, "text-emerald-500")} aria-hidden />;
     case "mention":
-      return <AtSign className={cn(base, "text-amber-500")} aria-hidden />;
+      return <AtSign className={cn(base, "text-primary")} aria-hidden />;
     default:
       return <Info className={cn(base, "text-muted-foreground")} aria-hidden />;
   }

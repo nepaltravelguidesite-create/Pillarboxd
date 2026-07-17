@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Heart, MessageCircle } from "lucide-react";
 import { StarRating } from "@/components/shows/StarRating";
 import { getShowRatingIcon } from "@/lib/showRatingIcons";
+import { VibeTagBadge } from "@/components/shows/VibeTag";
 import { useSocial } from "@/context/SocialContext";
 import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
@@ -12,11 +13,14 @@ export interface ReviewWithAuthor {
   user_id: string;
   show_id: number;
   show_name: string;
+  show_poster_path?: string | null;
+  show_first_air_date?: string | null;
   watched_date: string;
   rating: number | null;
   review: string;
   rewatch: boolean;
   contains_spoiler: boolean;
+  vibe_tag?: string | null;
   created_at: string;
   author_username: string;
   author_display_name: string;
@@ -97,15 +101,21 @@ export function ReviewCard({ review, onExpand }: ReviewCardProps) {
         </span>
       </div>
 
-      {/* Rating */}
+      {/* Rating + vibe tag */}
       {review.rating != null && (
-        <div className="mt-3">
+        <div className="mt-3 flex items-center gap-2">
           <StarRating
             value={review.rating}
             readOnly
             size="sm"
             icon={getShowRatingIcon(review.show_id)}
           />
+          {review.vibe_tag && <VibeTagBadge value={review.vibe_tag} />}
+        </div>
+      )}
+      {review.rating == null && review.vibe_tag && (
+        <div className="mt-3">
+          <VibeTagBadge value={review.vibe_tag} />
         </div>
       )}
 
