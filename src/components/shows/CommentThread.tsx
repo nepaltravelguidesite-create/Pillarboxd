@@ -221,7 +221,7 @@ export function CommentThread({ logId }: CommentThreadProps) {
         </div>
       ) : comments.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center mt-6">
-          No comments yet — start the conversation
+          No comments yet. Start the conversation
         </p>
       ) : (
         <div className="space-y-3 mt-4">

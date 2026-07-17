@@ -450,7 +450,7 @@ function StatsHeader() {
         Stats
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Your watching habits at a glance — totals, genre breakdowns, ratings,
+        Your watching habits at a glance: totals, genre breakdowns, ratings,
         and your year in TV.
       </p>
     </header>
@@ -577,7 +577,7 @@ function YearInReview({
           <div className="mt-6 space-y-2.5">
             <YearHighlight
               label="Most-watched show"
-              value={favoriteShow ?? "—"}
+              value={favoriteShow ?? "-"}
             />
             <YearHighlight
               label="Highest rated"
@@ -586,12 +586,12 @@ function YearInReview({
                   ? `${highestRatedShow}${
                       highestRatedScore ? ` · ${highestRatedScore}★` : ""
                     }`
-                  : "—"
+                  : "-"
               }
             />
             <YearHighlight
               label="Your top genre"
-              value={topGenre ?? "—"}
+              value={topGenre ?? "-"}
             />
           </div>
 

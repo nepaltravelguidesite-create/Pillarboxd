@@ -352,7 +352,7 @@ export function UserProfilePage() {
   return (
     <>
       <SEOMeta
-        title={`${user?.displayName || "Profile"} — Aftershow`}
+        title={`${user?.displayName || "Profile"} - Aftershow`}
         description={`Tracking, ratings, and diary for ${
           user?.displayName || "this user"
         } on Aftershow`}

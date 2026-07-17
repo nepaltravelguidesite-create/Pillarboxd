@@ -63,7 +63,7 @@ export function HomePage() {
   return (
     <div className="flex flex-col w-full">
       <SEOMeta
-        title="Aftershow — Track every show you watch"
+        title="Aftershow. Track every show you watch"
         description="Log episodes, rate shows, discover what's next. The TV tracker for people who care about what they watch."
         ogImage="/og-default.webp"
       />
@@ -84,14 +84,14 @@ export function HomePage() {
               </h2>
               <p className="text-sm sm:text-base text-muted-foreground max-w-xl leading-relaxed">
                 Not just "did you see it." Episode-by-episode tracking, season progress,
-                ratings, reviews, and a calendar of what's airing next — for the shows you follow.
+                ratings, reviews, and a calendar of what's airing next, for the shows you follow.
               </p>
               <div className="flex items-center gap-3 mt-2">
                 <button
                   onClick={() => openAuthModal("signup")}
                   className="flex items-center gap-2 h-11 px-6 rounded bg-primary text-primary-foreground font-bold text-sm uppercase tracking-widest hover:bg-primary/90 active:scale-95 transition-all duration-150"
                 >
-                  Start tracking — it's free
+                  Start tracking, it's free
                 </button>
                 <Link
                   to="/shows"

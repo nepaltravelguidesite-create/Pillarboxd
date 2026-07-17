@@ -81,7 +81,7 @@ async function handleShowPage(showId: string, url: string): Promise<Response> {
     );
     if (!res.ok) return proxyToSpa(url);
     const data = await res.json();
-    const title = `${data.name} — Aftershow`;
+    const title = `${data.name} - Aftershow`;
     const desc = data.overview?.slice(0, 200) || "Track, rate, and review TV shows on Aftershow.";
     const img = data.backdrop_path
       ? `https://image.tmdb.org/t/p/w1280${data.backdrop_path}`
@@ -116,7 +116,7 @@ async function handleProfilePage(username: string, url: string): Promise<Respons
     const rows = await res.json();
     if (!rows || rows.length === 0) return proxyToSpa(url);
     const profile = rows[0];
-    const title = `${profile.display_name || username} — Aftershow`;
+    const title = `${profile.display_name || username} - Aftershow`;
     const desc = profile.bio?.slice(0, 200) || `See ${profile.display_name || username}'s TV show ratings, reviews, and lists on Aftershow.`;
     const img = profile.avatar_url || `${SPA_URL}/og-default.webp`;
     return new Response(buildMetaHtml(title, desc, img, url), {
@@ -147,7 +147,7 @@ async function handleListPage(listId: string, url: string): Promise<Response> {
     const rows = await res.json();
     if (!rows || rows.length === 0) return proxyToSpa(url);
     const list = rows[0];
-    const title = `${list.title} — Aftershow`;
+    const title = `${list.title} - Aftershow`;
     const desc = list.description?.slice(0, 200) || `A curated list of ${list.item_count} TV shows on Aftershow.`;
     const img = `${SPA_URL}/og-default.webp`;
     return new Response(buildMetaHtml(title, desc, img, url), {

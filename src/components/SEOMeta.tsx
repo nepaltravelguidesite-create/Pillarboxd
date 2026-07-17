@@ -26,8 +26,8 @@ export interface SEOMetaProps {
   ogType?: string;
 }
 
-const DEFAULT_TITLE = "Aftershow — Track, rate & log your TV shows";
-const BRAND_SUFFIX = "— Aftershow";
+const DEFAULT_TITLE = "Aftershow. Track, rate & log your TV shows";
+const BRAND_SUFFIX = "- Aftershow";
 
 function upsertMeta(selector: string, attributes: Record<string, string>) {
   let el = document.head.querySelector<HTMLMetaElement>(selector);

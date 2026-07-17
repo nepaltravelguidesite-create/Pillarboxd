@@ -221,7 +221,7 @@ export function OnboardingFlow() {
               Welcome to Aftershow!
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground leading-relaxed max-w-sm">
-              The show's over — let's talk about it. Aftershow is your
+              The show's over. Let's talk about it. Aftershow is your
               personal TV tracker. Rate shows you've watched, keep a watchlist
               of what's next, log episodes as you go, and follow friends to
               see what they're loving. Let's set you up in a few quick steps.

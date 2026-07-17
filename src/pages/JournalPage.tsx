@@ -164,7 +164,7 @@ function JournalHeader() {
         Journal
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Your recent activity — diary entries, episodes watched, ratings, and
+        Your recent activity: diary entries, episodes watched, ratings, and
         likes.
       </p>
     </header>

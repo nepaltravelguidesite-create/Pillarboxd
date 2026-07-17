@@ -273,7 +273,7 @@ export function SubscriptionInsight() {
         <CardTitle>Subscription Value Insight</CardTitle>
         <CardDescription>
           A lightweight look at which streaming services you've actually used
-          recently — not financial tracking, just a usage snapshot.
+          recently, not financial tracking, just a usage snapshot.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">

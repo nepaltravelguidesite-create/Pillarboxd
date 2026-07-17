@@ -5,7 +5,7 @@ import { AftershowLogo } from "@/components/brand/AftershowLogo";
 const FOOTER_LINKS = [
   { label: "About", to: "/about" },
   { label: "Contact", to: "/contact" },
-  { label: "Films", to: "/shows" },
+  { label: "Shows", to: "/shows" },
   { label: "Members", to: "/members" },
   { label: "Journal", to: "/journal" },
   { label: "Lists", to: "/lists" },
@@ -53,7 +53,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-6 pt-5 border-t border-border/50 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
           <p className="text-xs text-muted-foreground/60 text-center">
-            &copy; {new Date().getFullYear()} Aftershow. TV show data provided by{" "}
+            TV show data provided by{" "}
             <a
               href="https://www.themoviedb.org"
               target="_blank"
@@ -65,7 +65,7 @@ export function Footer() {
             .
           </p>
           <p className="text-xs text-muted-foreground/40">
-            Not affiliated with Letterboxd Ltd.
+            &copy; {new Date().getFullYear()} Aftershow.
           </p>
         </div>
       </div>

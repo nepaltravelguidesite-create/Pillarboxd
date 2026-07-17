@@ -230,7 +230,7 @@ export default function ListDetailPage() {
             ) : (
               isOwner && (
                 <p className="text-sm text-muted-foreground/60 italic">
-                  No description — add one to help others discover this list.
+                  No description. Add one to help others discover this list.
                 </p>
               )
             )}

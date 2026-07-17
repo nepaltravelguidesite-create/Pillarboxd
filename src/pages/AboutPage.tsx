@@ -41,7 +41,7 @@ export default function AboutPage() {
   return (
     <div className="bg-background text-foreground">
       <SEOMeta
-        title="About — Aftershow"
+        title="About - Aftershow"
         description="Aftershow is a TV tracker for people who care about what they watch. Log episodes, rate shows, discover what's next."
       />
 
@@ -63,7 +63,7 @@ export default function AboutPage() {
             What makes it different
           </h2>
           <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed">
-            Film trackers treat a movie as a single event — you saw it, or you
+            Film trackers treat a movie as a single event. You saw it, or you
             didn't. Television doesn't work that way. A season is a commitment.
             An episode is a unit of attention. Aftershow is built around
             episode-level tracking, not just a checkbox that says "done." Watch
