@@ -309,6 +309,37 @@ export function ShowProfilePage() {
               </div>
             </div>
 
+            <div className="mt-3 rounded-xl border border-border/50 bg-card p-4 space-y-3">
+              <div className="flex items-center justify-around">
+                <ToggleIcon
+                  icon={CheckCircle}
+                  label="Watched"
+                  active={showData?.status === "completed"}
+                  onClick={() => setShowStatus(show, showData?.status === "completed" ? null : "completed")}
+                />
+                <ToggleIcon
+                  icon={Heart}
+                  label="Liked"
+                  active={showData?.liked ?? false}
+                  onClick={() => toggleLike(show)}
+                />
+                <ToggleIcon
+                  icon={Bookmark}
+                  label="Watchlist"
+                  active={showData?.watchlisted ?? false}
+                  onClick={() => toggleWatchlist(show)}
+                />
+              </div>
+              <div className="border-t border-border/40 pt-3">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Your Rating</p>
+                <StarRating
+                  value={showData?.rating ?? null}
+                  onChange={(newRating) => setRating(show, newRating)}
+                  size="lg"
+                />
+              </div>
+            </div>
+
             <div className="mt-3 space-y-2">
               <button onClick={() => setLogModalOpen(true)} className="flex items-center justify-center gap-2 w-full h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150">
                 <Plus className="size-4" /> Rate or Review

@@ -28,7 +28,7 @@ export function MobileTopBar({ onMenuClick }: MobileTopBarProps) {
         {/* Right: search + notifications */}
         <div className="flex items-center gap-1">
           <Link
-            to="/shows"
+            to="/search"
             className="p-2 rounded-md text-foreground hover:bg-secondary/50 transition-colors"
             aria-label="Search"
           >

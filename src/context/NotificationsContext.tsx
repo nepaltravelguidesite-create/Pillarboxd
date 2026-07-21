@@ -94,7 +94,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase
       .from("notifications")
       .select(
-        "id, user_id, actor_id, type, entity_id, entity_type, message, read, created_at, actor:profiles!actor_id(username, display_name, avatar_url)"
+        "id, user_id, actor_id, type, entity_id, entity_type, message, read, created_at"
       )
       .eq("user_id", uid)
       .order("created_at", { ascending: false })
@@ -107,20 +107,47 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const mapped: Notification[] = (data ?? []).map((row: any) => ({
-      id: row.id,
-      user_id: row.user_id,
-      actor_id: row.actor_id,
-      type: row.type as NotificationType,
-      entity_id: row.entity_id,
-      entity_type: row.entity_type,
-      message: row.message,
-      read: row.read,
-      created_at: row.created_at,
-      actor_username: row.actor?.username ?? null,
-      actor_display_name: row.actor?.display_name ?? null,
-      actor_avatar_url: row.actor?.avatar_url ?? null,
-    }));
+    const rows = (data ?? []) as any[];
+
+    // Fetch actor profiles separately — the notifications.actor_id FK
+    // references auth.users (not profiles), so PostgREST can't resolve an
+    // embedded `profiles!actor_id` join. We resolve them in a second query.
+    const actorIds = Array.from(
+      new Set(rows.map((r) => r.actor_id).filter((id): id is string => !!id))
+    );
+
+    const actorMap: Record<string, { username: string | null; display_name: string | null; avatar_url: string | null }> = {};
+    if (actorIds.length > 0) {
+      const { data: actors } = await supabase
+        .from("profiles")
+        .select("id, username, display_name, avatar_url")
+        .in("id", actorIds);
+      for (const a of (actors ?? []) as any[]) {
+        actorMap[a.id] = {
+          username: a.username ?? null,
+          display_name: a.display_name ?? null,
+          avatar_url: a.avatar_url ?? null,
+        };
+      }
+    }
+
+    const mapped: Notification[] = rows.map((row) => {
+      const actor = row.actor_id ? actorMap[row.actor_id] : undefined;
+      return {
+        id: row.id,
+        user_id: row.user_id,
+        actor_id: row.actor_id,
+        type: row.type as NotificationType,
+        entity_id: row.entity_id,
+        entity_type: row.entity_type,
+        message: row.message,
+        read: row.read,
+        created_at: row.created_at,
+        actor_username: actor?.username ?? null,
+        actor_display_name: actor?.display_name ?? null,
+        actor_avatar_url: actor?.avatar_url ?? null,
+      };
+    });
 
     setNotifications(mapped);
     setLoading(false);
@@ -161,12 +188,53 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         (payload) => {
           const uid = userIdRef.current;
           if (!uid) return;
-          const row = payload.new as Notification;
+          const row = payload.new as any;
           if (row.user_id !== uid) return;
+
+          // Build the notification with actor info resolved asynchronously.
+          const baseNotif: Notification = {
+            id: row.id,
+            user_id: row.user_id,
+            actor_id: row.actor_id,
+            type: row.type as NotificationType,
+            entity_id: row.entity_id,
+            entity_type: row.entity_type,
+            message: row.message,
+            read: row.read,
+            created_at: row.created_at,
+            actor_username: null,
+            actor_display_name: null,
+            actor_avatar_url: null,
+          };
+
           setNotifications((prev) => {
             if (prev.some((n) => n.id === row.id)) return prev;
-            return [row, ...prev];
+            return [baseNotif, ...prev];
           });
+
+          // Resolve actor profile info after inserting the row.
+          if (row.actor_id) {
+            supabase
+              .from("profiles")
+              .select("id, username, display_name, avatar_url")
+              .eq("id", row.actor_id)
+              .maybeSingle()
+              .then(({ data: actor }) => {
+                if (!actor) return;
+                setNotifications((prev) =>
+                  prev.map((n) =>
+                    n.id === row.id
+                      ? {
+                          ...n,
+                          actor_username: (actor as any).username ?? null,
+                          actor_display_name: (actor as any).display_name ?? null,
+                          actor_avatar_url: (actor as any).avatar_url ?? null,
+                        }
+                      : n
+                  )
+                );
+              });
+          }
         }
       )
       .subscribe();

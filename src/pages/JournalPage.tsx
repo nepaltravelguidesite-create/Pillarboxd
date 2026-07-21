@@ -61,6 +61,21 @@ export default function JournalPage() {
   }, [userLogs, userEpisodes]);
 
   // -------------------------------------------------------------------------
+  // Group activities by month (declared unconditionally to satisfy the
+  // Rules of Hooks — hooks must not follow early returns).
+  // -------------------------------------------------------------------------
+  const monthGroups = useMemo(() => {
+    const groups: Record<string, ActivityItem[]> = {};
+    activities.forEach((item) => {
+      const d = new Date(item.timestamp);
+      const monthKey = d.toLocaleDateString(undefined, { year: "numeric", month: "long" });
+      if (!groups[monthKey]) groups[monthKey] = [];
+      groups[monthKey].push(item);
+    });
+    return Object.entries(groups);
+  }, [activities]);
+
+  // -------------------------------------------------------------------------
   // Loading state
   // -------------------------------------------------------------------------
   if (authState === "loading") {
@@ -138,17 +153,6 @@ export default function JournalPage() {
   // -------------------------------------------------------------------------
   // Feed — grouped by month
   // -------------------------------------------------------------------------
-  const monthGroups = useMemo(() => {
-    const groups: Record<string, ActivityItem[]> = {};
-    activities.forEach((item) => {
-      const d = new Date(item.timestamp);
-      const monthKey = d.toLocaleDateString(undefined, { year: "numeric", month: "long" });
-      if (!groups[monthKey]) groups[monthKey] = [];
-      groups[monthKey].push(item);
-    });
-    return Object.entries(groups);
-  }, [activities]);
-
   return (
     <div className="min-h-screen bg-background text-foreground pb-page-enter">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
