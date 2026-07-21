@@ -24,9 +24,16 @@ export interface UserProfile {
   twitter_url: string | null;
   instagram_url: string | null;
   website_url: string | null;
+  favorite_shows: FavoriteShow[] | null;
   follower_count: number;
   following_count: number;
   created_at: string;
+}
+
+export interface FavoriteShow {
+  tmdb_id: number;
+  name: string;
+  poster_path: string | null;
 }
 
 export interface UserEpisode {

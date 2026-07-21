@@ -25,7 +25,7 @@ export function AftershowLogo({
       <svg
         width={size}
         height={size}
-        viewBox="0 0 32 32"
+        viewBox="4 3 27 25"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-label="Aftershow"
@@ -41,7 +41,7 @@ export function AftershowLogo({
       {showWordmark && (
         <span
           className="font-display font-bold tracking-tight text-foreground leading-none"
-          style={{ fontSize: (size * 13) / 24 }}
+          style={{ fontSize: (size * 15) / 24, marginTop: 1 }}
         >
           Aftershow
         </span>

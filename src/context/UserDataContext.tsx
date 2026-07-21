@@ -148,7 +148,9 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
   );
 
   // -------------------------------------------------------------------------
-  // setRating — upsert rating (null clears it)
+  // setRating — atomic upsert (null clears rating)
+  // Spreads any existing row so other fields (liked/watchlisted/status) are
+  // preserved on conflict; only rating is changed.
   // -------------------------------------------------------------------------
 
   const setRating = useCallback(
@@ -156,43 +158,33 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
       if (!user) return;
 
       const existing = userShows.find((s) => s.show_id === show.id);
-
-      if (existing) {
-        const { error } = await supabase
-          .from("user_shows")
-          .update({ rating })
-          .eq("id", existing.id);
-
-        if (error) {
-          console.error("[UserData] setRating error:", error);
-          toast.error("Failed to save rating");
-          return;
-        }
-
-        setUserShows((prev) =>
-          prev.map((s) => (s.id === existing.id ? { ...s, rating } : s))
-        );
-      } else {
-        const { data, error } = await supabase
-          .from("user_shows")
-          .insert({
+      const { data, error } = await supabase
+        .from("user_shows")
+        .upsert(
+          {
+            ...(existing ?? { rating: null, liked: false, watchlisted: false, status: null }),
             ...denormalizeShow(show),
             user_id: user.id,
             rating,
-            liked: false,
-            watchlisted: false,
-          })
-          .select()
-          .single();
+          },
+          { onConflict: "user_id,show_id" }
+        )
+        .select()
+        .single();
 
-        if (error) {
-          console.error("[UserData] setRating insert error:", error);
-          toast.error("Failed to save rating");
-          return;
-        }
-
-        setUserShows((prev) => [...prev, data as UserShow]);
+      if (error) {
+        console.error("[UserData] setRating upsert error:", error);
+        toast.error("Failed to save rating");
+        return;
       }
+
+      setUserShows((prev) => {
+        const idx = prev.findIndex((s) => s.show_id === show.id);
+        if (idx === -1) return [...prev, data as UserShow];
+        const next = [...prev];
+        next[idx] = data as UserShow;
+        return next;
+      });
     },
     [user, userShows]
   );
@@ -207,43 +199,33 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
 
       const existing = userShows.find((s) => s.show_id === show.id);
       const newLiked = existing ? !existing.liked : true;
-
-      if (existing) {
-        const { error } = await supabase
-          .from("user_shows")
-          .update({ liked: newLiked })
-          .eq("id", existing.id);
-
-        if (error) {
-          console.error("[UserData] toggleLike error:", error);
-          toast.error("Failed to update like");
-          return;
-        }
-
-        setUserShows((prev) =>
-          prev.map((s) => (s.id === existing.id ? { ...s, liked: newLiked } : s))
-        );
-      } else {
-        const { data, error } = await supabase
-          .from("user_shows")
-          .insert({
+      const { data, error } = await supabase
+        .from("user_shows")
+        .upsert(
+          {
+            ...(existing ?? { rating: null, liked: false, watchlisted: false, status: null }),
             ...denormalizeShow(show),
             user_id: user.id,
-            rating: null,
-            liked: true,
-            watchlisted: false,
-          })
-          .select()
-          .single();
+            liked: newLiked,
+          },
+          { onConflict: "user_id,show_id" }
+        )
+        .select()
+        .single();
 
-        if (error) {
-          console.error("[UserData] toggleLike insert error:", error);
-          toast.error("Failed to update like");
-          return;
-        }
-
-        setUserShows((prev) => [...prev, data as UserShow]);
+      if (error) {
+        console.error("[UserData] toggleLike upsert error:", error);
+        toast.error("Failed to update like");
+        return;
       }
+
+      setUserShows((prev) => {
+        const idx = prev.findIndex((s) => s.show_id === show.id);
+        if (idx === -1) return [...prev, data as UserShow];
+        const next = [...prev];
+        next[idx] = data as UserShow;
+        return next;
+      });
     },
     [user, userShows]
   );
@@ -258,45 +240,33 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
 
       const existing = userShows.find((s) => s.show_id === show.id);
       const newWatchlisted = existing ? !existing.watchlisted : true;
-
-      if (existing) {
-        const { error } = await supabase
-          .from("user_shows")
-          .update({ watchlisted: newWatchlisted })
-          .eq("id", existing.id);
-
-        if (error) {
-          console.error("[UserData] toggleWatchlist error:", error);
-          toast.error("Failed to update watchlist");
-          return;
-        }
-
-        setUserShows((prev) =>
-          prev.map((s) =>
-            s.id === existing.id ? { ...s, watchlisted: newWatchlisted } : s
-          )
-        );
-      } else {
-        const { data, error } = await supabase
-          .from("user_shows")
-          .insert({
+      const { data, error } = await supabase
+        .from("user_shows")
+        .upsert(
+          {
+            ...(existing ?? { rating: null, liked: false, watchlisted: false, status: null }),
             ...denormalizeShow(show),
             user_id: user.id,
-            rating: null,
-            liked: false,
-            watchlisted: true,
-          })
-          .select()
-          .single();
+            watchlisted: newWatchlisted,
+          },
+          { onConflict: "user_id,show_id" }
+        )
+        .select()
+        .single();
 
-        if (error) {
-          console.error("[UserData] toggleWatchlist insert error:", error);
-          toast.error("Failed to update watchlist");
-          return;
-        }
-
-        setUserShows((prev) => [...prev, data as UserShow]);
+      if (error) {
+        console.error("[UserData] toggleWatchlist upsert error:", error);
+        toast.error("Failed to update watchlist");
+        return;
       }
+
+      setUserShows((prev) => {
+        const idx = prev.findIndex((s) => s.show_id === show.id);
+        if (idx === -1) return [...prev, data as UserShow];
+        const next = [...prev];
+        next[idx] = data as UserShow;
+        return next;
+      });
     },
     [user, userShows]
   );
@@ -310,44 +280,38 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
       if (!user) return;
 
       const existing = userShows.find((s) => s.show_id === show.id);
-
-      if (existing) {
-        const { error } = await supabase
-          .from("user_shows")
-          .update({ status })
-          .eq("id", existing.id);
-
-        if (error) {
-          console.error("[UserData] setShowStatus error:", error);
-          toast.error("Failed to update status");
-          return;
-        }
-
-        setUserShows((prev) =>
-          prev.map((s) => (s.id === existing.id ? { ...s, status } : s))
-        );
-      } else {
-        const { data, error } = await supabase
-          .from("user_shows")
-          .insert({
+      // Preserve existing watchlisted unless this is a fresh row setting want_to_watch
+      const watchlisted = existing
+        ? existing.watchlisted
+        : status === 'want_to_watch';
+      const { data, error } = await supabase
+        .from("user_shows")
+        .upsert(
+          {
+            ...(existing ?? { rating: null, liked: false, watchlisted: false, status: null }),
             ...denormalizeShow(show),
             user_id: user.id,
-            rating: null,
-            liked: false,
-            watchlisted: status === 'want_to_watch',
+            watchlisted,
             status,
-          })
-          .select()
-          .single();
+          },
+          { onConflict: "user_id,show_id" }
+        )
+        .select()
+        .single();
 
-        if (error) {
-          console.error("[UserData] setShowStatus insert error:", error);
-          toast.error("Failed to update status");
-          return;
-        }
-
-        setUserShows((prev) => [...prev, data as UserShow]);
+      if (error) {
+        console.error("[UserData] setShowStatus upsert error:", error);
+        toast.error("Failed to update status");
+        return;
       }
+
+      setUserShows((prev) => {
+        const idx = prev.findIndex((s) => s.show_id === show.id);
+        if (idx === -1) return [...prev, data as UserShow];
+        const next = [...prev];
+        next[idx] = data as UserShow;
+        return next;
+      });
     },
     [user, userShows]
   );

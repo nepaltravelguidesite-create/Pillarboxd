@@ -13,6 +13,12 @@ import { supabase } from "@/lib/supabase";
 // Types
 // ---------------------------------------------------------------------------
 
+import type { FavoriteShow } from "@/context/SocialContext";
+
+declare module "react" {
+  // keep ts happy when we import the type above
+}
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -23,6 +29,7 @@ export interface AuthUser {
   twitterUrl?: string;
   instagramUrl?: string;
   websiteUrl?: string;
+  favoriteShows?: FavoriteShow[];
 }
 
 type AuthState = "loading" | "authenticated" | "unauthenticated";
@@ -63,12 +70,13 @@ type ProfileRow = {
   twitter_url: string | null;
   instagram_url: string | null;
   website_url: string | null;
+  favorite_shows: FavoriteShow[] | null;
 };
 
 async function fetchProfile(userId: string): Promise<AuthUser | null> {
   const { data } = await supabase
     .from("profiles")
-    .select("id, username, display_name, avatar_url, bio, twitter_url, instagram_url, website_url")
+    .select("id, username, display_name, avatar_url, bio, twitter_url, instagram_url, website_url, favorite_shows")
     .eq("id", userId)
     .maybeSingle();
 
@@ -84,6 +92,7 @@ async function fetchProfile(userId: string): Promise<AuthUser | null> {
       twitterUrl: p.twitter_url ?? undefined,
       instagramUrl: p.instagram_url ?? undefined,
       websiteUrl: p.website_url ?? undefined,
+      favoriteShows: p.favorite_shows ?? undefined,
     };
   }
   return null;

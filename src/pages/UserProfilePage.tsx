@@ -1,19 +1,20 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useUserData, type UserLog } from "@/context/UserDataContext";
-import { useSocial } from "@/context/SocialContext";
+import { useSocial, type FavoriteShow } from "@/context/SocialContext";
 import { bestPosterUrl } from "@/lib/tmdb";
 import { SEOMeta } from "@/components/SEOMeta";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StarRating } from "@/components/shows/StarRating";
 import { getShowRatingIcon } from "@/lib/showRatingIcons";
-import { Tv, Settings as SettingsIcon } from "lucide-react";
+import { EditFavoritesModal } from "@/components/shows/EditFavoritesModal";
+import { Tv, Settings as SettingsIcon, Pencil } from "lucide-react";
 
 export function UserProfilePage() {
   const { username } = useParams<{ username: string }>();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const { userShows, userLogs, loading } = useUserData();
   const { following, toggleFollow, allProfiles } = useSocial();
 
@@ -46,13 +47,24 @@ export function UserProfilePage() {
   const listCount = 0; // from social context if available
   const reviewCount = userLogs.filter((l) => l.review && l.review.trim()).length;
 
-  // Favorite shows — top 4 rated
-  const favoriteShows = useMemo(() => {
-    return [...userShows]
-      .filter((s) => s.rating !== null && s.rating >= 4)
-      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
-      .slice(0, 4);
-  }, [userShows]);
+  // Curated favorites — from profiles.favorite_shows (own profile via AuthContext,
+  // other profiles via SocialContext). Falls back to [] when unset.
+  const favoriteShows: FavoriteShow[] = useMemo(() => {
+    if (isOwnProfile) return user?.favoriteShows ?? [];
+    return profile?.favorite_shows ?? [];
+  }, [isOwnProfile, user, profile]);
+
+  const [editFavoritesOpen, setEditFavoritesOpen] = useState(false);
+  const [draftFavorites, setDraftFavorites] = useState<FavoriteShow[]>(favoriteShows);
+
+  useEffect(() => {
+    setDraftFavorites(favoriteShows);
+  }, [favoriteShows]);
+
+  const handleFavoritesSaved = useCallback((saved: FavoriteShow[]) => {
+    setDraftFavorites(saved);
+    refreshProfile();
+  }, [refreshProfile]);
 
   // Recent watched (from logs)
   const recentWatched = useMemo(() => {
@@ -127,16 +139,37 @@ export function UserProfilePage() {
         </div>
 
         {/* Favorite Shows */}
-        {favoriteShows.length > 0 && (
+        {(favoriteShows.length > 0 || isOwnProfile) && (
           <section className="space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Favorite Shows</h2>
+            {isOwnProfile && (
+              <button
+                onClick={() => setEditFavoritesOpen(true)}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Pencil className="size-3" />
+                Edit
+              </button>
+            )}
           </div>
-          <div className="grid grid-cols-4 gap-2">
-            {favoriteShows.map((show) => (
-              <FavoritePoster key={show.id} show={show} />
-            ))}
-          </div>
+          {favoriteShows.length > 0 ? (
+            <div className="grid grid-cols-4 gap-2">
+              {favoriteShows.map((show) => (
+                <FavoritePoster key={show.tmdb_id} show={show} />
+              ))}
+            </div>
+          ) : (
+            isOwnProfile && (
+              <button
+                onClick={() => setEditFavoritesOpen(true)}
+                className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border/60 bg-secondary/20 py-8 text-center hover:bg-secondary/40 transition-colors"
+              >
+                <Tv className="size-8 text-muted-foreground/30" strokeWidth={1} />
+                <span className="text-xs text-muted-foreground">Pick your 4 favorite shows</span>
+              </button>
+            )
+          )}
           </section>
         )}
 
@@ -184,6 +217,16 @@ export function UserProfilePage() {
           </div>
         )}
       </div>
+
+      {isOwnProfile && (
+        <EditFavoritesModal
+          open={editFavoritesOpen}
+          onOpenChange={setEditFavoritesOpen}
+          userId={user?.id ?? ""}
+          currentFavorites={draftFavorites}
+          onSaved={handleFavoritesSaved}
+        />
+      )}
     </>
   );
 }
@@ -197,13 +240,13 @@ function StatBlock({ label, value }: { label: string; value: number }) {
   );
 }
 
-function FavoritePoster({ show }: { show: { show_id: number; show_name: string; show_poster_path: string | null; rating: number | null } }) {
+function FavoritePoster({ show }: { show: FavoriteShow }) {
   const [imgError, setImgError] = useState(false);
   return (
-    <Link to={`/show/${show.show_id}`} className="block">
+    <Link to={`/show/${show.tmdb_id}`} className="block">
       <div className="aspect-poster rounded-lg overflow-hidden bg-muted border border-border/50">
-        {show.show_poster_path && !imgError ? (
-          <img src={bestPosterUrl({ id: show.show_id, poster_path: show.show_poster_path }, "w185")} alt={show.show_name} loading="lazy" onError={() => setImgError(true)} className="w-full h-full object-cover" />
+        {show.poster_path && !imgError ? (
+          <img src={bestPosterUrl({ id: show.tmdb_id, poster_path: show.poster_path }, "w185")} alt={show.name} loading="lazy" onError={() => setImgError(true)} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-secondary/30"><Tv className="size-6 text-muted-foreground/30" strokeWidth={1} /></div>
         )}

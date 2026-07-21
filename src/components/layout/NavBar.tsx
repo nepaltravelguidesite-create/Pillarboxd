@@ -431,7 +431,7 @@ export function NavBar() {
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6">
           <div className="flex h-12 items-center gap-3 md:gap-4">
             <Link to="/" className="group focus:outline-none shrink-0">
-              <AftershowLogo size={24} />
+              <AftershowLogo size={30} />
             </Link>
 
             <DesktopNavLinks />
