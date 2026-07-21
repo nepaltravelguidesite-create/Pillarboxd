@@ -400,6 +400,33 @@
     }
   }
 
+  /* Auth collage — horizontal poster scroll (mobile) */
+  @keyframes pb-scroll-left {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  @keyframes pb-scroll-right {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+  }
+
+  .pb-scroll-row-left {
+    animation: pb-scroll-left linear infinite;
+  }
+
+  .pb-scroll-row-right {
+    animation: pb-scroll-right linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pb-scroll-row-left,
+    .pb-scroll-row-right {
+      animation: none;
+      transform: none;
+    }
+  }
+
   /* Skip link for keyboard navigation */
   .skip-link {
     position: absolute;

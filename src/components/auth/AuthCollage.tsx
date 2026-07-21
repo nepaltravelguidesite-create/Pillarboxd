@@ -7,9 +7,10 @@ interface AuthCollageProps {
 }
 
 /**
- * Mobile variant: 2 vertical columns of posters scrolling upward continuously,
- * same infinite-loop technique as desktop but sized for mobile width.
- * Respects prefers-reduced-motion via CSS.
+ * Mobile variant: two horizontal rows of posters scrolling sideways — one row
+ * scrolls left, the other scrolls right at a different speed for a parallax
+ * feel. Each row's poster list is duplicated back-to-back so the translateX
+ * animation loops seamlessly. Respects prefers-reduced-motion via CSS.
  *
  * Desktop variant: 4 vertical columns of posters scrolling upward on an
  * infinite loop, with alternating column speeds for a subtle parallax effect.
@@ -17,23 +18,21 @@ interface AuthCollageProps {
  * animation loops seamlessly. Respects prefers-reduced-motion via CSS.
  */
 export function AuthCollage({ shows, variant = "mobile" }: AuthCollageProps) {
-  // Mobile: 2 columns, ~10 posters each (duplicated for seamless loop)
-  const mobilePosters = useMemo(() => {
-    return shows.slice(0, 20).map((show) => ({
+  // Mobile: split posters into two rows, each duplicated for seamless loop
+  const mobileRows = useMemo(() => {
+    const posters = shows.slice(0, 24).map((show) => ({
       id: show.id,
       url: bestPosterUrl(show, "w342"),
     }));
+    const rows: typeof posters[] = [[], []];
+    posters.forEach((poster, i) => {
+      rows[i % 2].push(poster);
+    });
+    // Duplicate each row so the horizontal scroll loops seamlessly
+    return rows.map((row) => [...row, ...row]);
   }, [shows]);
 
-  const mobileColumns = useMemo(() => {
-    const cols: typeof mobilePosters[] = [[], []];
-    mobilePosters.forEach((poster, i) => {
-      cols[i % 2].push(poster);
-    });
-    return cols.map((col) => [...col, ...col]);
-  }, [mobilePosters]);
-
-  const mobileColDurations = ["35s", "45s"];
+  const mobileRowDurations = ["40s", "55s"];
 
   // Desktop: use up to 28 shows for enough variety across 4 columns
   const desktopPosters = useMemo(() => {
@@ -57,10 +56,10 @@ export function AuthCollage({ shows, variant = "mobile" }: AuthCollageProps) {
   const colDurations = ["40s", "55s", "45s", "60s"];
 
   // ---------------------------------------------------------------------------
-  // Mobile variant — unchanged
+  // Mobile variant — horizontal scrolling rows
   // ---------------------------------------------------------------------------
   if (variant === "mobile") {
-    if (mobilePosters.length === 0) {
+    if (mobileRows.length === 0 || mobileRows.every((r) => r.length === 0)) {
       return (
         <div className="relative h-[45vh] min-h-[300px] w-full overflow-hidden bg-secondary">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
@@ -70,18 +69,21 @@ export function AuthCollage({ shows, variant = "mobile" }: AuthCollageProps) {
 
     return (
       <div className="relative h-[45vh] min-h-[300px] w-full overflow-hidden bg-background">
-        {/* Scrolling poster columns */}
-        <div className="flex h-full w-full gap-2 px-2">
-          {mobileColumns.map((colPosters, colIdx) => (
-            <div key={colIdx} className="relative flex-1 overflow-hidden">
+        {/* Two stacked horizontal rows scrolling in opposite directions */}
+        <div className="flex h-full w-full flex-col gap-2 py-2">
+          {mobileRows.map((rowPosters, rowIdx) => (
+            <div
+              key={rowIdx}
+              className="relative flex-1 overflow-hidden"
+            >
               <div
-                className="pb-scroll-col flex flex-col gap-2"
-                style={{ animationDuration: mobileColDurations[colIdx] }}
+                className={rowIdx === 0 ? "pb-scroll-row-left flex gap-2 h-full" : "pb-scroll-row-right flex gap-2 h-full"}
+                style={{ animationDuration: mobileRowDurations[rowIdx], width: "max-content" }}
               >
-                {colPosters.map((poster, posterIdx) => (
+                {rowPosters.map((poster, posterIdx) => (
                   <div
                     key={`${poster.id}-${posterIdx}`}
-                    className="relative w-full overflow-hidden rounded-lg shrink-0"
+                    className="relative h-full overflow-hidden rounded-lg shrink-0"
                     style={{
                       aspectRatio: "2/3",
                       boxShadow:
@@ -101,9 +103,9 @@ export function AuthCollage({ shows, variant = "mobile" }: AuthCollageProps) {
           ))}
         </div>
 
-        {/* Edge fades */}
-        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-background to-transparent pointer-events-none" style={{ zIndex: 20 }} />
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-background to-transparent pointer-events-none" style={{ zIndex: 20 }} />
+        {/* Edge fades — left and right */}
+        <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-background to-transparent pointer-events-none" style={{ zIndex: 20 }} />
+        <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-background to-transparent pointer-events-none" style={{ zIndex: 20 }} />
       </div>
     );
   }
