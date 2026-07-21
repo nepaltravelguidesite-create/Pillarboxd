@@ -383,6 +383,23 @@
     box-shadow: 0 8px 32px rgba(233, 166, 166, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
+  /* Auth collage — vertical poster scroll (desktop) */
+  @keyframes pb-scroll-up {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+
+  .pb-scroll-col {
+    animation: pb-scroll-up linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pb-scroll-col {
+      animation: none;
+      transform: none;
+    }
+  }
+
   /* Skip link for keyboard navigation */
   .skip-link {
     position: absolute;
