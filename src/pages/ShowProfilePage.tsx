@@ -49,7 +49,7 @@ export function ShowProfilePage() {
   const { showId } = useParams<{ showId: string }>();
   const numericId = showId ? parseInt(showId, 10) : null;
   const { data: showDetail, loading, error } = useShowDetail(numericId);
-  const { toggleWatchlist, toggleLike, getShowData, setRating } = useUserData();
+  const { toggleWatchlist, toggleLike, getShowData, setRating, setShowStatus } = useUserData();
   const { isListSaved, saveList, unsaveList } = useSocial();
   const { user } = useAuth();
   const [logModalOpen, setLogModalOpen] = useState(false);
@@ -485,7 +485,7 @@ export function ShowProfilePage() {
                       icon={CheckCircle}
                       label="Watched"
                       active={showData?.status === "completed"}
-                      onClick={() => {}}
+                      onClick={() => setShowStatus(show, showData?.status === "completed" ? null : "completed")}
                     />
                     <ToggleIcon
                       icon={Heart}
@@ -662,9 +662,10 @@ export function ShowProfilePage() {
           )}
         </div>
 
-        <LogEntryModal open={logModalOpen} onOpenChange={setLogModalOpen} show={show} initialRating={showData?.rating ?? null} />
-        <AddToListModal open={addToListOpen} onOpenChange={setAddToListOpen} show={show} />
       </div>
+
+      <LogEntryModal open={logModalOpen} onOpenChange={setLogModalOpen} show={show} initialRating={showData?.rating ?? null} />
+      <AddToListModal open={addToListOpen} onOpenChange={setAddToListOpen} show={show} />
     </>
   );
 }

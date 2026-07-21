@@ -141,7 +141,7 @@ export function SocialProvider({ children }: { children: ReactNode }) {
   const [userEpisodes, setUserEpisodes] = useState<UserEpisode[]>([]);
   const [following, setFollowing] = useState<Set<string>>(new Set());
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
-  const [loadingProfiles, setLoadingProfiles] = useState(true);
+  const [loadingProfiles, setLoadingProfiles] = useState(false);
   const [myLists, setMyLists] = useState<ShowList[]>([]);
   const [loadingLists, setLoadingLists] = useState(true);
   const [reviewLikes, setReviewLikes] = useState<Set<string>>(new Set());
@@ -178,14 +178,16 @@ export function SocialProvider({ children }: { children: ReactNode }) {
     if (data) setFollowing(new Set(data.map((f) => f.following_id)));
   }, [user]);
 
+  const [profilesLoaded, setProfilesLoaded] = useState(false);
   const loadProfiles = useCallback(async () => {
     setLoadingProfiles(true);
     const { data } = await supabase
       .from("profiles")
-      .select("*")
+      .select("id, username, display_name, avatar_url, bio, twitter_url, instagram_url, website_url, favorite_shows, follower_count, following_count, created_at")
       .order("follower_count", { ascending: false });
     if (data) setAllProfiles(data as UserProfile[]);
     setLoadingProfiles(false);
+    setProfilesLoaded(true);
   }, []);
 
   const loadLists = useCallback(async () => {
@@ -253,8 +255,37 @@ export function SocialProvider({ children }: { children: ReactNode }) {
   }, [loadEpisodes, loadFollowing, loadLists, loadReviewLikes, loadListLikes, loadSavedLists]);
 
   useEffect(() => {
-    loadProfiles();
-  }, [loadProfiles]);
+    if (user && !profilesLoaded) loadProfiles();
+  }, [user, profilesLoaded, loadProfiles]);
+
+  // -------------------------------------------------------------------------
+  // Real-time: keep allProfiles (follower counts, avatars, etc.) in sync
+  // without polling. Listens for UPDATE events on profiles and patches the
+  // matching row in local state.
+  // -------------------------------------------------------------------------
+  useEffect(() => {
+    const channel = supabase
+      .channel("profiles-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profiles" },
+        (payload) => {
+          const row = payload.new as UserProfile;
+          setAllProfiles((prev) => {
+            const idx = prev.findIndex((p) => p.id === row.id);
+            if (idx === -1) return [row, ...prev];
+            const next = [...prev];
+            next[idx] = { ...next[idx], ...row };
+            return next;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   // -------------------------------------------------------------------------
   // Episode helpers

@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useUserData, type UserLog } from "@/context/UserDataContext";
 import { useSocial, type FavoriteShow } from "@/context/SocialContext";
 import { bestPosterUrl } from "@/lib/tmdb";
+import { supabase } from "@/lib/supabase";
 import { SEOMeta } from "@/components/SEOMeta";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,11 +32,29 @@ export function UserProfilePage() {
     ? user?.username ?? "unknown"
     : profile?.username ?? username ?? "unknown";
   const avatarUrl = (isOwnProfile ? user?.avatarUrl : profile?.avatar_url) ?? undefined;
+  const [ownProfileCounts, setOwnProfileCounts] = useState<{ follower_count: number; following_count: number }>({ follower_count: 0, following_count: 0 });
+
+  useEffect(() => {
+    if (!isOwnProfile || !user) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("follower_count, following_count")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!cancelled && data) {
+        setOwnProfileCounts(data as { follower_count: number; following_count: number });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOwnProfile, user]);
+
   const followerCount = isOwnProfile
-    ? 0
+    ? ownProfileCounts.follower_count
     : profile?.follower_count ?? 0;
   const followingCount = isOwnProfile
-    ? following.size
+    ? ownProfileCounts.following_count
     : profile?.following_count ?? 0;
 
   // Stats
@@ -154,7 +173,7 @@ export function UserProfilePage() {
             )}
           </div>
           {favoriteShows.length > 0 ? (
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-2 max-w-[280px]">
               {favoriteShows.map((show) => (
                 <FavoritePoster key={show.tmdb_id} show={show} />
               ))}

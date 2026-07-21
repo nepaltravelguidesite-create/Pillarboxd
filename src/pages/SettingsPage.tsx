@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Navigate } from "react-router-dom";
-import { Loader2, Upload, ImageIcon, Globe } from "lucide-react";
+import { Loader2, Upload, ImageIcon, Globe, Tv, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { SEOMeta } from "@/components/SEOMeta";
@@ -19,6 +19,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { bestPosterUrl } from "@/lib/tmdb";
+import { EditFavoritesModal } from "@/components/shows/EditFavoritesModal";
+import type { FavoriteShow } from "@/context/SocialContext";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -85,6 +88,8 @@ export default function SettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [form, setForm] = useState<ProfileForm>(EMPTY_FORM);
+  const [favorites, setFavorites] = useState<FavoriteShow[]>([]);
+  const [editFavoritesOpen, setEditFavoritesOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -113,7 +118,7 @@ export default function SettingsPage() {
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "username, display_name, avatar_url, bio, twitter_url, instagram_url, website_url"
+        "username, display_name, avatar_url, bio, twitter_url, instagram_url, website_url, favorite_shows"
       )
       .eq("id", user.id)
       .maybeSingle();
@@ -124,6 +129,7 @@ export default function SettingsPage() {
 
     if (data) {
       setAvatarUrl(data.avatar_url ?? undefined);
+      setFavorites((data.favorite_shows as FavoriteShow[] | null) ?? []);
       setForm({
         username: data.username ?? "",
         displayName: data.display_name ?? "",
@@ -150,6 +156,15 @@ export default function SettingsPage() {
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
+
+  const handleFavoritesSaved = useCallback(
+    (saved: FavoriteShow[]) => {
+      setFavorites(saved);
+      refreshProfile();
+      toast.success("Favorites updated.");
+    },
+    [refreshProfile]
+  );
 
   // -------------------------------------------------------------------------
   // Field helpers
@@ -559,6 +574,56 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
+            {/* Favorite Shows */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Favorite Shows</CardTitle>
+                <CardDescription>
+                  Pick up to 4 shows to showcase on your profile.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {favorites.length > 0 ? (
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-1 gap-2">
+                      {favorites.map((show) => (
+                        <div key={show.tmdb_id} className="w-12 h-18 rounded-md overflow-hidden bg-muted shrink-0">
+                          {show.poster_path ? (
+                            <img src={bestPosterUrl({ id: show.tmdb_id, poster_path: show.poster_path }, "w92")} alt={show.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Tv className="size-4 text-muted-foreground/30" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditFavoritesOpen(true)}
+                    >
+                      <Pencil className="size-3.5" />
+                      Edit
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-3 py-6">
+                    <Tv className="size-8 text-muted-foreground/30" strokeWidth={1} />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditFavoritesOpen(true)}
+                    >
+                      Pick your favorites
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Save */}
             <div className="flex items-center justify-end gap-3 pt-2">
               <Button
@@ -572,6 +637,14 @@ export default function SettingsPage() {
             </div>
           </form>
         )}
+
+        <EditFavoritesModal
+          open={editFavoritesOpen}
+          onOpenChange={setEditFavoritesOpen}
+          userId={user.id}
+          currentFavorites={favorites}
+          onSaved={handleFavoritesSaved}
+        />
       </div>
     </div>
   );

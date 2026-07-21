@@ -55,9 +55,8 @@ function notificationHref(n: Notification): string | null {
   if (n.type === "follow") {
     return n.actor_username ? `/profile/${n.actor_username}` : null;
   }
-  // Likes/comments on a log or review point back to the log page.
-  if (n.entity_type === "log" || n.type === "like" || n.type === "comment") {
-    return "/log";
+  if ((n.type === "like" || n.type === "comment") && n.entity_id && n.entity_type === "log") {
+    return `/log`;
   }
   return null;
 }

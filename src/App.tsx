@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {
   createBrowserRouter,
   RouterProvider,
@@ -13,24 +14,53 @@ import { RootLayout } from "@/components/layout/RootLayout";
 import { OnboardingFlow } from "@/components/OnboardingFlow";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { WelcomeScreen } from "@/components/auth/WelcomeScreen";
-import { LoginPage } from "@/pages/LoginPage";
-import { SignupPage } from "@/pages/SignupPage";
-import { HomePage } from "@/pages/HomePage";
-import AboutPage from "@/pages/AboutPage";
-import ContactPage from "@/pages/ContactPage";
-import { NotFoundPage } from "@/pages/NotFoundPage";
-import { SearchResultsPage } from "@/pages/SearchResultsPage";
-import { ShowProfilePage } from "@/pages/ShowProfilePage";
-import { UserProfilePage } from "@/pages/UserProfilePage";
-import BrowsePage from "@/pages/BrowsePage";
-import ListsPage from "@/pages/ListsPage";
-import ListDetailPage from "@/pages/ListDetailPage";
-import MembersPage from "@/pages/MembersPage";
-import LogPage from "@/pages/LogPage";
-import JournalPage from "@/pages/JournalPage";
-import PersonPage from "@/pages/PersonPage";
-import StatsPage from "@/pages/StatsPage";
-import SettingsPage from "@/pages/SettingsPage";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// ---------------------------------------------------------------------------
+// Lazy page imports — each becomes its own chunk
+// ---------------------------------------------------------------------------
+
+const LoginPage          = lazy(() => import("@/pages/LoginPage").then(m => ({ default: m.LoginPage })));
+const SignupPage         = lazy(() => import("@/pages/SignupPage").then(m => ({ default: m.SignupPage })));
+const HomePage           = lazy(() => import("@/pages/HomePage").then(m => ({ default: m.HomePage })));
+const AboutPage          = lazy(() => import("@/pages/AboutPage"));
+const ContactPage        = lazy(() => import("@/pages/ContactPage"));
+const NotFoundPage       = lazy(() => import("@/pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
+const SearchResultsPage  = lazy(() => import("@/pages/SearchResultsPage").then(m => ({ default: m.SearchResultsPage })));
+const ShowProfilePage    = lazy(() => import("@/pages/ShowProfilePage").then(m => ({ default: m.ShowProfilePage })));
+const UserProfilePage    = lazy(() => import("@/pages/UserProfilePage").then(m => ({ default: m.UserProfilePage })));
+const BrowsePage         = lazy(() => import("@/pages/BrowsePage"));
+const ListsPage          = lazy(() => import("@/pages/ListsPage"));
+const ListDetailPage     = lazy(() => import("@/pages/ListDetailPage"));
+const MembersPage        = lazy(() => import("@/pages/MembersPage"));
+const LogPage            = lazy(() => import("@/pages/LogPage"));
+const JournalPage        = lazy(() => import("@/pages/JournalPage"));
+const PersonPage         = lazy(() => import("@/pages/PersonPage"));
+const StatsPage          = lazy(() => import("@/pages/StatsPage"));
+const SettingsPage       = lazy(() => import("@/pages/SettingsPage"));
+
+// ---------------------------------------------------------------------------
+// Page-level suspense fallback
+// ---------------------------------------------------------------------------
+
+function PageSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 p-6 max-w-5xl mx-auto w-full pt-20">
+      <Skeleton className="h-8 w-48" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-3/4" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="aspect-[2/3] rounded-lg" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function S({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<PageSkeleton />}>{children}</Suspense>;
+}
 
 // ---------------------------------------------------------------------------
 // Providers wrapper — shared by all routes
@@ -57,7 +87,6 @@ function AppProviders({ children }: { children: React.ReactNode }) {
 // ---------------------------------------------------------------------------
 
 const router = createBrowserRouter([
-  // Welcome — first-run only, shows before /login
   {
     path: "/welcome",
     element: (
@@ -67,12 +96,11 @@ const router = createBrowserRouter([
     ),
   },
 
-  // Auth routes — chrome-less, full-page, no NavBar/Footer
   {
     path: "/login",
     element: (
       <AppProviders>
-        <LoginPage />
+        <S><LoginPage /></S>
       </AppProviders>
     ),
   },
@@ -80,12 +108,11 @@ const router = createBrowserRouter([
     path: "/signup",
     element: (
       <AppProviders>
-        <SignupPage />
+        <S><SignupPage /></S>
       </AppProviders>
     ),
   },
 
-  // Main app — gated by RequireAuth
   {
     path: "/",
     element: (
@@ -97,56 +124,28 @@ const router = createBrowserRouter([
       </AppProviders>
     ),
     children: [
-      { index: true, element: <HomePage /> },
-
-      // Discovery / browse
-      { path: "shows", element: <BrowsePage /> },
-
-      // Individual show
-      { path: "show/:showId", element: <ShowProfilePage /> },
-      { path: "show/:showId/season/:seasonNumber", element: <ShowProfilePage /> },
-
-      // Search results
-      { path: "search", element: <SearchResultsPage /> },
-
-      // Person (cast/crew)
-      { path: "person/:personId", element: <PersonPage /> },
-
-      // User flow
-      { path: "sign-in", element: <Navigate to="/login" replace /> },
-      { path: "create-account", element: <Navigate to="/signup" replace /> },
-      { path: "profile", element: <UserProfilePage /> },
-      { path: "profile/:username", element: <UserProfilePage /> },
-
-      // Stats dashboard
-      { path: "profile/stats", element: <StatsPage /> },
-      { path: "profile/:username/stats", element: <StatsPage /> },
-
-      // Settings
-      { path: "settings", element: <SettingsPage /> },
-
-      // Lists
-      { path: "lists", element: <ListsPage /> },
-      { path: "lists/:listId", element: <ListDetailPage /> },
-
-      // Members directory
-      { path: "members", element: <MembersPage /> },
-
-      // Logging / diary
-      { path: "log", element: <LogPage /> },
-
-      // Journal / activity feed
-      { path: "journal", element: <JournalPage /> },
-
-      // Static
-      { path: "about", element: <AboutPage /> },
-      { path: "contact", element: <ContactPage /> },
-
-      // Legacy redirect
-      { path: "films", element: <Navigate to="/shows" replace /> },
-
-      // 404
-      { path: "*", element: <NotFoundPage /> },
+      { index: true,                           element: <S><HomePage /></S> },
+      { path: "shows",                         element: <S><BrowsePage /></S> },
+      { path: "show/:showId",                  element: <S><ShowProfilePage /></S> },
+      { path: "show/:showId/season/:seasonNumber", element: <S><ShowProfilePage /></S> },
+      { path: "search",                        element: <S><SearchResultsPage /></S> },
+      { path: "person/:personId",              element: <S><PersonPage /></S> },
+      { path: "sign-in",                       element: <Navigate to="/login" replace /> },
+      { path: "create-account",                element: <Navigate to="/signup" replace /> },
+      { path: "profile",                       element: <S><UserProfilePage /></S> },
+      { path: "profile/:username",             element: <S><UserProfilePage /></S> },
+      { path: "profile/stats",                 element: <S><StatsPage /></S> },
+      { path: "profile/:username/stats",       element: <S><StatsPage /></S> },
+      { path: "settings",                      element: <S><SettingsPage /></S> },
+      { path: "lists",                         element: <S><ListsPage /></S> },
+      { path: "lists/:listId",                 element: <S><ListDetailPage /></S> },
+      { path: "members",                       element: <S><MembersPage /></S> },
+      { path: "log",                           element: <S><LogPage /></S> },
+      { path: "journal",                       element: <S><JournalPage /></S> },
+      { path: "about",                         element: <S><AboutPage /></S> },
+      { path: "contact",                       element: <S><ContactPage /></S> },
+      { path: "films",                         element: <Navigate to="/shows" replace /> },
+      { path: "*",                             element: <S><NotFoundPage /></S> },
     ],
   },
 ]);
