@@ -48,6 +48,7 @@ export interface ShowList {
   title: string;
   description: string | null;
   is_public: boolean;
+  is_editorial: boolean;
   like_count: number;
   item_count: number;
   created_at: string;
@@ -103,6 +104,13 @@ interface SocialContextValue {
   listLikes: Set<string>;
   isListLiked: (listId: string) => boolean;
   toggleListLike: (listId: string) => Promise<void>;
+
+  // Saved lists (bookmark editorial lists)
+  savedLists: Set<string>;
+  savedListsData: ShowList[];
+  isListSaved: (listId: string) => boolean;
+  saveList: (list: ShowList) => Promise<void>;
+  unsaveList: (listId: string) => Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -131,6 +139,8 @@ export function SocialProvider({ children }: { children: ReactNode }) {
   const [loadingLists, setLoadingLists] = useState(true);
   const [reviewLikes, setReviewLikes] = useState<Set<string>>(new Set());
   const [listLikes, setListLikes] = useState<Set<string>>(new Set());
+  const [savedLists, setSavedLists] = useState<Set<string>>(new Set());
+  const [savedListsData, setSavedListsData] = useState<ShowList[]>([]);
 
   // -------------------------------------------------------------------------
   // Load data on sign in
@@ -205,13 +215,35 @@ export function SocialProvider({ children }: { children: ReactNode }) {
     if (data) setListLikes(new Set(data.map((l) => l.list_id)));
   }, [user]);
 
+  const loadSavedLists = useCallback(async () => {
+    if (!user) { setSavedLists(new Set()); setSavedListsData([]); return; }
+    const { data } = await supabase
+      .from("saved_lists")
+      .select("list_id")
+      .eq("user_id", user.id);
+    if (data) setSavedLists(new Set(data.map((s) => s.list_id)));
+
+    // Fetch the actual list data for saved editorial lists
+    if (data && data.length > 0) {
+      const listIds = data.map((s) => s.list_id);
+      const { data: listsData } = await supabase
+        .from("lists")
+        .select("*")
+        .in("id", listIds);
+      if (listsData) setSavedListsData(listsData as ShowList[]);
+    } else {
+      setSavedListsData([]);
+    }
+  }, [user]);
+
   useEffect(() => {
     loadEpisodes();
     loadFollowing();
     loadLists();
     loadReviewLikes();
     loadListLikes();
-  }, [loadEpisodes, loadFollowing, loadLists, loadReviewLikes, loadListLikes]);
+    loadSavedLists();
+  }, [loadEpisodes, loadFollowing, loadLists, loadReviewLikes, loadListLikes, loadSavedLists]);
 
   useEffect(() => {
     loadProfiles();
@@ -514,6 +546,43 @@ export function SocialProvider({ children }: { children: ReactNode }) {
     [user, listLikes, myLists]
   );
 
+  const isListSaved = useCallback(
+    (listId: string) => savedLists.has(listId),
+    [savedLists]
+  );
+
+  const saveList = useCallback(
+    async (list: ShowList) => {
+      if (!user) return;
+      setSavedLists((prev) => new Set(prev).add(list.id));
+      setSavedListsData((prev) => [list, ...prev.filter((l) => l.id !== list.id)]);
+      const { error } = await supabase
+        .from("saved_lists")
+        .insert({ user_id: user.id, list_id: list.id });
+      if (error) {
+        toast.error("Failed to save list");
+        setSavedLists((prev) => { const next = new Set(prev); next.delete(list.id); return next; });
+        setSavedListsData((prev) => prev.filter((l) => l.id !== list.id));
+      }
+    },
+    [user]
+  );
+
+  const unsaveList = useCallback(
+    async (listId: string) => {
+      if (!user) return;
+      setSavedLists((prev) => { const next = new Set(prev); next.delete(listId); return next; });
+      setSavedListsData((prev) => prev.filter((l) => l.id !== listId));
+      const { error } = await supabase
+        .from("saved_lists")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("list_id", listId);
+      if (error) toast.error("Failed to unsave list");
+    },
+    [user]
+  );
+
   return (
     <SocialContext.Provider
       value={{
@@ -541,6 +610,11 @@ export function SocialProvider({ children }: { children: ReactNode }) {
         listLikes,
         isListLiked,
         toggleListLike,
+        savedLists,
+        savedListsData,
+        isListSaved,
+        saveList,
+        unsaveList,
       }}
     >
       {children}

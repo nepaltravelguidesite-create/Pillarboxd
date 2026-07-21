@@ -18,7 +18,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Trash2, List, Lock, Globe, Heart } from "lucide-react";
+import { Loader2, Trash2, List, Lock, Globe, Heart, BookmarkCheck } from "lucide-react";
 import { useUI } from "@/context/UIContext";
 
 // ---------------------------------------------------------------------------
@@ -28,7 +28,7 @@ import { useUI } from "@/context/UIContext";
 export default function ListDetailPage() {
   const { listId } = useParams<{ listId: string }>();
   const { user } = useAuth();
-  const { myLists, getListItems, removeShowFromList, deleteList, isListLiked, toggleListLike } = useSocial();
+  const { myLists, getListItems, removeShowFromList, deleteList, isListLiked, toggleListLike, isListSaved, saveList, unsaveList, savedListsData } = useSocial();
   const { openAuthModal } = useUI();
 
   const [list, setList] = useState<ShowList | null>(null);
@@ -52,8 +52,8 @@ export default function ListDetailPage() {
     setError(null);
 
     try {
-      // First, try to find the list in the user's own lists (fast path)
-      let meta = myLists.find((l) => l.id === listId) ?? null;
+      // First, try to find the list in the user's own lists or saved lists (fast path)
+      let meta = myLists.find((l) => l.id === listId) ?? savedListsData.find((l) => l.id === listId) ?? null;
 
       // Fetch items regardless of ownership (RLS handles visibility)
       const fetchedItems = await getListItems(listId);
@@ -77,6 +77,7 @@ export default function ListDetailPage() {
           title: "Shared List",
           description: null,
           is_public: true,
+          is_editorial: false,
           like_count: 0,
           item_count: fetchedItems.length,
           created_at: "",
@@ -90,7 +91,7 @@ export default function ListDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [listId, myLists, getListItems]);
+  }, [listId, myLists, savedListsData, getListItems]);
 
   useEffect(() => {
     load();
@@ -101,6 +102,7 @@ export default function ListDetailPage() {
   // -------------------------------------------------------------------------
 
   const isOwner = !!(user && list && list.user_id === user.id);
+  const isEditorial = list?.is_editorial === true;
 
   // -------------------------------------------------------------------------
   // Handlers
@@ -235,13 +237,31 @@ export default function ListDetailPage() {
               )
             )}
 
-            {/* Stats + Like button */}
+            {/* Stats + Like/Save button */}
             <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1">
                 <List className="size-3.5" />
                 {list.item_count} {list.item_count === 1 ? "show" : "shows"}
               </span>
-              {!isOwner && (
+              {isEditorial && !isOwner && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!user) { openAuthModal("signin"); return; }
+                    if (isListSaved(list.id)) unsaveList(list.id);
+                    else saveList(list);
+                  }}
+                  className={cn(
+                    "inline-flex items-center gap-1 transition-colors",
+                    isListSaved(list.id) ? "text-primary" : "hover:text-foreground"
+                  )}
+                  aria-label={isListSaved(list.id) ? "Unsave list" : "Save list"}
+                >
+                  <BookmarkCheck className={cn("size-3.5", isListSaved(list.id) && "fill-primary")} />
+                  {isListSaved(list.id) ? "Saved" : "Save"}
+                </button>
+              )}
+              {!isEditorial && !isOwner && (
                 <button
                   type="button"
                   onClick={() => {
@@ -262,6 +282,11 @@ export default function ListDetailPage() {
                 <span className="inline-flex items-center gap-1">
                   <Heart className="size-3.5" />
                   {list.like_count} {list.like_count === 1 ? "like" : "likes"}
+                </span>
+              )}
+              {isEditorial && (
+                <span className="inline-flex items-center gap-1 text-accent/80 font-medium">
+                  Curated by Aftershow
                 </span>
               )}
             </div>

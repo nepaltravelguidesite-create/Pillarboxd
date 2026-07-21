@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { backdropUrl, bestPosterUrl, type TVShow } from "@/lib/tmdb";
+import { bestPosterUrl, type TVShow } from "@/lib/tmdb";
 
 interface AuthCollageProps {
   shows: TVShow[];
@@ -7,8 +7,9 @@ interface AuthCollageProps {
 }
 
 /**
- * Mobile variant: diagonal, overlapping collage of 2-3 backdrop/poster images,
- * clipped with an angled bottom edge, fading into the page background.
+ * Mobile variant: 2 vertical columns of posters scrolling upward continuously,
+ * same infinite-loop technique as desktop but sized for mobile width.
+ * Respects prefers-reduced-motion via CSS.
  *
  * Desktop variant: 4 vertical columns of posters scrolling upward on an
  * infinite loop, with alternating column speeds for a subtle parallax effect.
@@ -16,14 +17,23 @@ interface AuthCollageProps {
  * animation loops seamlessly. Respects prefers-reduced-motion via CSS.
  */
 export function AuthCollage({ shows, variant = "mobile" }: AuthCollageProps) {
-  const mobileImages = useMemo(() => {
-    return shows.slice(0, 3).map((show, i) => {
-      const url = show.backdrop_path
-        ? backdropUrl(show.backdrop_path, "w780")
-        : bestPosterUrl(show, "w500");
-      return { url, isBackdrop: !!show.backdrop_path, index: i };
-    });
+  // Mobile: 2 columns, ~10 posters each (duplicated for seamless loop)
+  const mobilePosters = useMemo(() => {
+    return shows.slice(0, 20).map((show) => ({
+      id: show.id,
+      url: bestPosterUrl(show, "w342"),
+    }));
   }, [shows]);
+
+  const mobileColumns = useMemo(() => {
+    const cols: typeof mobilePosters[] = [[], []];
+    mobilePosters.forEach((poster, i) => {
+      cols[i % 2].push(poster);
+    });
+    return cols.map((col) => [...col, ...col]);
+  }, [mobilePosters]);
+
+  const mobileColDurations = ["35s", "45s"];
 
   // Desktop: use up to 28 shows for enough variety across 4 columns
   const desktopPosters = useMemo(() => {
@@ -50,45 +60,50 @@ export function AuthCollage({ shows, variant = "mobile" }: AuthCollageProps) {
   // Mobile variant — unchanged
   // ---------------------------------------------------------------------------
   if (variant === "mobile") {
-    if (mobileImages.length === 0) {
+    if (mobilePosters.length === 0) {
       return (
-        <div className="relative h-[40vh] min-h-[280px] w-full overflow-hidden bg-secondary">
+        <div className="relative h-[45vh] min-h-[300px] w-full overflow-hidden bg-secondary">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
         </div>
       );
     }
 
     return (
-      <div
-        className="relative h-[40vh] min-h-[280px] w-full overflow-hidden"
-        style={{ clipPath: "polygon(0 0, 100% 0, 100% 82%, 0 100%)" }}
-      >
-        {mobileImages.map((img, i) => {
-          const widths = ["55%", "50%", "45%"];
-          const lefts = ["0%", "22%", "48%"];
-          const tops = ["0%", "8%", "4%"];
-          const zIndices = [3, 2, 1];
-          return (
-            <div
-              key={i}
-              className="absolute overflow-hidden"
-              style={{
-                width: widths[i] || "45%",
-                left: lefts[i] || "0%",
-                top: tops[i] || "0%",
-                zIndex: zIndices[i] || 1,
-                height: "100%",
-                borderRadius: i === 0 ? "0" : "12px 0 0 0",
-                transform: `rotate(${i === 0 ? 0 : i === 1 ? -1.5 : 1.5}deg)`,
-                boxShadow: i === 0 ? "none" : "0 8px 32px rgba(0,0,0,0.4)",
-              }}
-            >
-              <img src={img.url} alt="" className="h-full w-full object-cover" loading="eager" />
+      <div className="relative h-[45vh] min-h-[300px] w-full overflow-hidden bg-background">
+        {/* Scrolling poster columns */}
+        <div className="flex h-full w-full gap-2 px-2">
+          {mobileColumns.map((colPosters, colIdx) => (
+            <div key={colIdx} className="relative flex-1 overflow-hidden">
+              <div
+                className="pb-scroll-col flex flex-col gap-2"
+                style={{ animationDuration: mobileColDurations[colIdx] }}
+              >
+                {colPosters.map((poster, posterIdx) => (
+                  <div
+                    key={`${poster.id}-${posterIdx}`}
+                    className="relative w-full overflow-hidden rounded-lg shrink-0"
+                    style={{
+                      aspectRatio: "2/3",
+                      boxShadow:
+                        "0 6px 20px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3)",
+                    }}
+                  >
+                    <img
+                      src={poster.url}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
-          );
-        })}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background pointer-events-none" />
-        <div className="absolute inset-0 bg-background/10 pointer-events-none" />
+          ))}
+        </div>
+
+        {/* Edge fades */}
+        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-background to-transparent pointer-events-none" style={{ zIndex: 20 }} />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-background to-transparent pointer-events-none" style={{ zIndex: 20 }} />
       </div>
     );
   }

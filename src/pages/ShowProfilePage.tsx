@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useShowDetail } from "@/hooks/use-tmdb";
 import { useUserData } from "@/context/UserDataContext";
+import { useSocial, type ShowList } from "@/context/SocialContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   posterUrl,
   bestPosterUrl,
@@ -16,13 +18,14 @@ import { cn } from "@/lib/utils";
 import { SEOMeta } from "@/components/SEOMeta";
 import { StarRating } from "@/components/shows/StarRating";
 import { LogEntryModal } from "@/components/shows/LogEntryModal";
+import { AddToListModal } from "@/components/shows/AddToListModal";
 import { ShowCarousel } from "@/components/shows/ShowCarousel";
 import { MobileReviewCard } from "@/components/shows/MobileReviewCard";
 import { ReviewCard } from "@/components/shows/ReviewCard";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2, Heart, Bookmark, Plus, ChevronLeft, Eye, List as ListIcon,
-  Tv, CheckCircle,
+  Tv, CheckCircle, BookmarkCheck,
 } from "lucide-react";
 import type { ReviewWithAuthor } from "@/components/shows/ReviewCard";
 
@@ -46,8 +49,11 @@ export function ShowProfilePage() {
   const { showId } = useParams<{ showId: string }>();
   const numericId = showId ? parseInt(showId, 10) : null;
   const { data: showDetail, loading, error } = useShowDetail(numericId);
-  const { toggleWatchlist, toggleLike, getShowData } = useUserData();
+  const { toggleWatchlist, toggleLike, getShowData, setRating } = useUserData();
+  const { isListSaved, saveList, unsaveList } = useSocial();
+  const { user } = useAuth();
   const [logModalOpen, setLogModalOpen] = useState(false);
+  const [addToListOpen, setAddToListOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"cast" | "crew" | "details">("cast");
   const [reviews, setReviews] = useState<ReviewWithAuthor[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
@@ -307,9 +313,9 @@ export function ShowProfilePage() {
               <button onClick={() => setLogModalOpen(true)} className="flex items-center justify-center gap-2 w-full h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150">
                 <Plus className="size-4" /> Rate or Review
               </button>
-              <Link to="/lists" className="flex items-center justify-center gap-2 w-full h-11 rounded-full border border-border text-foreground font-medium text-sm hover:bg-secondary/50 hover:-translate-y-px active:translate-y-0 transition-all duration-150">
+              <button onClick={() => setAddToListOpen(true)} className="flex items-center justify-center gap-2 w-full h-11 rounded-full border border-border text-foreground font-medium text-sm hover:bg-secondary/50 hover:-translate-y-px active:translate-y-0 transition-all duration-150">
                 <ListIcon className="size-4" /> Add to Lists
-              </Link>
+              </button>
               <button onClick={() => toggleWatchlist(show)} className={cn("flex items-center justify-center gap-2 w-full h-11 rounded-full border font-medium text-sm hover:-translate-y-px active:translate-y-0 transition-all duration-150", showData?.watchlisted ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground hover:bg-secondary/50")}>
                 <Bookmark className={cn("size-4", showData?.watchlisted && "fill-primary")} /> {showData?.watchlisted ? "In Watchlist" : "Add to Watchlist"}
               </button>
@@ -498,7 +504,7 @@ export function ShowProfilePage() {
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Your Rating</p>
                     <StarRating
                       value={showData?.rating ?? null}
-                      onChange={() => setLogModalOpen(true)}
+                      onChange={(newRating) => setRating(show, newRating)}
                       size="lg"
                     />
                   </div>
@@ -584,7 +590,9 @@ export function ShowProfilePage() {
             <div className="py-4 pb-12">
               <h3 className="font-display text-lg font-semibold text-foreground mb-3 px-4 sm:px-0">Featured In</h3>
               <div className="flex gap-4 overflow-x-auto pb-2 px-4 sm:px-0 snap-x">
-                {editorialLists.map((list) => (
+                {editorialLists.map((list) => {
+                  const saved = isListSaved(list.id);
+                  return (
                   <Link
                     key={list.id}
                     to={`/lists/${list.id}`}
@@ -618,7 +626,26 @@ export function ShowProfilePage() {
                       </div>
                       {/* List info */}
                       <div className="p-3 space-y-1.5">
-                        <p className="font-medium text-sm text-foreground line-clamp-1 group-hover:text-accent transition-colors">{list.title}</p>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-medium text-sm text-foreground line-clamp-1 group-hover:text-accent transition-colors">{list.title}</p>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (!user) return;
+                              const showList: ShowList = { id: list.id, user_id: "", title: list.title, description: list.description, is_public: true, is_editorial: true, like_count: list.like_count, item_count: list.item_count, created_at: "", updated_at: "" };
+                              if (saved) unsaveList(list.id); else saveList(showList);
+                            }}
+                            className={cn(
+                              "flex items-center justify-center size-7 rounded-md transition-colors shrink-0",
+                              saved ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                            )}
+                            aria-label={saved ? "Unsave list" : "Save list"}
+                          >
+                            <BookmarkCheck className={cn("size-4", saved && "fill-primary")} />
+                          </button>
+                        </div>
                         <p className="text-xs text-muted-foreground line-clamp-1">{list.description}</p>
                         <div className="flex items-center gap-2 pt-1">
                           <span className="text-xs text-muted-foreground">{list.item_count} shows</span>
@@ -628,13 +655,15 @@ export function ShowProfilePage() {
                       </div>
                     </div>
                   </Link>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
         </div>
 
-        <LogEntryModal open={logModalOpen} onOpenChange={setLogModalOpen} show={show} />
+        <LogEntryModal open={logModalOpen} onOpenChange={setLogModalOpen} show={show} initialRating={showData?.rating ?? null} />
+        <AddToListModal open={addToListOpen} onOpenChange={setAddToListOpen} show={show} />
       </div>
     </>
   );

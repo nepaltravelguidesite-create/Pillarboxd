@@ -26,7 +26,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 export default function ListsPage() {
   const { user } = useAuth();
   const { openAuthModal } = useUI();
-  const { myLists, loadingLists, createList, deleteList } = useSocial();
+  const { myLists, loadingLists, createList, deleteList, savedListsData, unsaveList } = useSocial();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -241,11 +241,11 @@ export default function ListsPage() {
             <Loader2 className="size-8 animate-spin mb-3" />
             <p className="text-sm">Loading your lists…</p>
           </div>
-        ) : myLists.length === 0 ? (
+        ) : myLists.length === 0 && savedListsData.length === 0 ? (
           <EmptyState
             icon={List}
             title="No lists yet"
-            description="Create your first list to organize shows you love."
+            description="Create your first list or save an Aftershow editorial collection to get started."
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -264,6 +264,14 @@ export default function ListsPage() {
                 }}
               />
             ))}
+            {savedListsData.map((list) => (
+              <ListCard
+                key={list.id}
+                list={list}
+                isSaved
+                onUnsave={() => unsaveList(list.id)}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -277,51 +285,83 @@ export default function ListsPage() {
 
 interface ListCardProps {
   list: ShowList;
-  onDelete: () => void;
+  onDelete?: () => void;
+  isSaved?: boolean;
+  onUnsave?: () => void;
 }
 
-function ListCard({ list, onDelete }: ListCardProps) {
+function ListCard({ list, onDelete, isSaved, onUnsave }: ListCardProps) {
   const { user } = useAuth();
   const { openAuthModal } = useUI();
   const { isListLiked, toggleListLike } = useSocial();
   return (
-    <div className="group relative flex flex-col rounded-xl border border-border bg-secondary/20 hover:border-primary/50 hover:bg-secondary/30 transition-colors overflow-hidden">
+    <div className={cn(
+      "group relative flex flex-col rounded-xl border bg-secondary/20 hover:border-primary/50 hover:bg-secondary/30 transition-colors overflow-hidden",
+      isSaved ? "border-primary/30" : "border-border"
+    )}>
       {/* Top accent strip */}
-      <div className="h-1.5 bg-gradient-to-r from-primary/60 to-primary/20" />
+      <div className={cn("h-1.5", isSaved ? "bg-gradient-to-r from-primary/40 to-primary/10" : "bg-gradient-to-r from-primary/60 to-primary/20")} />
 
       {/* Body */}
       <div className="flex flex-col gap-3 p-4 sm:p-5 flex-1">
-        {/* Visibility badge */}
+        {/* Visibility + saved/editorial badges + action */}
         <div className="flex items-center justify-between">
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
-              list.is_public
-                ? "bg-primary/10 text-primary"
-                : "bg-muted text-muted-foreground"
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                list.is_public
+                  ? "bg-primary/10 text-primary"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {list.is_public ? (
+                <Globe className="size-3" />
+              ) : (
+                <Lock className="size-3" />
+              )}
+              {list.is_public ? "Public" : "Private"}
+            </span>
+            {isSaved && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-medium">
+                Saved
+              </span>
             )}
-          >
-            {list.is_public ? (
-              <Globe className="size-3" />
-            ) : (
-              <Lock className="size-3" />
+            {list.is_editorial && !isSaved && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 text-accent px-2 py-0.5 text-[11px] font-medium">
+                Curated by Aftershow
+              </span>
             )}
-            {list.is_public ? "Public" : "Private"}
-          </span>
+          </div>
 
-          {/* Delete */}
-          <button
-            type="button"
-            onClick={onDelete}
-            aria-label="Delete list"
-            className={cn(
-              "flex items-center justify-center size-7 rounded-md text-muted-foreground/60",
-              "hover:bg-destructive/10 hover:text-destructive transition-colors",
-              "opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none"
-            )}
-          >
-            <Trash2 className="size-4" />
-          </button>
+          {/* Delete (owned) or Unsave (saved) */}
+          {isSaved ? (
+            <button
+              type="button"
+              onClick={onUnsave}
+              aria-label="Remove from saved"
+              className={cn(
+                "flex items-center justify-center size-7 rounded-md text-muted-foreground/60",
+                "hover:bg-destructive/10 hover:text-destructive transition-colors",
+                "opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none"
+              )}
+            >
+              <Trash2 className="size-4" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onDelete}
+              aria-label="Delete list"
+              className={cn(
+                "flex items-center justify-center size-7 rounded-md text-muted-foreground/60",
+                "hover:bg-destructive/10 hover:text-destructive transition-colors",
+                "opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none"
+              )}
+            >
+              <Trash2 className="size-4" />
+            </button>
+          )}
         </div>
 
         {/* Title + description (link) */}
@@ -346,23 +386,25 @@ function ListCard({ list, onDelete }: ListCardProps) {
             <List className="size-3.5" />
             {list.item_count} {list.item_count === 1 ? "show" : "shows"}
           </span>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (!user) { openAuthModal("signin"); return; }
-              toggleListLike(list.id);
-            }}
-            className={cn(
-              "inline-flex items-center gap-1 transition-colors",
-              isListLiked(list.id) ? "text-primary" : "hover:text-foreground"
-            )}
-            aria-label={isListLiked(list.id) ? "Unlike list" : "Like list"}
-          >
-            <Heart className={cn("size-3.5", isListLiked(list.id) && "fill-primary")} />
-            {list.like_count} {list.like_count === 1 ? "like" : "likes"}
-          </button>
+          {!isSaved && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!user) { openAuthModal("signin"); return; }
+                toggleListLike(list.id);
+              }}
+              className={cn(
+                "inline-flex items-center gap-1 transition-colors",
+                isListLiked(list.id) ? "text-primary" : "hover:text-foreground"
+              )}
+              aria-label={isListLiked(list.id) ? "Unlike list" : "Like list"}
+            >
+              <Heart className={cn("size-3.5", isListLiked(list.id) && "fill-primary")} />
+              {list.like_count} {list.like_count === 1 ? "like" : "likes"}
+            </button>
+          )}
         </div>
       </div>
     </div>

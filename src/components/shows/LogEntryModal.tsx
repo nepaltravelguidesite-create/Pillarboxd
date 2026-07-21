@@ -12,9 +12,10 @@ interface LogEntryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   show: TVShow;
+  initialRating?: number | null;
 }
 
-export function LogEntryModal({ open, onOpenChange, show }: LogEntryModalProps) {
+export function LogEntryModal({ open, onOpenChange, show, initialRating = null }: LogEntryModalProps) {
   const { addLog } = useUserData();
 
   const [watchedDate, setWatchedDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -30,14 +31,14 @@ export function LogEntryModal({ open, onOpenChange, show }: LogEntryModalProps) 
   useEffect(() => {
     if (open) {
       setWatchedDate(new Date().toISOString().slice(0, 10));
-      setRating(null);
+      setRating(initialRating);
       setReview("");
       setContainsSpoilers(false);
       setRewatch(false);
       setVibeTag(null);
       setSubmitting(false);
     }
-  }, [open, show.id]);
+  }, [open, show.id, initialRating]);
 
   if (!open) return null;
 

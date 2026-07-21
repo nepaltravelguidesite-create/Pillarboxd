@@ -41,6 +41,7 @@ type ListRow = {
   title: string;
   description: string | null;
   is_public: boolean;
+  is_editorial: boolean;
   like_count: number;
   item_count: number;
   created_at: string;
