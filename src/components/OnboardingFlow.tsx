@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
 import { useUserData } from "@/context/UserDataContext";
 import { getPopularShows, type TVShow } from "@/lib/tmdb";
-import { posterUrl } from "@/lib/tmdb";
+import { bestPosterUrl } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/shows/StarRating";
@@ -263,7 +263,7 @@ export function OnboardingFlow() {
                   >
                     <div className="relative aspect-poster w-full rounded-md overflow-hidden bg-muted">
                       <img
-                        src={posterUrl(show.poster_path, "w342")}
+                        src={bestPosterUrl(show, "w342")}
                         alt={`${show.name} poster`}
                         loading="lazy"
                         className="absolute inset-0 w-full h-full object-cover"
@@ -323,7 +323,7 @@ export function OnboardingFlow() {
                   >
                     <div className="relative aspect-poster w-full rounded-md overflow-hidden bg-muted">
                       <img
-                        src={posterUrl(show.poster_path, "w342")}
+                        src={bestPosterUrl(show, "w342")}
                         alt={`${show.name} poster`}
                         loading="lazy"
                         className="absolute inset-0 w-full h-full object-cover"

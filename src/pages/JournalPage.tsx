@@ -4,7 +4,7 @@ import { useUserData } from "@/context/UserDataContext";
 import { useSocial, type UserEpisode } from "@/context/SocialContext";
 import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
-import { posterUrl } from "@/lib/tmdb";
+import { bestPosterUrl } from "@/lib/tmdb";
 import { Calendar, Check, Star, Heart, Activity } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -215,7 +215,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
         aria-label={`Open ${item.showName}`}
       >
         <img
-          src={posterUrl(item.posterPath, "w92")}
+          src={bestPosterUrl({ id: item.showId, poster_path: item.posterPath }, "w92")}
           alt={item.showName}
           loading="lazy"
           className="w-9 h-[54px] rounded object-cover bg-secondary/40"

@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, X, Loader2, Tv } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { posterUrl } from "@/lib/tmdb";
+import { bestPosterUrl } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
 
 export function SearchBar({ className }: { className?: string }) {
@@ -131,7 +131,7 @@ export function SearchBar({ className }: { className?: string }) {
                     <div className="shrink-0 w-8 aspect-poster rounded overflow-hidden bg-muted">
                       {show.poster_path ? (
                         <img
-                          src={posterUrl(show.poster_path, "w92")}
+                          src={bestPosterUrl(show, "w92")}
                           alt=""
                           className="w-full h-full object-cover"
                           loading="lazy"

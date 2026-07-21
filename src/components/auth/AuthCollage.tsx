@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { posterUrl, backdropUrl, type TVShow } from "@/lib/tmdb";
+import { backdropUrl, bestPosterUrl, type TVShow } from "@/lib/tmdb";
 
 interface AuthCollageProps {
   shows: TVShow[];
@@ -18,14 +18,14 @@ export function AuthCollage({ shows, variant = "mobile" }: AuthCollageProps) {
     return shows.slice(0, 3).map((show, i) => {
       const url = show.backdrop_path
         ? backdropUrl(show.backdrop_path, "w780")
-        : posterUrl(show.poster_path, "w500");
+        : bestPosterUrl(show, "w500");
       return { url, isBackdrop: !!show.backdrop_path, index: i };
     });
   }, [shows]);
 
   const desktopPosters = useMemo(() => {
     return shows.slice(0, 5).map((show, i) => ({
-      url: posterUrl(show.poster_path, "w342"),
+      url: bestPosterUrl(show, "w342"),
       index: i,
     }));
   }, [shows]);

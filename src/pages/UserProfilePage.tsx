@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useUserData, type UserLog } from "@/context/UserDataContext";
 import { useSocial } from "@/context/SocialContext";
-import { posterUrl } from "@/lib/tmdb";
+import { bestPosterUrl } from "@/lib/tmdb";
 import { SEOMeta } from "@/components/SEOMeta";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -203,7 +203,7 @@ function FavoritePoster({ show }: { show: { show_id: number; show_name: string; 
     <Link to={`/show/${show.show_id}`} className="block">
       <div className="aspect-poster rounded-lg overflow-hidden bg-muted border border-border/50">
         {show.show_poster_path && !imgError ? (
-          <img src={posterUrl(show.show_poster_path, "w185")} alt={show.show_name} loading="lazy" onError={() => setImgError(true)} className="w-full h-full object-cover" />
+          <img src={bestPosterUrl({ id: show.show_id, poster_path: show.show_poster_path }, "w185")} alt={show.show_name} loading="lazy" onError={() => setImgError(true)} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-secondary/30"><Tv className="size-6 text-muted-foreground/30" strokeWidth={1} /></div>
         )}
@@ -219,7 +219,7 @@ function RatedPoster({ log }: { log: UserLog }) {
     <Link to={`/show/${log.show_id}`} className="block relative">
       <div className="aspect-poster rounded-lg overflow-hidden bg-muted border border-border/50">
         {log.show_poster_path && !imgError ? (
-          <img src={posterUrl(log.show_poster_path, "w185")} alt={log.show_name} loading="lazy" onError={() => setImgError(true)} className="w-full h-full object-cover" />
+          <img src={bestPosterUrl({ id: log.show_id, poster_path: log.show_poster_path }, "w185")} alt={log.show_name} loading="lazy" onError={() => setImgError(true)} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-secondary/30"><Tv className="size-6 text-muted-foreground/30" strokeWidth={1} /></div>
         )}

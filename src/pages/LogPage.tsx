@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useUserData, type UserLog } from "@/context/UserDataContext";
 import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
-import { posterUrl } from "@/lib/tmdb";
+import { bestPosterUrl } from "@/lib/tmdb";
 import { StarRating } from "@/components/shows/StarRating";
 import {
   AlertDialog,
@@ -205,7 +205,7 @@ function LogEntry({
         aria-label={`Open ${log.show_name}`}
       >
         <img
-          src={posterUrl(log.show_poster_path, "w185")}
+          src={bestPosterUrl({ id: log.show_id, poster_path: log.show_poster_path }, "w185")}
           alt={log.show_name}
           loading="lazy"
           className="w-12 h-[72px] sm:w-14 sm:h-[84px] rounded object-cover bg-secondary/40"

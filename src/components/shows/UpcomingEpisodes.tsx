@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Calendar, Clock } from "lucide-react";
 import { useSocial } from "@/context/SocialContext";
 import { useUserData } from "@/context/UserDataContext";
-import { getShowDetail, posterUrl, type TVShowDetail, type Episode } from "@/lib/tmdb";
+import { getShowDetail, bestPosterUrl, type TVShowDetail, type Episode } from "@/lib/tmdb";
 
 // TVShowDetail doesn't declare next_episode_to_air, but TMDB returns it by default.
 interface ShowDetailWithNext extends TVShowDetail {
@@ -151,7 +151,7 @@ export function UpcomingEpisodes() {
                 className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors"
               >
                 <img
-                  src={posterUrl(posterPath, "w92")}
+                  src={bestPosterUrl({ id: showId, poster_path: posterPath }, "w92")}
                   alt={showName}
                   className="size-10 rounded object-cover bg-muted shrink-0"
                   loading="lazy"

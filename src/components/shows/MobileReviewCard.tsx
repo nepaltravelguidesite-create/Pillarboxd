@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { StarRating } from "@/components/shows/StarRating";
-import { posterUrl } from "@/lib/tmdb";
+import { bestPosterUrl } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
 import { getShowRatingIcon } from "@/lib/showRatingIcons";
 import { VibeTagBadge } from "@/components/shows/VibeTag";
@@ -95,7 +95,7 @@ export function MobileReviewCard({ review }: MobileReviewCardProps) {
       <Link to={`/show/${review.show_id}`} className="shrink-0">
         <div className="w-12 h-18 rounded-md overflow-hidden bg-secondary/40">
           <img
-            src={posterUrl(review.show_poster_path, "w92")}
+            src={bestPosterUrl({ id: review.show_id, poster_path: review.show_poster_path }, "w92")}
             alt={review.show_name}
             className="h-full w-full object-cover"
             loading="lazy"

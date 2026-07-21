@@ -1,7 +1,7 @@
 import { useState, memo } from "react";
 import { Link } from "react-router-dom";
 import { Tv, Star, Heart, Bookmark } from "lucide-react";
-import { posterUrl, type TVShow } from "@/lib/tmdb";
+import { bestPosterUrl, type TVShow } from "@/lib/tmdb";
 import { useUserData } from "@/context/UserDataContext";
 import { useUI } from "@/context/UIContext";
 import { useAuth } from "@/context/AuthContext";
@@ -88,7 +88,7 @@ function ShowPosterCardInner({
           </div>
         ) : (
           <img
-            src={posterUrl(show.poster_path, "w342")}
+            src={bestPosterUrl(show, "w342")}
             alt={`${show.name} poster`}
             loading="lazy"
             onLoad={() => setImgLoaded(true)}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useUserData } from "@/context/UserDataContext";
-import { posterUrl, type TVShow } from "@/lib/tmdb";
+import { bestPosterUrl, type TVShow } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
 import { StarRating } from "@/components/shows/StarRating";
 import { getShowRatingIcon } from "@/lib/showRatingIcons";
@@ -109,7 +109,7 @@ export function LogEntryModal({ open, onOpenChange, show }: LogEntryModalProps) 
           <div className="flex items-center gap-3 py-2">
             <div className="w-12 h-18 rounded-md overflow-hidden bg-muted shrink-0">
               {show.poster_path ? (
-                <img src={posterUrl(show.poster_path, "w92")} alt={show.name} className="w-full h-full object-cover" />
+                <img src={bestPosterUrl(show, "w92")} alt={show.name} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-secondary/30" />
               )}

@@ -13,6 +13,8 @@
 const BASE_URL = "https://api.themoviedb.org/3";
 const IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
 
+import { fanartPosterMap } from "@/lib/fanartPosterMap";
+
 const READ_TOKEN = import.meta.env.VITE_TMDB_READ_TOKEN as string | undefined;
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY as string | undefined;
 
@@ -46,6 +48,23 @@ export function posterUrl(
 ): string {
   if (!path) return "/placeholder-poster.svg";
   return `${IMAGE_BASE_URL}/${size}${path}`;
+}
+
+/**
+ * Drop-in replacement for posterUrl() that checks the fanart.tv override
+ * map first. If the show has a curated fanart poster, returns that URL;
+ * otherwise falls back to the standard TMDB poster URL.
+ *
+ * Stays synchronous — the fanart map is a static lookup table shipped with
+ * the app, not a runtime API call.
+ */
+export function bestPosterUrl(
+  show: { id: number; poster_path: string | null | undefined },
+  size: PosterSize = "w500"
+): string {
+  const fanartUrl = fanartPosterMap[show.id];
+  if (fanartUrl) return fanartUrl;
+  return posterUrl(show.poster_path, size);
 }
 
 export function backdropUrl(
@@ -281,6 +300,23 @@ export function getShowDetail(
   return tmdbFetch<TVShowDetail>(`/tv/${seriesId}`, {
     append_to_response: appendToResponse.join(","),
   });
+}
+
+/** GET /tv/{series_id}/external_ids — resolves TheTVDB / IMDb / TVRage ids */
+export interface ExternalIds {
+  imdb_id: string | null;
+  tvdb_id: number | null;
+  tvrage_id: number | null;
+  facebook_id: string | null;
+  instagram_id: string | null;
+  twitter_id: string | null;
+  id: number;
+}
+
+export function getExternalIds(
+  seriesId: number
+): Promise<ExternalIds> {
+  return tmdbFetch<ExternalIds>(`/tv/${seriesId}/external_ids`);
 }
 
 /** GET /tv/{series_id}/season/{season_number} */

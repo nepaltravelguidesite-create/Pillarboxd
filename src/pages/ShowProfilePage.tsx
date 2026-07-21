@@ -4,6 +4,7 @@ import { useShowDetail } from "@/hooks/use-tmdb";
 import { useUserData } from "@/context/UserDataContext";
 import {
   posterUrl,
+  bestPosterUrl,
   backdropUrl,
   profileUrl,
   type TVShow,
@@ -237,7 +238,7 @@ export function ShowProfilePage() {
               <div className="w-24 shrink-0">
                 <div className="aspect-poster rounded-lg overflow-hidden bg-muted border border-border/50 shadow-xl shadow-black/40">
                   {showDetail.poster_path ? (
-                    <img src={posterUrl(showDetail.poster_path, "w342")} alt={`${showDetail.name} poster`} className="w-full h-full object-cover" />
+                    <img src={bestPosterUrl(showDetail, "w342")} alt={`${showDetail.name} poster`} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center"><Tv className="size-8 text-muted-foreground/30" strokeWidth={1} /></div>
                   )}
@@ -374,7 +375,7 @@ export function ShowProfilePage() {
               <div className="w-48 shrink-0">
                 <div className="aspect-poster rounded-xl overflow-hidden bg-muted border border-border/50 shadow-2xl shadow-black/50">
                   {showDetail.poster_path ? (
-                    <img src={posterUrl(showDetail.poster_path, "w500")} alt={`${showDetail.name} poster`} className="w-full h-full object-cover" />
+                    <img src={bestPosterUrl(showDetail, "w500")} alt={`${showDetail.name} poster`} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center"><Tv className="size-12 text-muted-foreground/30" strokeWidth={1} /></div>
                   )}
