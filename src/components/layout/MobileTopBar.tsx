@@ -10,7 +10,7 @@ interface MobileTopBarProps {
 export function MobileTopBar({ onMenuClick }: MobileTopBarProps) {
   return (
     <header className="sticky top-0 z-30 bg-nav/95 backdrop-blur-md border-b border-border/40">
-      <div className="flex items-center justify-between h-14 px-3">
+      <div className="flex items-center gap-2 h-14 px-3">
         {/* Hamburger */}
         <button
           onClick={onMenuClick}
@@ -22,11 +22,11 @@ export function MobileTopBar({ onMenuClick }: MobileTopBarProps) {
 
         {/* Logo */}
         <Link to="/" className="flex items-center">
-          <AftershowLogo size={22} showWordmark={false} />
+          <AftershowLogo size={20} showWordmark={false} />
         </Link>
 
         {/* Right: search + notifications */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 ml-auto">
           <Link
             to="/search"
             className="p-2 rounded-md text-foreground hover:bg-secondary/50 transition-colors"

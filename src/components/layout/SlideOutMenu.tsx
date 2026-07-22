@@ -9,13 +9,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const MENU_ITEMS = [
   { to: "/", icon: Home, label: "Home", end: true },
-  { to: "/shows", icon: Tv, label: "Shows", end: false },
-  { to: "/log", icon: BookOpen, label: "Diary", end: false },
-  { to: "/log", icon: Star, label: "Reviews", end: false },
-  { to: "/profile", icon: Bookmark, label: "Watchlist", end: false },
-  { to: "/lists", icon: List, label: "Lists", end: false },
-  { to: "/profile", icon: Heart, label: "Likes", end: false },
-  { to: "/settings", icon: Settings, label: "Settings", end: false },
+  { to: "/shows", icon: Tv, label: "Shows", end: true },
+  { to: "/log", icon: BookOpen, label: "Diary", end: true },
+  { to: "/journal", icon: Star, label: "Reviews", end: true },
+  { to: "/shows?filter=watchlist", icon: Bookmark, label: "Watchlist", end: true },
+  { to: "/lists", icon: List, label: "Lists", end: true },
+  { to: "/journal?filter=likes", icon: Heart, label: "Likes", end: true },
+  { to: "/settings", icon: Settings, label: "Settings", end: true },
 ] as const;
 
 interface SlideOutMenuProps {

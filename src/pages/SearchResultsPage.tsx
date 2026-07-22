@@ -4,6 +4,7 @@ import { ShowPosterCard } from "@/components/shows/ShowPosterCard";
 import { Loader2, SearchX, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { SearchBar } from "@/components/layout/SearchBar";
 
 export function SearchResultsPage() {
   const [searchParams] = useSearchParams();
@@ -15,6 +16,11 @@ export function SearchResultsPage() {
 
   return (
     <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Search bar — visible on mobile where there's no persistent search input */}
+      <div className="md:hidden mb-4">
+        <SearchBar />
+      </div>
+
       {/* Search header */}
       <div className="mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
