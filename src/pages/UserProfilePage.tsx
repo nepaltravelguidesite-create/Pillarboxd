@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { useUserData, type UserLog } from "@/context/UserDataContext";
+import { useUserData, type UserLog, type UserShow } from "@/context/UserDataContext";
 import { useSocial, type FavoriteShow } from "@/context/SocialContext";
-import { bestPosterUrl } from "@/lib/tmdb";
+import { bestPosterUrl, type TVShow } from "@/lib/tmdb";
 import { supabase } from "@/lib/supabase";
 import { SEOMeta } from "@/components/SEOMeta";
 import { cn } from "@/lib/utils";
@@ -11,19 +11,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StarRating } from "@/components/shows/StarRating";
 import { getShowRatingIcon } from "@/lib/showRatingIcons";
 import { EditFavoritesModal } from "@/components/shows/EditFavoritesModal";
-import { Tv, Settings as SettingsIcon, Pencil } from "lucide-react";
+import { ShowPosterCard } from "@/components/shows/ShowPosterCard";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { VibeTagBadge } from "@/components/shows/VibeTag";
+import { Tv, Settings as SettingsIcon, Pencil, Bookmark, Heart, Star } from "lucide-react";
 
-export function UserProfilePage() {
+export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "reviews" }) {
   const { username } = useParams<{ username: string }>();
   const { user, refreshProfile } = useAuth();
   const { userShows, userLogs, loading } = useUserData();
   const { following, toggleFollow, allProfiles } = useSocial();
 
-  // If viewing another user's profile
+  const isOwnProfile = !username || username === user?.username;
+
   const profile = username
     ? allProfiles.find((p) => p.username === username)
     : null;
-  const isOwnProfile = !username || username === user?.username;
 
   const displayName = isOwnProfile
     ? user?.displayName ?? "User"
@@ -57,17 +60,14 @@ export function UserProfilePage() {
     ? ownProfileCounts.following_count
     : profile?.following_count ?? 0;
 
-  // Stats
   const totalShows = userShows.length;
   const thisYear = new Date().getFullYear();
   const showsThisYear = userLogs.filter((l) =>
     l.watched_date?.startsWith(String(thisYear))
   ).length;
-  const listCount = 0; // from social context if available
+  const listCount = 0;
   const reviewCount = userLogs.filter((l) => l.review && l.review.trim()).length;
 
-  // Curated favorites — from profiles.favorite_shows (own profile via AuthContext,
-  // other profiles via SocialContext). Falls back to [] when unset.
   const favoriteShows: FavoriteShow[] = useMemo(() => {
     if (isOwnProfile) return user?.favoriteShows ?? [];
     return profile?.favorite_shows ?? [];
@@ -85,15 +85,43 @@ export function UserProfilePage() {
     refreshProfile();
   }, [refreshProfile]);
 
-  // Recent watched (from logs)
-  const recentWatched = useMemo(() => {
-    return [...userLogs].slice(0, 6);
-  }, [userLogs]);
+  const recentWatched = useMemo(() => [...userLogs].slice(0, 6), [userLogs]);
 
-  // Recent reviewed
   const recentReviewed = useMemo(() => {
     return userLogs.filter((l) => l.review && l.review.trim()).slice(0, 6);
   }, [userLogs]);
+
+  // Filtered collections for tab views
+  const watchlistShows = useMemo(() => {
+    return userShows.filter((s) => s.watchlisted);
+  }, [userShows]);
+
+  const likedShows = useMemo(() => {
+    return userShows.filter((s) => s.liked);
+  }, [userShows]);
+
+  const reviewedLogs = useMemo(() => {
+    return userLogs.filter((l) => l.review && l.review.trim());
+  }, [userLogs]);
+
+  // Convert UserShow to TVShow for ShowPosterCard
+  function userShowToTVShow(s: UserShow): TVShow {
+    return {
+      id: s.show_id,
+      name: s.show_name,
+      original_name: s.show_name,
+      overview: "",
+      poster_path: s.show_poster_path,
+      backdrop_path: s.show_backdrop_path,
+      first_air_date: s.show_first_air_date ?? "",
+      vote_average: 0,
+      vote_count: 0,
+      popularity: 0,
+      genre_ids: [],
+      origin_country: [],
+      original_language: "",
+    };
+  }
 
   if (loading) {
     return (
@@ -103,6 +131,115 @@ export function UserProfilePage() {
     );
   }
 
+  // Tab view: if tab is set, render the filtered collection
+  if (tab) {
+    const TAB_CONFIG = {
+      watchlist: {
+        title: "Watchlist",
+        icon: Bookmark,
+        emptyTitle: "Your watchlist is empty",
+        emptyDesc: "Browse shows and add them to your watchlist to keep track of what you want to watch next.",
+        items: watchlistShows,
+      },
+      likes: {
+        title: "Likes",
+        icon: Heart,
+        emptyTitle: "No liked shows yet",
+        emptyDesc: "Tap the heart on any show to add it to your likes.",
+        items: likedShows,
+      },
+      reviews: {
+        title: "Reviews",
+        icon: Star,
+        emptyTitle: "No reviews yet",
+        emptyDesc: "Write a review for a show you've watched to see it here.",
+        items: reviewedLogs,
+      },
+    } as const;
+
+    const config = TAB_CONFIG[tab];
+    const TabIcon = config.icon;
+
+    return (
+      <>
+        <SEOMeta title={`${config.title} — Aftershow`} />
+        <div className="w-full max-w-screen-lg mx-auto px-4 py-4 space-y-5 md:py-8">
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            <Link to="/profile" className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">
+              <Tv className="size-5" />
+            </Link>
+            <div className="flex items-center gap-2">
+              <TabIcon className="size-5 text-primary" />
+              <h1 className="font-display text-lg font-bold text-foreground tracking-tight">
+                {config.title}
+              </h1>
+              <span className="text-sm text-muted-foreground">({config.items.length})</span>
+            </div>
+          </div>
+
+          {/* Tab navigation */}
+          <div className="flex gap-1 border-b border-border/50">
+            {(["watchlist", "likes", "reviews"] as const).map((t) => (
+              <Link
+                key={t}
+                to={`/profile/${t}`}
+                className={cn(
+                  "px-4 py-2 text-sm font-medium capitalize transition-colors relative",
+                  tab === t
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t}
+                {tab === t && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+                )}
+              </Link>
+            ))}
+          </div>
+
+          {/* Content */}
+          {tab === "reviews" ? (
+            config.items.length > 0 ? (
+              <div className="divide-y divide-border/30">
+                {(config.items as UserLog[]).map((log) => (
+                  <ReviewLogEntry key={log.id} log={log} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={Star}
+                title={config.emptyTitle}
+                description={config.emptyDesc}
+                action={{ label: "Browse Shows", to: "/shows" }}
+              />
+            )
+          ) : config.items.length > 0 ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+              {(config.items as UserShow[]).map((s) => (
+                <ShowPosterCard
+                  key={s.id}
+                  show={userShowToTVShow(s)}
+                  size="md"
+                  className="w-full"
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={TabIcon}
+              title={config.emptyTitle}
+              description={config.emptyDesc}
+              action={{ label: "Browse Shows", to: "/shows" }}
+            />
+          )}
+        </div>
+      </>
+    );
+  }
+
+  // Default profile view
   return (
     <>
       <SEOMeta title={`${displayName} — Aftershow`} />
@@ -121,7 +258,6 @@ export function UserProfilePage() {
               <h1 className="font-display text-lg font-bold text-foreground tracking-tight truncate">
                 {displayName}
               </h1>
-              {/* Pro badge — omit if no premium flag */}
             </div>
             <p className="text-xs text-muted-foreground">@{handle}</p>
             <div className="flex gap-3 text-xs text-muted-foreground pt-1">
@@ -156,6 +292,15 @@ export function UserProfilePage() {
           <StatBlock label="Lists" value={listCount} />
           <StatBlock label="Reviews" value={reviewCount} />
         </div>
+
+        {/* Quick links to Watchlist / Likes / Reviews */}
+        {isOwnProfile && (
+          <div className="grid grid-cols-3 gap-2">
+            <QuickLink to="/profile/watchlist" icon={Bookmark} label="Watchlist" count={watchlistShows.length} />
+            <QuickLink to="/profile/likes" icon={Heart} label="Likes" count={likedShows.length} />
+            <QuickLink to="/profile/reviews" icon={Star} label="Reviews" count={reviewedLogs.length} />
+          </div>
+        )}
 
         {/* Favorite Shows */}
         {(favoriteShows.length > 0 || isOwnProfile) && (
@@ -212,7 +357,7 @@ export function UserProfilePage() {
           <section className="space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Recent Reviewed</h2>
-            <Link to="/journal" className="text-xs text-accent hover:underline">See All</Link>
+            <Link to="/profile/reviews" className="text-xs text-accent hover:underline">See All</Link>
           </div>
           <div className="grid grid-cols-3 gap-2">
             {recentReviewed.slice(0, 3).map((log) => (
@@ -247,6 +392,73 @@ export function UserProfilePage() {
         />
       )}
     </>
+  );
+}
+
+function ReviewLogEntry({ log }: { log: UserLog }) {
+  const [imgError, setImgError] = useState(false);
+  const ratingIcon = getShowRatingIcon(log.show_id);
+
+  return (
+    <div className="py-5 flex gap-3">
+      <Link to={`/show/${log.show_id}`} className="shrink-0">
+        <div className="w-16 aspect-poster rounded-lg overflow-hidden bg-muted border border-border/50">
+          {log.show_poster_path && !imgError ? (
+            <img
+              src={bestPosterUrl({ id: log.show_id, poster_path: log.show_poster_path }, "w185")}
+              alt={log.show_name}
+              loading="lazy"
+              onError={() => setImgError(true)}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-secondary/30">
+              <Tv className="size-5 text-muted-foreground/30" strokeWidth={1} />
+            </div>
+          )}
+        </div>
+      </Link>
+      <div className="flex-1 min-w-0">
+        <Link to={`/show/${log.show_id}`} className="text-sm font-semibold text-foreground hover:text-primary transition-colors">
+          {log.show_name}
+        </Link>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {new Date(log.watched_date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+          {log.rewatch && <span className="ml-1.5">Rewatched</span>}
+        </p>
+        {log.rating != null && (
+          <div className="mt-2 flex items-center gap-2">
+            <StarRating value={log.rating} readOnly size="sm" icon={ratingIcon} />
+            {log.vibe_tag && <VibeTagBadge value={log.vibe_tag} />}
+          </div>
+        )}
+        {log.rating == null && log.vibe_tag && (
+          <div className="mt-2"><VibeTagBadge value={log.vibe_tag} /></div>
+        )}
+        {log.review && (
+          <p className="text-sm text-foreground/80 leading-7 mt-2">
+            {log.contains_spoiler ? (
+              <span className="text-xs text-muted-foreground italic">Contains spoilers — view on show page</span>
+            ) : (
+              log.review
+            )}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QuickLink({ to, icon: Icon, label, count }: { to: string; icon: typeof Bookmark; label: string; count: number }) {
+  return (
+    <Link
+      to={to}
+      className="flex flex-col items-center gap-1 rounded-xl border border-border/50 bg-card p-3 hover:border-primary/40 hover:bg-secondary/30 transition-all"
+    >
+      <Icon className="size-5 text-muted-foreground" />
+      <span className="text-xs font-semibold text-foreground">{count}</span>
+      <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</span>
+    </Link>
   );
 }
 

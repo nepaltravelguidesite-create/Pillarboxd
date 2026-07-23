@@ -11,10 +11,10 @@ const MENU_ITEMS = [
   { to: "/", icon: Home, label: "Home", end: true },
   { to: "/shows", icon: Tv, label: "Shows", end: true },
   { to: "/log", icon: BookOpen, label: "Diary", end: true },
-  { to: "/journal", icon: Star, label: "Reviews", end: true },
-  { to: "/shows?filter=watchlist", icon: Bookmark, label: "Watchlist", end: true },
+  { to: "/profile/reviews", icon: Star, label: "Reviews", end: true },
+  { to: "/profile/watchlist", icon: Bookmark, label: "Watchlist", end: true },
   { to: "/lists", icon: List, label: "Lists", end: true },
-  { to: "/journal?filter=likes", icon: Heart, label: "Likes", end: true },
+  { to: "/profile/likes", icon: Heart, label: "Likes", end: true },
   { to: "/settings", icon: Settings, label: "Settings", end: true },
 ] as const;
 

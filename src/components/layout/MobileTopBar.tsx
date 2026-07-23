@@ -22,7 +22,7 @@ export function MobileTopBar({ onMenuClick }: MobileTopBarProps) {
 
         {/* Logo */}
         <Link to="/" className="flex items-center">
-          <AftershowLogo size={20} showWordmark={false} />
+          <AftershowLogo size={22} showWordmark />
         </Link>
 
         {/* Right: search + notifications */}
