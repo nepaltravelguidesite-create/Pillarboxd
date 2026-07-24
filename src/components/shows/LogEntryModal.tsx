@@ -123,7 +123,6 @@ export function LogEntryModal({
         rewatch,
         rating,
         contains_spoiler: containsSpoilers,
-        vibe_tag: null,
         season_number: seasonNumber,
       };
 

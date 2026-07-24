@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useRef } from "react";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RatingIcon } from "@/lib/showRatingIcons";
@@ -93,27 +93,6 @@ export function StarRating({
     }
   }
 
-  // -------------------------------------------------------------------------
-  // Click fallback for non-pointer devices
-  // -------------------------------------------------------------------------
-
-  const handleClick = useCallback(
-    (segment: number) => {
-      if (readOnly || !onChange || isDragging) return;
-
-      if (currentSegments === segment) {
-        onChange(null);
-        setJustRated(null);
-      } else {
-        const newRating = segment / 2;
-        onChange(newRating);
-        setJustRated(segment);
-        setTimeout(() => setJustRated(null), 300);
-      }
-    },
-    [readOnly, onChange, isDragging, currentSegments]
-  );
-
   return (
     <div
       ref={containerRef}
@@ -167,7 +146,6 @@ export function StarRating({
             <div
               className="absolute inset-0 overflow-hidden"
               style={{ width: px / 2 }}
-              onClick={() => handleClick(leftSegment)}
             >
               {CustomIcon ? (
                 <CustomIcon
@@ -199,7 +177,6 @@ export function StarRating({
             <div
               className="absolute top-0 overflow-hidden"
               style={{ width: px / 2, left: px / 2, height: px }}
-              onClick={() => handleClick(rightSegment)}
             >
               {CustomIcon ? (
                 <CustomIcon
