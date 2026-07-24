@@ -4,7 +4,7 @@ import { type TVShow } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
 import { StarRating } from "@/components/shows/StarRating";
 import { getShowRatingIcon } from "@/lib/showRatingIcons";
-import { Loader2, Calendar, X } from "lucide-react";
+import { Loader2, Calendar, X, Star } from "lucide-react";
 import { toast } from "sonner";
 
 type Season = {
@@ -25,6 +25,7 @@ interface LogEntryModalProps {
   initialRating?: number | null;
   initialSeasonNumber?: number | null;
   existingLog?: UserLog | null;
+  showLogs?: UserLog[];
   onSuccess?: () => void;
 }
 
@@ -36,6 +37,7 @@ export function LogEntryModal({
   initialRating = null,
   initialSeasonNumber = null,
   existingLog = null,
+  showLogs = [],
   onSuccess,
 }: LogEntryModalProps) {
   const { addLog, updateLog } = useUserData();
@@ -77,6 +79,26 @@ export function LogEntryModal({
       setSubmitting(false);
     }
   }, [open, show.id, initialRating, initialSeasonNumber, existingLog]);
+
+  function handleScopeChange(seasonNum: number | null) {
+    setSeasonNumber(seasonNum);
+    const existing = showLogs.find(
+      (l) => l.show_id === show.id && l.season_number === seasonNum
+    );
+    if (existing) {
+      setWatchedDate(existing.watched_date ?? null);
+      setRating(existing.rating);
+      setReview(existing.review ?? "");
+      setContainsSpoilers(existing.contains_spoiler);
+      setRewatch(existing.rewatch);
+    } else {
+      setWatchedDate(new Date().toISOString().slice(0, 10));
+      setRating(seasonNum === null ? initialRating : null);
+      setReview("");
+      setContainsSpoilers(false);
+      setRewatch(false);
+    }
+  }
 
   if (!open) return null;
 
@@ -169,17 +191,24 @@ export function LogEntryModal({
               <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
                 <ScopePill
                   active={seasonNumber === null}
-                  onClick={() => setSeasonNumber(null)}
+                  onClick={() => handleScopeChange(null)}
                   label="Overall Show"
+                  rating={showLogs.find((l) => l.show_id === show.id && l.season_number === null)?.rating ?? null}
                 />
-                {realSeasons.map((s) => (
-                  <ScopePill
-                    key={s.id}
-                    active={seasonNumber === s.season_number}
-                    onClick={() => setSeasonNumber(s.season_number)}
-                    label={s.name}
-                  />
-                ))}
+                {realSeasons.map((s) => {
+                  const seasonLog = showLogs.find(
+                    (l) => l.show_id === show.id && l.season_number === s.season_number && l.rating != null
+                  );
+                  return (
+                    <ScopePill
+                      key={s.id}
+                      active={seasonNumber === s.season_number}
+                      onClick={() => handleScopeChange(s.season_number)}
+                      label={s.name}
+                      rating={seasonLog?.rating ?? null}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}
@@ -322,19 +351,25 @@ export function LogEntryModal({
   );
 }
 
-function ScopePill({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+function ScopePill({ active, onClick, label, rating }: { active: boolean; onClick: () => void; label: string; rating?: number | null }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
+        "shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
         active
           ? "bg-primary text-primary-foreground"
           : "bg-secondary text-muted-foreground hover:text-foreground"
       )}
     >
       {label}
+      {rating != null && (
+        <span className="flex items-center gap-0.5">
+          <Star className="size-3 fill-current" />
+          {rating}
+        </span>
+      )}
     </button>
   );
 }

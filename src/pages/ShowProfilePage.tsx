@@ -18,7 +18,6 @@ import {
 import { cn } from "@/lib/utils";
 import { SEOMeta } from "@/components/SEOMeta";
 import { StarRating } from "@/components/shows/StarRating";
-import { getShowRatingIcon } from "@/lib/showRatingIcons";
 import { LogEntryModal } from "@/components/shows/LogEntryModal";
 import { AddToListModal } from "@/components/shows/AddToListModal";
 import { ShowCarousel } from "@/components/shows/ShowCarousel";
@@ -27,7 +26,7 @@ import { ReviewCard } from "@/components/shows/ReviewCard";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2, Heart, Bookmark, Plus, ChevronLeft, Eye, List as ListIcon,
-  Tv, CheckCircle, BookmarkCheck, Star,
+  Tv, CheckCircle, BookmarkCheck,
 } from "lucide-react";
 
 type EditorialListPreview = {
@@ -57,7 +56,7 @@ export function ShowProfilePage() {
   // Find existing review log for edit-in-place (scoped by season_number)
   const openWriteReview = useCallback((seasonNum: number | null = null) => {
     const existing = userLogs.find(
-      (l) => l.show_id === numericId && l.season_number === seasonNum && l.review && l.review.trim()
+      (l) => l.show_id === numericId && l.season_number === seasonNum
     ) ?? null;
     setExistingLogForEdit(existing);
     setLogModalSeason(seasonNum);
@@ -121,9 +120,9 @@ export function ShowProfilePage() {
   }, [showDetail?.genres]);
 
   const ratedReviews = reviews.filter((r) => r.rating !== null);
-  const realSeasons = useMemo(
-    () => (showDetail?.seasons ?? []).filter((s) => s.season_number > 0),
-    [showDetail]
+  const showLogs = useMemo(
+    () => numericId ? userLogs.filter((l) => l.show_id === numericId) : [],
+    [userLogs, numericId]
   );
 
   if (loading) {
@@ -572,46 +571,6 @@ export function ShowProfilePage() {
             </aside>
           </div>
 
-          {/* Seasons — with per-season rating entry point */}
-          {realSeasons.length > 0 && (
-            <div className="py-4">
-              <h3 className="font-display text-lg font-semibold text-foreground mb-3 px-4 sm:px-0">Seasons</h3>
-              <div className="space-y-2 px-4 sm:px-0">
-                {realSeasons.map((season) => {
-                  const seasonLog = userLogs.find(
-                    (l) => l.show_id === numericId && l.season_number === season.season_number
-                  );
-                  return (
-                    <div key={season.id} className="flex items-center gap-3 p-2.5 rounded-lg border border-border/40 bg-card/40">
-                      <div className="w-10 h-14 rounded overflow-hidden bg-muted shrink-0">
-                        {season.poster_path ? (
-                          <img src={posterUrl(season.poster_path, "w92")} alt={season.name} loading="lazy" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center"><Tv className="size-5 text-muted-foreground/30" strokeWidth={1} /></div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{season.name}</p>
-                        <p className="text-xs text-muted-foreground">{season.episode_count} episodes{season.air_date && ` · ${season.air_date.slice(0, 4)}`}</p>
-                      </div>
-                      {seasonLog?.rating != null && (
-                        <StarRating value={seasonLog.rating} readOnly size="sm" icon={getShowRatingIcon(numericId!)} />
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => openWriteReview(season.season_number)}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-secondary text-xs font-medium text-foreground hover:bg-secondary/70 transition-colors shrink-0"
-                      >
-                        <Star className="size-3" />
-                        {seasonLog?.review?.trim() ? "Edit" : "Rate"}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {/* Similar shows */}
           {similar.length > 0 && (
             <div className="py-4">
@@ -711,6 +670,7 @@ export function ShowProfilePage() {
         initialRating={showData?.rating ?? null}
         initialSeasonNumber={logModalSeason}
         existingLog={existingLogForEdit}
+        showLogs={showLogs}
         onSuccess={refetchReviews}
       />
       <AddToListModal open={addToListOpen} onOpenChange={setAddToListOpen} show={show} />
