@@ -66,7 +66,6 @@ export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "review
     l.watched_date?.startsWith(String(thisYear))
   ).length;
   const listCount = 0;
-  const reviewCount = userLogs.filter((l) => l.review && l.review.trim()).length;
 
   const favoriteShows: FavoriteShow[] = useMemo(() => {
     if (isOwnProfile) return user?.favoriteShows ?? [];
@@ -286,11 +285,10 @@ export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "review
         </div>
 
         {/* Stat row */}
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <StatBlock label="Total Shows" value={totalShows} />
           <StatBlock label="This Year" value={showsThisYear} />
           <StatBlock label="Lists" value={listCount} />
-          <StatBlock label="Reviews" value={reviewCount} />
         </div>
 
         {/* Quick links to Watchlist / Likes / Reviews */}
@@ -318,7 +316,7 @@ export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "review
             )}
           </div>
           {favoriteShows.length > 0 ? (
-            <div className="grid grid-cols-4 gap-2 max-w-[280px]">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-3">
               {favoriteShows.map((show) => (
                 <FavoritePoster key={show.tmdb_id} show={show} />
               ))}
@@ -344,8 +342,8 @@ export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "review
             <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Recent Watched</h2>
             <Link to="/log" className="text-xs text-accent hover:underline">See All</Link>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            {recentWatched.slice(0, 3).map((log) => (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
+            {recentWatched.slice(0, 6).map((log) => (
               <RatedPoster key={log.id} log={log} />
             ))}
           </div>
@@ -359,8 +357,8 @@ export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "review
             <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Recent Reviewed</h2>
             <Link to="/profile/reviews" className="text-xs text-accent hover:underline">See All</Link>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            {recentReviewed.slice(0, 3).map((log) => (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
+            {recentReviewed.slice(0, 6).map((log) => (
               <RatedPoster key={log.id} log={log} />
             ))}
           </div>
@@ -498,11 +496,18 @@ function RatedPoster({ log }: { log: UserLog }) {
           <div className="w-full h-full flex items-center justify-center bg-secondary/30"><Tv className="size-6 text-muted-foreground/30" strokeWidth={1} /></div>
         )}
       </div>
-      {log.rating !== null && (
-        <div className="absolute bottom-1 right-1 rounded-full bg-background/90 backdrop-blur-sm px-1.5 py-0.5 flex items-center gap-0.5">
-          <StarRating value={log.rating} readOnly size="sm" icon={ratingIcon} />
-        </div>
-      )}
+      <div className="absolute bottom-1 right-1 left-1 flex items-end justify-between gap-1">
+        {log.rewatch && (
+          <span className="rounded-md bg-primary/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground backdrop-blur-sm">
+            Rewatch
+          </span>
+        )}
+        {log.rating !== null && (
+          <div className="ml-auto rounded-full bg-background/90 backdrop-blur-sm px-1.5 py-0.5 flex items-center gap-0.5">
+            <StarRating value={log.rating} readOnly size="sm" icon={ratingIcon} />
+          </div>
+        )}
+      </div>
     </Link>
   );
 }
