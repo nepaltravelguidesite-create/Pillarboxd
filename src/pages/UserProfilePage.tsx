@@ -421,7 +421,7 @@ function ReviewLogEntry({ log }: { log: UserLog }) {
           {log.show_name}
         </Link>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {new Date(log.watched_date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+          {log.watched_date ? new Date(log.watched_date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "No date"}
           {log.rewatch && <span className="ml-1.5">Rewatched</span>}
         </p>
         {log.rating != null && (

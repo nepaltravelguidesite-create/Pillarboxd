@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useShowDetail } from "@/hooks/use-tmdb";
-import { useUserData } from "@/context/UserDataContext";
+import { useUserData, type UserLog } from "@/context/UserDataContext";
 import { useSocial, type ShowList } from "@/context/SocialContext";
 import { useAuth } from "@/context/AuthContext";
+import { useShowReviews } from "@/hooks/useShowReviews";
 import {
   posterUrl,
   bestPosterUrl,
@@ -17,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { SEOMeta } from "@/components/SEOMeta";
 import { StarRating } from "@/components/shows/StarRating";
+import { getShowRatingIcon } from "@/lib/showRatingIcons";
 import { LogEntryModal } from "@/components/shows/LogEntryModal";
 import { AddToListModal } from "@/components/shows/AddToListModal";
 import { ShowCarousel } from "@/components/shows/ShowCarousel";
@@ -25,17 +27,8 @@ import { ReviewCard } from "@/components/shows/ReviewCard";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2, Heart, Bookmark, Plus, ChevronLeft, Eye, List as ListIcon,
-  Tv, CheckCircle, BookmarkCheck,
+  Tv, CheckCircle, BookmarkCheck, Star,
 } from "lucide-react";
-import type { ReviewWithAuthor } from "@/components/shows/ReviewCard";
-
-type LogRow = {
-  id: string; user_id: string; show_id: number; show_name: string;
-  show_poster_path: string | null; show_first_air_date: string | null;
-  watched_date: string; rating: number | null; review: string;
-  rewatch: boolean; contains_spoiler: boolean; vibe_tag: string | null; created_at: string;
-};
-type ProfileRow = { id: string; username: string; display_name: string; avatar_url: string | null };
 
 type EditorialListPreview = {
   id: string; title: string; description: string | null;
@@ -49,58 +42,27 @@ export function ShowProfilePage() {
   const { showId } = useParams<{ showId: string }>();
   const numericId = showId ? parseInt(showId, 10) : null;
   const { data: showDetail, loading, error } = useShowDetail(numericId);
-  const { toggleWatchlist, toggleLike, getShowData, setRating, setShowStatus } = useUserData();
+  const { toggleWatchlist, toggleLike, getShowData, setRating, setShowStatus, userLogs } = useUserData();
   const { isListSaved, saveList, unsaveList } = useSocial();
   const { user } = useAuth();
+  const { reviews, loading: reviewsLoading, refetch: refetchReviews } = useShowReviews(numericId);
   const [logModalOpen, setLogModalOpen] = useState(false);
+  const [logModalSeason, setLogModalSeason] = useState<number | null>(null);
+  const [existingLogForEdit, setExistingLogForEdit] = useState<UserLog | null>(null);
   const [addToListOpen, setAddToListOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"cast" | "crew" | "details">("cast");
-  const [reviews, setReviews] = useState<ReviewWithAuthor[]>([]);
-  const [reviewsLoading, setReviewsLoading] = useState(true);
   const [editorialLists, setEditorialLists] = useState<EditorialListPreview[]>([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!numericId) return;
-    setReviewsLoading(true);
-    (async () => {
-      try {
-        const { data: logs } = await supabase
-          .from("user_logs")
-          .select("*")
-          .eq("show_id", numericId)
-          .order("created_at", { ascending: false })
-          .limit(20);
-        if (!logs) { setReviews([]); return; }
-        const typedLogs = logs as LogRow[];
-        const userIds = [...new Set(typedLogs.map((l) => l.user_id))];
-        const { data: profiles } = await supabase.from("profiles").select("*").in("id", userIds);
-        const profileMap = new Map<string, ProfileRow>();
-        (profiles ?? []).forEach((p) => profileMap.set((p as ProfileRow).id, p as ProfileRow));
-        const logIds = typedLogs.map((l) => l.id);
-        const { data: likes } = await supabase.from("review_likes").select("log_id").in("log_id", logIds);
-        const likeCounts = new Map<string, number>();
-        (likes ?? []).forEach((l) => { const id = (l as { log_id: string }).log_id; likeCounts.set(id, (likeCounts.get(id) ?? 0) + 1); });
-        const { data: comments } = await supabase.from("comments").select("log_id").in("log_id", logIds);
-        const commentCounts = new Map<string, number>();
-        (comments ?? []).forEach((c) => { const id = (c as { log_id: string }).log_id; commentCounts.set(id, (commentCounts.get(id) ?? 0) + 1); });
-        const merged: ReviewWithAuthor[] = typedLogs.map((l) => {
-          const profile = profileMap.get(l.user_id);
-          return {
-            id: l.id, user_id: l.user_id, show_id: l.show_id, show_name: l.show_name,
-            show_poster_path: l.show_poster_path, show_first_air_date: l.show_first_air_date,
-            watched_date: l.watched_date, rating: l.rating == null ? null : Number(l.rating),
-            review: l.review, rewatch: l.rewatch, contains_spoiler: l.contains_spoiler, vibe_tag: l.vibe_tag,
-            created_at: l.created_at, author_username: profile?.username ?? "unknown",
-            author_display_name: profile?.display_name ?? profile?.username ?? "Unknown",
-            author_avatar_url: profile?.avatar_url ?? null,
-            like_count: likeCounts.get(l.id) ?? 0, comment_count: commentCounts.get(l.id) ?? 0,
-          };
-        });
-        setReviews(merged);
-      } finally { setReviewsLoading(false); }
-    })();
-  }, [numericId]);
+  // Find existing review log for edit-in-place (scoped by season_number)
+  const openWriteReview = useCallback((seasonNum: number | null = null) => {
+    const existing = userLogs.find(
+      (l) => l.show_id === numericId && l.season_number === seasonNum && l.review && l.review.trim()
+    ) ?? null;
+    setExistingLogForEdit(existing);
+    setLogModalSeason(seasonNum);
+    setLogModalOpen(true);
+  }, [userLogs, numericId]);
 
   // Fetch editorial lists that contain this show, with first-4-poster previews
   useEffect(() => {
@@ -158,6 +120,12 @@ export function ShowProfilePage() {
     }));
   }, [showDetail?.genres]);
 
+  const ratedReviews = reviews.filter((r) => r.rating !== null);
+  const realSeasons = useMemo(
+    () => (showDetail?.seasons ?? []).filter((s) => s.season_number > 0),
+    [showDetail]
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -192,7 +160,7 @@ export function ShowProfilePage() {
     original_language: showDetail.original_language,
   };
 
-  const ratedReviews = reviews.filter((r) => r.rating !== null);
+
   const histogram = [0, 0, 0, 0, 0];
   ratedReviews.forEach((r) => {
     if (r.rating && r.rating >= 1 && r.rating <= 5) {
@@ -341,7 +309,7 @@ export function ShowProfilePage() {
             </div>
 
             <div className="mt-3 space-y-2">
-              <button onClick={() => setLogModalOpen(true)} className="flex items-center justify-center gap-2 w-full h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150">
+              <button onClick={() => openWriteReview(null)} className="flex items-center justify-center gap-2 w-full h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150">
                 <Plus className="size-4" /> Rate or Review
               </button>
               <button onClick={() => setAddToListOpen(true)} className="flex items-center justify-center gap-2 w-full h-11 rounded-full border border-border text-foreground font-medium text-sm hover:bg-secondary/50 hover:-translate-y-px active:translate-y-0 transition-all duration-150">
@@ -539,7 +507,7 @@ export function ShowProfilePage() {
                       size="lg"
                     />
                   </div>
-                  <button onClick={() => setLogModalOpen(true)} className="flex items-center justify-center gap-2 w-full h-10 rounded-md bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150">
+                  <button onClick={() => openWriteReview(null)} className="flex items-center justify-center gap-2 w-full h-10 rounded-md bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150">
                     <Plus className="size-4" /> Rate or Review
                   </button>
                 </div>
@@ -603,6 +571,46 @@ export function ShowProfilePage() {
               </div>
             </aside>
           </div>
+
+          {/* Seasons — with per-season rating entry point */}
+          {realSeasons.length > 0 && (
+            <div className="py-4">
+              <h3 className="font-display text-lg font-semibold text-foreground mb-3 px-4 sm:px-0">Seasons</h3>
+              <div className="space-y-2 px-4 sm:px-0">
+                {realSeasons.map((season) => {
+                  const seasonLog = userLogs.find(
+                    (l) => l.show_id === numericId && l.season_number === season.season_number
+                  );
+                  return (
+                    <div key={season.id} className="flex items-center gap-3 p-2.5 rounded-lg border border-border/40 bg-card/40">
+                      <div className="w-10 h-14 rounded overflow-hidden bg-muted shrink-0">
+                        {season.poster_path ? (
+                          <img src={posterUrl(season.poster_path, "w92")} alt={season.name} loading="lazy" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center"><Tv className="size-5 text-muted-foreground/30" strokeWidth={1} /></div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{season.name}</p>
+                        <p className="text-xs text-muted-foreground">{season.episode_count} episodes{season.air_date && ` · ${season.air_date.slice(0, 4)}`}</p>
+                      </div>
+                      {seasonLog?.rating != null && (
+                        <StarRating value={seasonLog.rating} readOnly size="sm" icon={getShowRatingIcon(numericId!)} />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => openWriteReview(season.season_number)}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-secondary text-xs font-medium text-foreground hover:bg-secondary/70 transition-colors shrink-0"
+                      >
+                        <Star className="size-3" />
+                        {seasonLog?.review?.trim() ? "Edit" : "Rate"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Similar shows */}
           {similar.length > 0 && (
@@ -695,7 +703,16 @@ export function ShowProfilePage() {
 
       </div>
 
-      <LogEntryModal open={logModalOpen} onOpenChange={setLogModalOpen} show={show} initialRating={showData?.rating ?? null} />
+      <LogEntryModal
+        open={logModalOpen}
+        onOpenChange={setLogModalOpen}
+        show={show}
+        seasons={showDetail?.seasons ?? []}
+        initialRating={showData?.rating ?? null}
+        initialSeasonNumber={logModalSeason}
+        existingLog={existingLogForEdit}
+        onSuccess={refetchReviews}
+      />
       <AddToListModal open={addToListOpen} onOpenChange={setAddToListOpen} show={show} />
     </>
   );

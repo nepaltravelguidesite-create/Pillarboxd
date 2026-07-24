@@ -36,13 +36,16 @@ export default function LogPage() {
   const grouped = useMemo(() => {
     const map = new Map<string, UserLog[]>();
     for (const log of userLogs) {
-      const list = map.get(log.watched_date) ?? [];
+      const key = log.watched_date ?? "No date";
+      const list = map.get(key) ?? [];
       list.push(log);
-      map.set(log.watched_date, list);
+      map.set(key, list);
     }
-    return Array.from(map.entries()).sort(([a], [b]) =>
-      a < b ? 1 : a > b ? -1 : 0
-    );
+    return Array.from(map.entries()).sort(([a], [b]) => {
+      if (a === "No date") return 1;
+      if (b === "No date") return -1;
+      return a < b ? 1 : a > b ? -1 : 0;
+    });
   }, [userLogs]);
 
   // -------------------------------------------------------------------------

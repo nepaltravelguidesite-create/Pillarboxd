@@ -21,6 +21,7 @@ export interface ReviewWithAuthor {
   rewatch: boolean;
   contains_spoiler: boolean;
   vibe_tag?: string | null;
+  season_number?: number | null;
   created_at: string;
   author_username: string;
   author_display_name: string;

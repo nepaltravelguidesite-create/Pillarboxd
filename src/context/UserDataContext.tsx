@@ -41,7 +41,7 @@ export interface UserLog {
   show_poster_path: string | null;
   show_backdrop_path: string | null;
   show_first_air_date: string | null;
-  watched_date: string;
+  watched_date: string | null;
   seasons_watched: number;
   episodes_watched: number;
   review: string | null;
@@ -49,6 +49,7 @@ export interface UserLog {
   rating: number | null;
   contains_spoiler: boolean;
   vibe_tag: string | null;
+  season_number: number | null;
   created_at: string;
 }
 
@@ -62,6 +63,7 @@ interface UserDataContextValue {
   toggleWatchlist: (show: TVShow) => Promise<void>;
   setShowStatus: (show: TVShow, status: WatchStatus | null) => Promise<void>;
   addLog: (log: Omit<UserLog, "id" | "user_id" | "created_at">) => Promise<void>;
+  updateLog: (logId: string, patch: Partial<Omit<UserLog, "id" | "user_id" | "created_at">>) => Promise<void>;
   deleteLog: (logId: string) => Promise<void>;
 }
 
@@ -107,7 +109,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
           .from("user_logs")
           .select("*")
           .eq("user_id", user.id)
-          .order("watched_date", { ascending: false })
+          .order("watched_date", { ascending: false, nullsFirst: false })
           .order("created_at", { ascending: false }),
       ]);
 
@@ -342,6 +344,30 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
   );
 
   // -------------------------------------------------------------------------
+  // updateLog
+  // -------------------------------------------------------------------------
+
+  const updateLog = useCallback(
+    async (logId: string, patch: Partial<Omit<UserLog, "id" | "user_id" | "created_at">>) => {
+      const { data, error } = await supabase
+        .from("user_logs")
+        .update(patch)
+        .eq("id", logId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("[UserData] updateLog error:", error);
+        toast.error("Failed to update diary entry");
+        return;
+      }
+
+      setUserLogs((prev) => prev.map((l) => (l.id === logId ? (data as UserLog) : l)));
+    },
+    []
+  );
+
+  // -------------------------------------------------------------------------
   // deleteLog
   // -------------------------------------------------------------------------
 
@@ -375,6 +401,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
         toggleWatchlist,
         setShowStatus,
         addLog,
+        updateLog,
         deleteLog,
       }}
     >

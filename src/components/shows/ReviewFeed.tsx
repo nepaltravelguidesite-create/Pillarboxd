@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { MessageCircle } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { useSocial } from "@/context/SocialContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { ReviewCard, type ReviewWithAuthor } from "@/components/shows/ReviewCard";
+import { ReviewCard } from "@/components/shows/ReviewCard";
+import { useShowReviews } from "@/hooks/useShowReviews";
 
 interface ReviewFeedProps {
   showId: number;
@@ -14,124 +14,20 @@ type SortTab = "newest" | "liked" | "friends";
 
 const PAGE_SIZE = 5;
 
-type LogRow = {
-  id: string;
-  user_id: string;
-  show_id: number;
-  show_name: string;
-  watched_date: string;
-  rating: number | null;
-  review: string;
-  rewatch: boolean;
-  contains_spoiler: boolean;
-  created_at: string;
-};
-
-type ProfileRow = {
-  id: string;
-  username: string;
-  display_name: string;
-  avatar_url: string | null;
-};
-
 export function ReviewFeed({ showId }: ReviewFeedProps) {
   const { following } = useSocial();
-  const [loading, setLoading] = useState(true);
-  const [reviews, setReviews] = useState<ReviewWithAuthor[]>([]);
+  const { reviews, loading } = useShowReviews(showId);
   const [tab, setTab] = useState<SortTab>("newest");
   const [page, setPage] = useState(1);
 
-  const loadReviews = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data: logs } = await supabase
-        .from("user_logs")
-        .select("*")
-        .eq("show_id", showId)
-        .not("review", "is", null)
-        .neq("review", "")
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (!logs || logs.length === 0) {
-        setReviews([]);
-        return;
-      }
-
-      const typedLogs = logs as LogRow[];
-
-      const userIds = [...new Set(typedLogs.map((l) => l.user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("*")
-        .in("id", userIds);
-
-      const profileMap = new Map<string, ProfileRow>();
-      (profiles ?? []).forEach((p) => {
-        const row = p as ProfileRow;
-        profileMap.set(row.id, row);
-      });
-
-      const logIds = typedLogs.map((l) => l.id);
-      const { data: likes } = await supabase
-        .from("review_likes")
-        .select("log_id")
-        .in("log_id", logIds);
-
-      const likeCounts = new Map<string, number>();
-      (likes ?? []).forEach((l) => {
-        const id = (l as { log_id: string }).log_id;
-        likeCounts.set(id, (likeCounts.get(id) ?? 0) + 1);
-      });
-
-      const { data: comments } = await supabase
-        .from("comments")
-        .select("log_id")
-        .in("log_id", logIds);
-
-      const commentCounts = new Map<string, number>();
-      (comments ?? []).forEach((c) => {
-        const id = (c as { log_id: string }).log_id;
-        commentCounts.set(id, (commentCounts.get(id) ?? 0) + 1);
-      });
-
-      const merged: ReviewWithAuthor[] = typedLogs.map((l) => {
-        const profile = profileMap.get(l.user_id);
-        return {
-          id: l.id,
-          user_id: l.user_id,
-          show_id: l.show_id,
-          show_name: l.show_name,
-          watched_date: l.watched_date,
-          rating: l.rating == null ? null : Number(l.rating),
-          review: l.review,
-          rewatch: l.rewatch,
-          contains_spoiler: l.contains_spoiler,
-          created_at: l.created_at,
-          author_username: profile?.username ?? "unknown",
-          author_display_name: profile?.display_name ?? profile?.username ?? "Unknown",
-          author_avatar_url: profile?.avatar_url ?? null,
-          like_count: likeCounts.get(l.id) ?? 0,
-          comment_count: commentCounts.get(l.id) ?? 0,
-        };
-      });
-
-      setReviews(merged);
-    } finally {
-      setLoading(false);
-    }
-  }, [showId]);
-
-  useEffect(() => {
-    loadReviews();
-  }, [loadReviews]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [tab]);
+  // Only show reviews that have actual review text
+  const reviewsWithText = useMemo(
+    () => reviews.filter((r) => r.review && r.review.trim()),
+    [reviews]
+  );
 
   const sortedReviews = useMemo(() => {
-    let list = [...reviews];
+    let list = [...reviewsWithText];
     if (tab === "liked") {
       list.sort((a, b) => b.like_count - a.like_count || b.created_at.localeCompare(a.created_at));
     } else if (tab === "friends") {
@@ -140,7 +36,7 @@ export function ReviewFeed({ showId }: ReviewFeedProps) {
       list.sort((a, b) => b.created_at.localeCompare(a.created_at));
     }
     return list;
-  }, [reviews, tab, following]);
+  }, [reviewsWithText, tab, following]);
 
   const visibleReviews = sortedReviews.slice(0, page * PAGE_SIZE);
   const hasMore = visibleReviews.length < sortedReviews.length;

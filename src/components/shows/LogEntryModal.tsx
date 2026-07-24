@@ -1,55 +1,94 @@
 import { useState, useEffect } from "react";
-import { useUserData } from "@/context/UserDataContext";
-import { bestPosterUrl, type TVShow } from "@/lib/tmdb";
+import { useUserData, type UserLog } from "@/context/UserDataContext";
+import { type TVShow } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
 import { StarRating } from "@/components/shows/StarRating";
 import { getShowRatingIcon } from "@/lib/showRatingIcons";
-import { Loader2, Calendar } from "lucide-react";
+import { Loader2, Calendar, X } from "lucide-react";
 import { toast } from "sonner";
-import { VibeTagPicker, type VibeTagValue } from "@/components/shows/VibeTag";
+
+type Season = {
+  id: number;
+  name: string;
+  season_number: number;
+  episode_count: number;
+  poster_path: string | null;
+  air_date: string;
+  overview: string;
+};
 
 interface LogEntryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   show: TVShow;
+  seasons?: Season[];
   initialRating?: number | null;
+  initialSeasonNumber?: number | null;
+  existingLog?: UserLog | null;
+  onSuccess?: () => void;
 }
 
-export function LogEntryModal({ open, onOpenChange, show, initialRating = null }: LogEntryModalProps) {
-  const { addLog } = useUserData();
+export function LogEntryModal({
+  open,
+  onOpenChange,
+  show,
+  seasons = [],
+  initialRating = null,
+  initialSeasonNumber = null,
+  existingLog = null,
+  onSuccess,
+}: LogEntryModalProps) {
+  const { addLog, updateLog } = useUserData();
 
-  const [watchedDate, setWatchedDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const isEditMode = !!existingLog;
+
+  const [watchedDate, setWatchedDate] = useState<string | null>(() =>
+    new Date().toISOString().slice(0, 10)
+  );
   const [rating, setRating] = useState<number | null>(null);
   const [review, setReview] = useState("");
   const [containsSpoilers, setContainsSpoilers] = useState(false);
   const [rewatch, setRewatch] = useState(false);
-  const [vibeTag, setVibeTag] = useState<VibeTagValue | null>(null);
+  const [seasonNumber, setSeasonNumber] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const ratingIcon = getShowRatingIcon(show.id);
 
+  // Only show real seasons (skip season 0 specials)
+  const realSeasons = seasons.filter((s) => s.season_number > 0);
+
   useEffect(() => {
     if (open) {
-      setWatchedDate(new Date().toISOString().slice(0, 10));
-      setRating(initialRating);
-      setReview("");
-      setContainsSpoilers(false);
-      setRewatch(false);
-      setVibeTag(null);
+      if (existingLog) {
+        setWatchedDate(existingLog.watched_date ?? null);
+        setRating(existingLog.rating);
+        setReview(existingLog.review ?? "");
+        setContainsSpoilers(existingLog.contains_spoiler);
+        setRewatch(existingLog.rewatch);
+        setSeasonNumber(existingLog.season_number);
+      } else {
+        setWatchedDate(new Date().toISOString().slice(0, 10));
+        setRating(initialRating);
+        setReview("");
+        setContainsSpoilers(false);
+        setRewatch(false);
+        setSeasonNumber(initialSeasonNumber);
+      }
       setSubmitting(false);
     }
-  }, [open, show.id, initialRating]);
+  }, [open, show.id, initialRating, initialSeasonNumber, existingLog]);
 
   if (!open) return null;
 
-  const year = show.first_air_date ? new Date(show.first_air_date).getFullYear() : "";
+  const headerText = isEditMode ? "Edit Your Review" : "Write a Review";
+  const submitText = isEditMode ? "Save Changes" : "Publish";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (rating === null) return;
     setSubmitting(true);
     try {
-      await addLog({
+      const payload = {
         show_id: show.id,
         show_name: show.name,
         show_poster_path: show.poster_path,
@@ -62,12 +101,21 @@ export function LogEntryModal({ open, onOpenChange, show, initialRating = null }
         rewatch,
         rating,
         contains_spoiler: containsSpoilers,
-        vibe_tag: vibeTag,
-      });
-      toast.success("Review published!");
+        vibe_tag: null,
+        season_number: seasonNumber,
+      };
+
+      if (isEditMode && existingLog) {
+        await updateLog(existingLog.id, payload);
+        toast.success("Review updated!");
+      } else {
+        await addLog(payload);
+        toast.success("Review published!");
+      }
+      onSuccess?.();
       onOpenChange(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to publish review");
+      toast.error(err instanceof Error ? err.message : "Failed to save review");
     } finally {
       setSubmitting(false);
     }
@@ -94,69 +142,54 @@ export function LogEntryModal({ open, onOpenChange, show, initialRating = null }
           <div className="w-10 h-1 rounded-full bg-border" />
         </div>
 
-        {/* Header */}
-        <div className="px-5 pt-3 pb-2 flex items-center justify-between">
-          <h2 className="font-display text-base font-bold text-foreground">Write a Review</h2>
+        {/* Compact header: show title + close button in one line */}
+        <div className="px-5 pt-2 pb-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <h2 className="font-display text-base font-bold text-foreground shrink-0">
+              {headerText}
+            </h2>
+            <span className="text-xs text-muted-foreground truncate">{show.name}</span>
+          </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Close"
           >
-            Cancel
+            <X className="size-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
-          {/* Selected show */}
-          <div className="flex items-center gap-3 py-2">
-            <div className="w-12 h-18 rounded-md overflow-hidden bg-muted shrink-0">
-              {show.poster_path ? (
-                <img src={bestPosterUrl(show, "w92")} alt={show.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-secondary/30" />
-              )}
+        <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-3">
+          {/* Season scope selector */}
+          {realSeasons.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Scope
+              </label>
+              <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+                <ScopePill
+                  active={seasonNumber === null}
+                  onClick={() => setSeasonNumber(null)}
+                  label="Overall Show"
+                />
+                {realSeasons.map((s) => (
+                  <ScopePill
+                    key={s.id}
+                    active={seasonNumber === s.season_number}
+                    onClick={() => setSeasonNumber(s.season_number)}
+                    label={s.name}
+                  />
+                ))}
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">{show.name}</p>
-              {year && <p className="text-xs text-muted-foreground">{year}</p>}
-            </div>
-          </div>
+          )}
 
-          {/* Date watched */}
-          <div className="space-y-1.5">
-            <label htmlFor="log-date" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Date Watched
-            </label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <input
-                id="log-date"
-                type="date"
-                value={watchedDate}
-                onChange={(e) => setWatchedDate(e.target.value)}
-                className={cn(
-                  "h-11 w-full rounded-md border border-input bg-background/40",
-                  "pl-10 pr-3 text-sm text-foreground",
-                  "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
-                  "transition-colors"
-                )}
-              />
-            </div>
-          </div>
-
-          {/* Quick-tag pills */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Quick Tag <span className="normal-case text-muted-foreground/60">(optional)</span>
-            </label>
-            <VibeTagPicker value={vibeTag} onChange={setVibeTag} />
-          </div>
-
-          {/* Star rating — large, tappable */}
+          {/* Star rating — primary, near top */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Rating
             </label>
-            <div className="flex items-center justify-center py-3 rounded-md border border-border/40 bg-background/20">
+            <div className="flex items-center justify-center py-2.5 rounded-md border border-border/40 bg-background/20">
               <StarRating
                 value={rating}
                 onChange={setRating}
@@ -166,7 +199,7 @@ export function LogEntryModal({ open, onOpenChange, show, initialRating = null }
             </div>
           </div>
 
-          {/* Review text */}
+          {/* Review text — primary, near top */}
           <div className="space-y-1.5">
             <label htmlFor="log-review" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Review
@@ -175,8 +208,8 @@ export function LogEntryModal({ open, onOpenChange, show, initialRating = null }
               id="log-review"
               value={review}
               onChange={(e) => setReview(e.target.value)}
-              rows={4}
-              placeholder="Share your thoughts on this show..."
+              rows={3}
+              placeholder="Share your thoughts..."
               className={cn(
                 "w-full rounded-md border border-input bg-background/40",
                 "px-3 py-2.5 text-sm text-foreground",
@@ -187,8 +220,42 @@ export function LogEntryModal({ open, onOpenChange, show, initialRating = null }
             />
           </div>
 
+          {/* Secondary controls below the fold */}
+          {/* Date watched — optional */}
+          <div className="space-y-1.5 pt-1">
+            <div className="flex items-center justify-between">
+              <label htmlFor="log-date" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Date Watched
+              </label>
+              {watchedDate && (
+                <button
+                  type="button"
+                  onClick={() => setWatchedDate(null)}
+                  className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors"
+                >
+                  I don't remember
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+              <input
+                id="log-date"
+                type="date"
+                value={watchedDate ?? ""}
+                onChange={(e) => setWatchedDate(e.target.value || null)}
+                className={cn(
+                  "h-11 w-full rounded-md border border-input bg-background/40",
+                  "pl-10 pr-3 text-sm text-foreground",
+                  "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
+                  "transition-colors"
+                )}
+              />
+            </div>
+          </div>
+
           {/* Rewatch toggle */}
-          <label className="flex items-center gap-2.5 cursor-pointer">
+          <label className="flex items-center gap-2.5 cursor-pointer pt-1">
             <button
               type="button"
               role="switch"
@@ -228,7 +295,7 @@ export function LogEntryModal({ open, onOpenChange, show, initialRating = null }
             </label>
           )}
 
-          {/* Publish button — disabled until rating is set */}
+          {/* Submit button */}
           <button
             type="submit"
             disabled={rating === null || submitting}
@@ -241,16 +308,33 @@ export function LogEntryModal({ open, onOpenChange, show, initialRating = null }
               "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
             )}
           >
-            {submitting ? <Loader2 className="size-4 animate-spin" /> : "Publish"}
+            {submitting ? <Loader2 className="size-4 animate-spin" /> : submitText}
           </button>
 
           {rating === null && (
             <p className="text-center text-xs text-muted-foreground">
-              Set a rating to publish your review
+              Set a rating to {isEditMode ? "save your review" : "publish your review"}
             </p>
           )}
         </form>
       </div>
     </div>
+  );
+}
+
+function ScopePill({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
+        active
+          ? "bg-primary text-primary-foreground"
+          : "bg-secondary text-muted-foreground hover:text-foreground"
+      )}
+    >
+      {label}
+    </button>
   );
 }
