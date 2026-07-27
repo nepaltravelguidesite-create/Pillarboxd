@@ -21,11 +21,11 @@
 */
 
 @theme inline {
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -67,8 +67,8 @@
   --font-sans: "DM Sans Variable", "system-ui", sans-serif;
   --font-display: "Bricolage Grotesque Variable", "DM Sans Variable", sans-serif;
 
-  --text-display: 2.5rem;
-  --text-h1: 1.75rem;
+  --text-display: 2.75rem;
+  --text-h1: 1.875rem;
   --text-h2: 1.25rem;
   --text-h3: 1rem;
   --text-body: 0.875rem;
@@ -77,106 +77,106 @@
 }
 
 :root {
-  --radius: 0.375rem;
+  --radius: 0.75rem; /* softer base radius */
 
-  /* Core palette — deep indigo-navy */
-  --background: #1F1D36;
-  --foreground: #F5F3FA;
-  --nav: #16142A;
-  --card: #29243C;
-  --card-foreground: #FFFFFF;
-  --popover: #29243C;
-  --popover-foreground: #FFFFFF;
+  /* Core palette — deep indigo/navy for a warm, premium feel */
+  --background: #1A1A24;
+  --foreground: #F1F3F5;
+  --nav: #1F1E2E;
+  --card: #242333;
+  --card-foreground: #F1F3F5;
+  --popover: #242333;
+  --popover-foreground: #F1F3F5;
 
-  /* Primary = soft coral */
-  --primary: #E9A6A6;
-  --primary-foreground: #1F1D36;
+  /* Primary = soft coral pink */
+  --primary: #EFA9A9;
+  --primary-foreground: #1A1A24;
 
-  /* Secondary = subtle elevated surface */
-  --secondary: #322D47;
-  --secondary-foreground: #FFFFFF;
+  /* Secondary = elevated surface */
+  --secondary: #2A2A3C;
+  --secondary-foreground: #F1F3F5;
 
   /* Muted = subdued text / bg */
-  --muted: #221E38;
-  --muted-foreground: #9490AC;
+  --muted: #2A2A3C;
+  --muted-foreground: #9AA0C3;
 
-  /* Accent = coral (alias of primary for links/highlights) */
-  --accent: #E9A6A6;
-  --accent-foreground: #1F1D36;
+  /* Accent = alias of primary for links/highlights */
+  --accent: #EFA9A9;
+  --accent-foreground: #1A1A24;
 
   /* Destructive */
   --destructive: #E5484D;
   --destructive-foreground: #FFFFFF;
 
-  /* Border / input — hairline lighter than surface */
-  --border: #3A3555;
-  --input: #3A3555;
-  --ring: #E9A6A6;
+  /* Border / input — slightly lighter than surface */
+  --border: #34334A;
+  --input: #34334A;
+  --ring: #EFA9A9;
 
-  /* Rating — brighter red, distinct from primary coral */
-  --rating: #EC2626;
+  /* Rating — vibrant red */
+  --rating: #E82C2F;
 
   /* Status colors */
-  --status-watched: #00AA44;
-  --status-list: #088DD8;
+  --status-watched: #EFA9A9;
+  --status-list: #6B8AFF;
 
-  /* Charts — coral primary + complementary hues for multi-series readability */
-  --chart-1: #E9A6A6;   /* coral (primary) */
+  /* Charts */
+  --chart-1: #EFA9A9;   /* coral (primary) */
   --chart-2: #B8A4E8;   /* soft violet */
   --chart-3: #5EB8B0;   /* muted teal */
   --chart-4: #D4A84B;   /* dusty gold */
   --chart-5: #7B8FB5;   /* slate blue */
 
-  /* Sidebar inherits card colors */
-  --sidebar: #16142A;
-  --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #E9A6A6;
-  --sidebar-primary-foreground: #1F1D36;
-  --sidebar-accent: #322D47;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #3A3555;
-  --sidebar-ring: #E9A6A6;
+  /* Sidebar inherits nav colors */
+  --sidebar: #1F1E2E;
+  --sidebar-foreground: #F1F3F5;
+  --sidebar-primary: #EFA9A9;
+  --sidebar-primary-foreground: #1A1A24;
+  --sidebar-accent: #2A2A3C;
+  --sidebar-accent-foreground: #F1F3F5;
+  --sidebar-border: #34334A;
+  --sidebar-ring: #EFA9A9;
 }
 
 /* Aftershow is always dark — no .dark variant needed. */
 /* Force dark so shadcn tokens still work if ThemeProvider emits .dark */
 .dark {
-  --background: #1F1D36;
-  --foreground: #F5F3FA;
-  --nav: #16142A;
-  --card: #29243C;
-  --card-foreground: #FFFFFF;
-  --popover: #29243C;
-  --popover-foreground: #FFFFFF;
-  --primary: #E9A6A6;
-  --primary-foreground: #1F1D36;
-  --secondary: #322D47;
-  --secondary-foreground: #FFFFFF;
-  --muted: #221E38;
-  --muted-foreground: #9490AC;
-  --accent: #E9A6A6;
-  --accent-foreground: #1F1D36;
+  --background: #1A1A24;
+  --foreground: #F1F3F5;
+  --nav: #1F1E2E;
+  --card: #242333;
+  --card-foreground: #F1F3F5;
+  --popover: #242333;
+  --popover-foreground: #F1F3F5;
+  --primary: #EFA9A9;
+  --primary-foreground: #1A1A24;
+  --secondary: #2A2A3C;
+  --secondary-foreground: #F1F3F5;
+  --muted: #2A2A3C;
+  --muted-foreground: #9AA0C3;
+  --accent: #EFA9A9;
+  --accent-foreground: #1A1A24;
   --destructive: #E5484D;
   --destructive-foreground: #FFFFFF;
-  --border: #3A3555;
-  --input: #3A3555;
-  --ring: #E9A6A6;
-  --rating: #EC2626;
-  --status-watched: #00AA44;
-  --status-list: #088DD8;
-  --chart-1: #E9A6A6;
+  --border: #34334A;
+  --input: #34334A;
+  --ring: #EFA9A9;
+  --rating: #E82C2F;
+  --status-watched: #EFA9A9;
+  --status-list: #6B8AFF;
+  --chart-1: #EFA9A9;
   --chart-2: #B8A4E8;
   --chart-3: #5EB8B0;
   --chart-4: #D4A84B;
   --chart-5: #7B8FB5;
-  --sidebar: #16142A;
-  --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #E9A6A6;
-  --sidebar-primary-foreground: #1F1D36;
-  --sidebar-accent: #322D47;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #3A3555;
-  --sidebar-ring: #E9A6A6;
+  --sidebar: #1F1E2E;
+  --sidebar-foreground: #F1F3F5;
+  --sidebar-primary: #EFA9A9;
+  --sidebar-primary-foreground: #1A1A24;
+  --sidebar-accent: #2A2A3C;
+  --sidebar-accent-foreground: #F1F3F5;
+  --sidebar-border: #34334A;
+  --sidebar-ring: #EFA9A9;
 }
 
 @layer base {
@@ -195,13 +195,16 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-size: 14px;
-    line-height: 1.6;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Visible focus states with brand accent */
   *:focus-visible {
     outline: 2px solid var(--ring);
-    outline-offset: 2px;
+    outline-offset: 4px;
+    border-radius: 6px;
   }
 
   /* Remove focus outline for mouse users */
@@ -213,7 +216,8 @@
   h1, h2, h3, h4 {
     font-family: var(--font-display);
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
   }
 
   /* Scrollbar styling for webkit */
@@ -379,8 +383,8 @@
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
   .pb-poster-glow:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 32px rgba(233, 166, 166, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(239, 169, 169, 0.15), 0 4px 16px rgba(0, 0, 0, 0.4);
   }
 
   /* Auth collage — vertical poster scroll (desktop) */

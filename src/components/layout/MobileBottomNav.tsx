@@ -1,12 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { Home, Compass, Bell, User } from "lucide-react";
+import { Home, Compass, BookOpen, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/context/NotificationsContext";
 
 const NAV_ITEMS = [
   { to: "/", icon: Home, label: "Home", end: true },
   { to: "/shows", icon: Compass, label: "Explore", end: false },
-  { to: "/journal", icon: Bell, label: "Activity", end: false },
+  { to: "/journal", icon: BookOpen, label: "Diary", end: false },
   { to: "/profile", icon: User, label: "Profile", end: false },
 ] as const;
 

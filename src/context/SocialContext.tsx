@@ -549,13 +549,25 @@ export function SocialProvider({ children }: { children: ReactNode }) {
     async (logId: string) => {
       if (!user) return;
       if (reviewLikes.has(logId)) {
+        // Optimistic unlike
         setReviewLikes((prev) => { const next = new Set(prev); next.delete(logId); return next; });
         const { error: unlikeErr } = await supabase.from("review_likes").delete().eq("user_id", user.id).eq("log_id", logId);
-        if (unlikeErr) { console.error("[toggleReviewLike] unlike failed", unlikeErr); toast.error("Failed to update like"); }
+        if (unlikeErr) {
+          // Rollback
+          setReviewLikes((prev) => new Set(prev).add(logId));
+          console.error("[toggleReviewLike] unlike failed", unlikeErr);
+          toast.error("Failed to update like");
+        }
       } else {
+        // Optimistic like
         setReviewLikes((prev) => new Set(prev).add(logId));
         const { error: likeErr } = await supabase.from("review_likes").insert({ user_id: user.id, log_id: logId });
-        if (likeErr) { console.error("[toggleReviewLike] like failed", likeErr); toast.error("Failed to update like"); }
+        if (likeErr) {
+          // Rollback
+          setReviewLikes((prev) => { const next = new Set(prev); next.delete(logId); return next; });
+          console.error("[toggleReviewLike] like failed", likeErr);
+          toast.error("Failed to like review");
+        }
       }
     },
     [user, reviewLikes]

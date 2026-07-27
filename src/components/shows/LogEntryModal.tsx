@@ -217,7 +217,7 @@ export function LogEntryModal({
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Rating
             </label>
-            <div className="flex items-center justify-center py-2.5 rounded-md border border-border/40 bg-background/20">
+            <div className="flex items-center justify-center py-3 rounded-2xl border border-border/40 bg-background/20">
               <StarRating
                 value={rating}
                 onChange={setRating}
@@ -236,11 +236,11 @@ export function LogEntryModal({
               id="log-review"
               value={review}
               onChange={(e) => setReview(e.target.value)}
-              rows={3}
-              placeholder="Share your thoughts..."
+              rows={4}
+              placeholder="Share your thoughts on this show..."
               className={cn(
-                "w-full rounded-md border border-input bg-background/40",
-                "px-3 py-2.5 text-sm text-foreground",
+                "w-full rounded-2xl border border-input bg-background/40",
+                "px-4 py-3 text-sm text-foreground",
                 "placeholder:text-muted-foreground resize-none",
                 "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
                 "transition-colors"
@@ -273,8 +273,8 @@ export function LogEntryModal({
                 value={watchedDate ?? ""}
                 onChange={(e) => setWatchedDate(e.target.value || null)}
                 className={cn(
-                  "h-11 w-full rounded-md border border-input bg-background/40",
-                  "pl-10 pr-3 text-sm text-foreground",
+                  "h-11 w-full rounded-full border border-input bg-background/40",
+                  "pl-10 pr-4 text-sm text-foreground",
                   "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
                   "transition-colors"
                 )}
@@ -328,8 +328,8 @@ export function LogEntryModal({
             type="submit"
             disabled={rating === null || submitting}
             className={cn(
-              "flex items-center justify-center w-full h-11 rounded-md",
-              "bg-primary text-primary-foreground font-semibold text-sm",
+              "flex items-center justify-center w-full h-12 rounded-full",
+              "bg-primary text-primary-foreground font-bold text-sm uppercase tracking-widest",
               "hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25",
               "active:translate-y-0 active:scale-[0.98]",
               "transition-all duration-150",

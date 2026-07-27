@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useSocial } from "@/context/SocialContext";
-import { useTrendingShows, usePopularShows } from "@/hooks/use-tmdb";
+import { useTrendingShows } from "@/hooks/use-tmdb";
 import { type TVShow } from "@/lib/tmdb";
 import { ShowPosterCard } from "@/components/shows/ShowPosterCard";
 import { MobileListCard } from "@/components/shows/MobileListCard";
@@ -56,7 +56,6 @@ export function HomePage() {
   const { user } = useAuth();
   const { following, isListLiked } = useSocial();
   const { data: trending } = useTrendingShows("week");
-  const { data: popular } = usePopularShows();
 
   const [reviews, setReviews] = useState<ReviewWithAuthor[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
@@ -232,25 +231,40 @@ export function HomePage() {
       {/* Header row */}
       <div className="flex items-start justify-between">
         <div className="space-y-0.5">
-          <h1 className="font-display text-xl font-bold text-foreground tracking-tight">
-            Hello, {firstName}!
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            What are you watching today?
-          </p>
+          {user ? (
+            <>
+              <h1 className="font-display text-xl font-bold text-foreground tracking-tight">
+                Hello, {firstName}!
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                What are you watching today?
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="font-display text-xl font-bold text-foreground tracking-tight">
+                Welcome to Aftershow
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                Track, rate, and discuss every show you've ever watched.
+              </p>
+            </>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Avatar className="size-9 border border-border/40">
-              <AvatarImage src={user?.avatarUrl} alt={user?.displayName} />
-              <AvatarFallback className="bg-secondary text-foreground text-xs font-semibold">
-                {user?.displayName?.charAt(0).toUpperCase() ?? "?"}
-              </AvatarFallback>
-            </Avatar>
-            {/* Online status dot */}
-            <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-status-watched border-2 border-nav" />
+        {user && (
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Avatar className="size-9 border border-border/40">
+                <AvatarImage src={user?.avatarUrl} alt={user?.displayName} />
+                <AvatarFallback className="bg-secondary text-foreground text-xs font-semibold">
+                  {user?.displayName?.charAt(0).toUpperCase() ?? "?"}
+                </AvatarFallback>
+              </Avatar>
+              {/* Online status dot */}
+              <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-status-watched border-2 border-nav" />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Popular This Month — horizontal scroll-snap row */}
@@ -307,22 +321,26 @@ export function HomePage() {
         {reviewsLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex gap-3 rounded-xl border border-border/50 bg-card p-3">
-                <Skeleton className="size-9 rounded-full" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-3 w-32" />
-                  <Skeleton className="h-3 w-full" />
-                  <Skeleton className="h-3 w-3/4" />
+              <div key={i} className="bg-card rounded-2xl border border-border/50 p-4">
+                <div className="flex items-start gap-3">
+                  <Skeleton className="size-8 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-3 w-40" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <Skeleton className="w-10 rounded-lg shrink-0" style={{ aspectRatio: '2/3' }} />
                 </div>
-                <Skeleton className="w-12 h-18 rounded-md" />
+                <Skeleton className="h-3 w-full mt-3" />
+                <Skeleton className="h-3 w-3/4 mt-1.5" />
               </div>
             ))}
           </div>
         ) : reviews.length === 0 ? (
-          <p className="text-sm text-muted-foreground px-1">
-            No reviews from friends yet. Follow people to see their reviews here.
-          </p>
+          <div className="rounded-2xl border border-border/50 bg-card p-6 text-center space-y-2">
+            <p className="text-sm font-medium text-foreground">No reviews from friends yet</p>
+            <p className="text-xs text-muted-foreground">Follow other members to see their reviews and ratings here.</p>
+            <a href="/members" className="inline-flex mt-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors">Discover Members</a>
+          </div>
         ) : (
           <div className="space-y-3">
             {reviews.slice(0, 5).map((review) => (
@@ -335,20 +353,6 @@ export function HomePage() {
         )}
       </section>
 
-      {/* Popular Shows (desktop only, hidden on mobile to keep it clean) */}
-      <section className="hidden md:block space-y-3">
-        <SectionHeader title="Popular Shows" />
-        <HorizontalScrollRow>
-          {(popular?.results ?? []).slice(0, 10).map((show: TVShow) => (
-            <ShowPosterCard
-              key={show.id}
-              show={show}
-              size="md"
-              className="shrink-0"
-            />
-          ))}
-        </HorizontalScrollRow>
-      </section>
     </div>
   );
 }

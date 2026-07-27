@@ -114,7 +114,7 @@ export function AuthModal({
           aria-label="Close"
           className={cn(
             "absolute right-3 top-3 z-10",
-            "flex items-center justify-center size-7 rounded",
+            "flex items-center justify-center size-7 rounded-full",
             "text-muted-foreground hover:text-foreground",
             "transition-colors duration-150"
           )}
@@ -143,7 +143,7 @@ export function AuthModal({
             disabled={googleLoading || loading}
             className={cn(
               "flex items-center justify-center gap-2.5 w-full",
-              "h-10 rounded border border-border bg-background",
+              "h-10 rounded-full border border-border bg-background",
               "text-sm font-medium text-foreground",
               "hover:bg-secondary/50 transition-colors duration-150",
               "disabled:opacity-60 disabled:cursor-not-allowed"
@@ -183,8 +183,8 @@ export function AuthModal({
                     autoComplete="username"
                     required
                     className={cn(
-                      "h-9 w-full rounded border border-border bg-background/50",
-                      "pl-8 pr-3 text-sm text-foreground",
+                      "h-10 w-full rounded-full border border-border bg-background/50",
+                      "pl-9 pr-4 text-sm text-foreground",
                       "placeholder:text-muted-foreground",
                       "focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30",
                       "transition-colors"
@@ -209,8 +209,8 @@ export function AuthModal({
                   autoComplete="email"
                   required
                   className={cn(
-                    "h-9 w-full rounded border border-border bg-background/50",
-                    "pl-8 pr-3 text-sm text-foreground",
+                    "h-10 w-full rounded-full border border-border bg-background/50",
+                    "pl-9 pr-4 text-sm text-foreground",
                     "placeholder:text-muted-foreground",
                     "focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30",
                     "transition-colors"
@@ -235,8 +235,8 @@ export function AuthModal({
                   required
                   minLength={6}
                   className={cn(
-                    "h-9 w-full rounded border border-border bg-background/50",
-                    "pl-8 pr-3 text-sm text-foreground",
+                    "h-10 w-full rounded-full border border-border bg-background/50",
+                    "pl-9 pr-4 text-sm text-foreground",
                     "placeholder:text-muted-foreground",
                     "focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30",
                     "transition-colors"
@@ -259,7 +259,7 @@ export function AuthModal({
               type="submit"
               disabled={loading || googleLoading}
               className={cn(
-                "flex items-center justify-center w-full h-9 rounded",
+                "flex items-center justify-center w-full h-10 rounded-full",
                 "bg-primary text-primary-foreground font-bold text-xs uppercase tracking-widest",
                 "hover:bg-primary/90 active:scale-[0.98]",
                 "transition-all duration-150",

@@ -28,11 +28,11 @@ function DesktopNavLinks() {
           to={to}
           className={({ isActive }) =>
             cn(
-              "px-3 py-1.5 text-xs font-semibold uppercase tracking-widest rounded",
-              "transition-colors duration-150",
+              "relative px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded-full",
+              "transition-colors duration-200",
               isActive
-                ? "text-primary"
-                : "text-foreground/60 hover:text-foreground"
+                ? "bg-primary/20 text-primary"
+                : "text-foreground/55 hover:text-foreground hover:bg-secondary/50"
             )
           }
         >
@@ -54,8 +54,8 @@ function LogButton({ className }: { className?: string }) {
       aria-label="Log a show"
       className={cn(
         "flex items-center gap-1.5 shrink-0",
-        "h-8 px-3 rounded",
-        "bg-primary text-background font-bold text-xs uppercase tracking-widest",
+        "h-8 px-4 rounded-full",
+        "bg-primary text-primary-foreground font-bold text-xs uppercase tracking-widest",
         "hover:bg-primary/90 active:scale-95",
         "transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-ring/40",
         className
@@ -83,7 +83,7 @@ function UserArea({ className }: { className?: string }) {
           aria-label={`Profile: ${user.displayName}`}
           className={cn(
             "flex items-center gap-2 shrink-0",
-            "h-8 px-2.5 rounded border border-border",
+            "h-8 px-2.5 rounded-full border border-border",
             "text-xs font-medium text-foreground/80 hover:text-foreground",
             "hover:border-primary/50 transition-colors duration-150"
           )}
@@ -115,7 +115,7 @@ function UserArea({ className }: { className?: string }) {
           onClick={() => signOut()}
           aria-label="Sign out"
           className={cn(
-            "flex items-center justify-center size-8 rounded",
+            "flex items-center justify-center size-8 rounded-full",
             "text-muted-foreground hover:text-foreground",
             "hover:bg-secondary/50 transition-colors duration-150"
           )}
@@ -132,8 +132,8 @@ function UserArea({ className }: { className?: string }) {
         type="button"
         onClick={() => openAuthModal("signin")}
         className={cn(
-          "h-8 px-3 flex items-center gap-1.5",
-          "text-xs font-semibold uppercase tracking-widest rounded",
+          "h-8 px-4 flex items-center gap-1.5",
+          "text-xs font-bold uppercase tracking-widest rounded-full",
           "text-foreground/70 hover:text-foreground",
           "transition-colors duration-150"
         )}
@@ -145,8 +145,8 @@ function UserArea({ className }: { className?: string }) {
         type="button"
         onClick={() => openAuthModal("signup")}
         className={cn(
-          "h-8 px-3 flex items-center",
-          "text-xs font-semibold uppercase tracking-widest rounded",
+          "h-8 px-4 flex items-center",
+          "text-xs font-bold uppercase tracking-widest rounded-full",
           "border border-border text-foreground/70 hover:text-foreground hover:border-foreground/40",
           "transition-colors duration-150"
         )}
@@ -186,7 +186,7 @@ function CollapsibleSearch() {
           aria-label="Search shows"
           onClick={() => setExpanded(true)}
           className={cn(
-            "flex items-center justify-center size-8 rounded",
+            "flex items-center justify-center size-8 rounded-full",
             "text-muted-foreground hover:text-foreground",
             "hover:bg-secondary/50 transition-colors duration-150"
           )}
@@ -260,7 +260,7 @@ function MobileDrawer({
             type="button"
             onClick={onClose}
             aria-label="Close menu"
-            className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+            className="p-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="size-5" strokeWidth={2} aria-hidden />
           </button>
@@ -281,10 +281,10 @@ function MobileDrawer({
                   to={to}
                   className={({ isActive }) =>
                     cn(
-                      "flex items-center px-3 py-2.5 rounded text-sm font-medium",
+                      "flex items-center px-4 py-2.5 rounded-full text-sm font-medium",
                       "transition-colors duration-100",
                       isActive
-                        ? "bg-primary/10 text-primary"
+                        ? "bg-primary/20 text-primary"
                         : "text-foreground/70 hover:text-foreground hover:bg-secondary/50"
                     )
                   }
@@ -294,9 +294,7 @@ function MobileDrawer({
               </li>
             ))}
 
-            <li className="my-2 px-3">
-              <div className="h-px bg-border" />
-            </li>
+            {/* Removed horizontal line to match sleek mockup */}
 
             {user ? (
               <>
@@ -305,10 +303,10 @@ function MobileDrawer({
                     to="/profile"
                     className={({ isActive }) =>
                       cn(
-                        "flex items-center gap-2.5 px-3 py-2.5 rounded text-sm font-medium",
+                        "flex items-center gap-2.5 px-4 py-2.5 rounded-full text-sm font-medium",
                         "transition-colors duration-100",
                         isActive
-                          ? "bg-primary/10 text-primary"
+                          ? "bg-primary/20 text-primary"
                           : "text-foreground/70 hover:text-foreground hover:bg-secondary/50"
                       )
                     }
@@ -323,9 +321,9 @@ function MobileDrawer({
                     onClick={onClose}
                     className={({ isActive }) =>
                       cn(
-                        "flex items-center gap-2.5 w-full px-3 py-2.5 rounded text-sm font-medium",
+                        "flex items-center gap-2.5 w-full px-4 py-2.5 rounded-full text-sm font-medium",
                         isActive
-                          ? "bg-primary/10 text-primary"
+                          ? "bg-primary/20 text-primary"
                           : "text-foreground/70 hover:text-foreground hover:bg-secondary/50"
                       )
                     }
@@ -342,7 +340,7 @@ function MobileDrawer({
                       onClose();
                     }}
                     className={cn(
-                      "flex items-center gap-2.5 w-full px-3 py-2.5 rounded text-sm font-medium",
+                      "flex items-center gap-2.5 w-full px-4 py-2.5 rounded-full text-sm font-medium",
                       "text-foreground/70 hover:text-foreground hover:bg-secondary/50",
                       "transition-colors duration-100"
                     )}
@@ -424,8 +422,8 @@ export function NavBar() {
           "sticky top-0 z-30 w-full",
           "transition-all duration-200",
           scrolled
-            ? "bg-nav/95 backdrop-blur-md shadow-md shadow-black/30 border-b border-border/50"
-            : "bg-transparent border-b border-transparent"
+            ? "bg-nav/98 backdrop-blur-xl shadow-lg shadow-black/40 border-b border-border/60"
+            : "bg-nav/80 backdrop-blur-md border-b border-border/30"
         )}
       >
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6">
@@ -450,7 +448,7 @@ export function NavBar() {
               onClick={() => setMobileOpen(true)}
               className={cn(
                 "flex md:hidden items-center justify-center",
-                "size-8 rounded text-muted-foreground hover:text-foreground",
+                "size-8 rounded-full text-muted-foreground hover:text-foreground",
                 "transition-colors duration-150"
               )}
             >

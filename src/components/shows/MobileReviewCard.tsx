@@ -19,11 +19,12 @@ export function MobileReviewCard({ review }: MobileReviewCardProps) {
     : "";
 
   return (
-    <div className="flex gap-3 rounded-xl border border-border/50 bg-card p-3 shadow-sm shadow-black/20">
-      {/* Left: avatar + name */}
-      <div className="shrink-0">
-        <Link to={`/profile/${review.author_username}`}>
-          <div className="size-9 rounded-full bg-secondary border border-border/40 overflow-hidden">
+    <div className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
+      {/* Header: avatar + author + show link */}
+      <div className="flex items-start gap-3">
+        {/* Avatar */}
+        <Link to={`/profile/${review.author_username}`} className="shrink-0">
+          <div className="size-8 rounded-full bg-secondary border border-border/40 overflow-hidden">
             {review.author_avatar_url ? (
               <img
                 src={review.author_avatar_url}
@@ -37,71 +38,66 @@ export function MobileReviewCard({ review }: MobileReviewCardProps) {
             )}
           </div>
         </Link>
-      </div>
 
-      {/* Middle: content */}
-      <div className="flex-1 min-w-0 space-y-1">
-        <div className="flex items-center gap-1.5">
-          <Link
-            to={`/profile/${review.author_username}`}
-            className="text-xs font-semibold text-foreground hover:text-accent transition-colors truncate"
-          >
-            {review.author_display_name}
-          </Link>
-          <span className="text-xs text-muted-foreground shrink-0">rated</span>
-        </div>
-
-        <Link
-          to={`/show/${review.show_id}`}
-          className="block text-sm font-medium text-foreground hover:text-accent transition-colors"
-        >
-          {review.show_name}
-          {year && <span className="text-muted-foreground ml-1.5">{year}</span>}
-        </Link>
-
-        <div className="flex items-center gap-2">
-          <StarRating
-            value={review.rating}
-            readOnly
-            size="sm"
-            icon={ratingIcon}
-          />
-          {review.vibe_tag && <VibeTagBadge value={review.vibe_tag} />}
-        </div>
-
-        {review.review && (
-          <div className="pt-0.5">
-            <p
-              className={cn(
-                "text-xs text-foreground/80 leading-relaxed",
-                !expanded && "line-clamp-3"
-              )}
+        {/* Meta */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Link
+              to={`/profile/${review.author_username}`}
+              className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
             >
-              {review.review}
-            </p>
-            {review.review.length > 150 && !expanded && (
-              <button
-                onClick={() => setExpanded(true)}
-                className="text-xs text-accent hover:underline mt-0.5"
-              >
-                Read more
-              </button>
-            )}
+              {review.author_display_name}
+            </Link>
+            <span className="text-xs text-muted-foreground">reviewed</span>
+            <Link
+              to={`/show/${review.show_id}`}
+              className="text-sm font-semibold text-foreground hover:text-primary transition-colors truncate"
+            >
+              {review.show_name}
+              {year && <span className="text-muted-foreground font-normal ml-1">{year}</span>}
+            </Link>
           </div>
-        )}
+          {/* Rating + vibe tag */}
+          <div className="flex items-center gap-2 mt-1">
+            <StarRating value={review.rating} readOnly size="sm" icon={ratingIcon} />
+            {review.vibe_tag && <VibeTagBadge value={review.vibe_tag} />}
+          </div>
+        </div>
+
+        {/* Poster */}
+        <Link to={`/show/${review.show_id}`} className="shrink-0">
+          <div className="w-10 rounded-lg overflow-hidden bg-secondary/40" style={{ aspectRatio: "2/3" }}>
+            <img
+              src={bestPosterUrl({ id: review.show_id, poster_path: review.show_poster_path }, "w92")}
+              alt={review.show_name}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          </div>
+        </Link>
       </div>
 
-      {/* Right: poster thumbnail */}
-      <Link to={`/show/${review.show_id}`} className="shrink-0">
-        <div className="w-12 h-18 rounded-md overflow-hidden bg-secondary/40">
-          <img
-            src={bestPosterUrl({ id: review.show_id, poster_path: review.show_poster_path }, "w92")}
-            alt={review.show_name}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
+      {/* Review text */}
+      {review.review && (
+        <div className="mt-3">
+          <p
+            className={cn(
+              "text-sm text-foreground/80 leading-relaxed",
+              !expanded && "line-clamp-3"
+            )}
+          >
+            {review.review}
+          </p>
+          {review.review.length > 150 && !expanded && (
+            <button
+              onClick={() => setExpanded(true)}
+              className="text-xs text-primary hover:underline mt-1"
+            >
+              Read more
+            </button>
+          )}
         </div>
-      </Link>
+      )}
     </div>
   );
 }

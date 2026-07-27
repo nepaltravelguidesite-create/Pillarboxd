@@ -63,9 +63,9 @@ function ShowPosterCardInner({
       {/* Poster */}
       <div
         className={cn(
-          "relative aspect-poster rounded-lg overflow-hidden bg-muted border border-border/50",
+          "relative aspect-poster rounded-lg overflow-hidden bg-muted border border-border/40",
           "transition-all duration-300 ease-out pb-poster-glow",
-          "group-hover:border-primary/60 group-hover:shadow-xl group-hover:shadow-primary/15",
+          "group-hover:border-primary/50 group-hover:shadow-2xl group-hover:shadow-primary/10",
           "group-hover:-translate-y-1"
         )}
       >

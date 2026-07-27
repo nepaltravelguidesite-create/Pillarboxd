@@ -131,12 +131,12 @@ export function StarRating({
             {CustomIcon ? (
               <CustomIcon
                 filled={false}
-                className="absolute inset-0 text-muted-foreground/30"
+                className="absolute inset-0 text-muted-foreground/50"
                 style={{ width: px, height: px }}
               />
             ) : (
               <Star
-                className="absolute inset-0 text-muted-foreground/30"
+                className="absolute inset-0 text-muted-foreground/50"
                 strokeWidth={1.5}
                 style={{ width: px, height: px }}
               />

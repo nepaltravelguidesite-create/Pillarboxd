@@ -57,6 +57,7 @@ export function ReviewCard({ review, onExpand }: ReviewCardProps) {
   const { user } = useAuth();
   const { openAuthModal } = useUI();
   const [revealed, setRevealed] = useState(false);
+  const [likeCount, setLikeCount] = useState(review.like_count);
 
   const liked = isReviewLiked(review.id);
 
@@ -65,15 +66,19 @@ export function ReviewCard({ review, onExpand }: ReviewCardProps) {
       openAuthModal("signin");
       return;
     }
+    // Optimistic update
+    setLikeCount((prev) => (liked ? Math.max(prev - 1, 0) : prev + 1));
     await toggleReviewLike(review.id);
   };
 
-  const handleComment = () => {
+  const handleComment = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     onExpand?.(review);
   };
 
   return (
-    <div className="py-5 border-b border-border/30 last:border-b-0">
+    <div className="bg-card rounded-2xl p-5 border border-border/50 shadow-sm mb-4 last:mb-0">
       {/* Header: avatar + author + date */}
       <div className="flex items-center gap-2.5">
         <Link to={`/profile/${review.author_username}`} className="shrink-0">
@@ -157,7 +162,7 @@ export function ReviewCard({ review, onExpand }: ReviewCardProps) {
           <Heart
             className={`size-4 ${liked ? "fill-primary text-primary" : ""}`}
           />
-          <span>{review.like_count}</span>
+          <span>{likeCount}</span>
         </button>
         <button
           type="button"

@@ -261,11 +261,11 @@ export function ShowProfilePage() {
             <div className="mt-3 rounded-xl border border-border/50 bg-card p-5">
               <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">Ratings</h3>
               <div className="flex gap-4">
-                <div className="flex items-end gap-1.5 h-32 flex-1">
+                <div className="flex items-end gap-1.5 h-48 flex-1">
                   {histogram.map((count, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center gap-1">
                       <div className="w-full flex-1 flex items-end">
-                        <div className="w-full rounded-t-sm bg-primary/70 transition-all duration-300" style={{ height: `${(count / maxHist) * 100}%`, minHeight: count > 0 ? "4px" : "0" }} />
+                        <div className="w-full rounded-t bg-primary/80 transition-all duration-500" style={{ height: `${(count / maxHist) * 100}%`, minHeight: count > 0 ? "6px" : "0" }} />
                       </div>
                       <span className="text-[10px] text-muted-foreground">{i + 1}★</span>
                     </div>
@@ -310,15 +310,12 @@ export function ShowProfilePage() {
               </div>
             </div>
 
-            <div className="mt-3 space-y-2">
-              <button onClick={() => openWriteReview(null)} className="flex items-center justify-center gap-2 w-full h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150">
+            <div className="mt-4 flex gap-2">
+              <button onClick={() => openWriteReview(null)} className="flex-1 flex items-center justify-center gap-2 h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150">
                 <Plus className="size-4" /> Rate or Review
               </button>
-              <button onClick={() => setAddToListOpen(true)} className="flex items-center justify-center gap-2 w-full h-11 rounded-full border border-border text-foreground font-medium text-sm hover:bg-secondary/50 hover:-translate-y-px active:translate-y-0 transition-all duration-150">
-                <ListIcon className="size-4" /> Add to Lists
-              </button>
-              <button onClick={() => toggleWatchlist(show)} className={cn("flex items-center justify-center gap-2 w-full h-11 rounded-full border font-medium text-sm hover:-translate-y-px active:translate-y-0 transition-all duration-150", showData?.watchlisted ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground hover:bg-secondary/50")}>
-                <Bookmark className={cn("size-4", showData?.watchlisted && "fill-primary")} /> {showData?.watchlisted ? "In Watchlist" : "Add to Watchlist"}
+              <button onClick={() => setAddToListOpen(true)} className="flex items-center justify-center gap-2 px-4 h-11 rounded-full border border-border text-foreground font-medium text-sm hover:bg-secondary/50 hover:-translate-y-px active:translate-y-0 transition-all duration-150 shrink-0" aria-label="Add to Lists">
+                <ListIcon className="size-4" />
               </button>
             </div>
 
@@ -465,20 +462,25 @@ export function ShowProfilePage() {
                       size="lg"
                     />
                   </div>
-                  <button onClick={() => openWriteReview(null)} className="flex items-center justify-center gap-2 w-full h-10 rounded-md bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150">
-                    <Plus className="size-4" /> Rate or Review
-                  </button>
+                  <div className="flex flex-col gap-2 pt-1">
+                    <button onClick={() => openWriteReview(null)} className="flex items-center justify-center gap-2 w-full h-10 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150">
+                      <Plus className="size-4" /> Rate or Review
+                    </button>
+                    <button onClick={() => setAddToListOpen(true)} className="flex items-center justify-center gap-2 w-full h-10 rounded-full border border-border text-foreground font-medium text-sm hover:bg-secondary/50 hover:-translate-y-px active:translate-y-0 transition-all duration-150">
+                      <ListIcon className="size-4" /> Add to Lists
+                    </button>
+                  </div>
                 </div>
 
                 {/* Ratings histogram */}
                 <div className="rounded-xl border border-border/50 bg-card p-5">
                   <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">Ratings</h3>
                   <div className="flex gap-4">
-                    <div className="flex items-end gap-1.5 h-32 flex-1">
+                    <div className="flex items-end gap-1.5 h-48 flex-1">
                       {histogram.map((count, i) => (
                         <div key={i} className="flex-1 flex flex-col items-center gap-1">
                           <div className="w-full flex-1 flex items-end">
-                            <div className="w-full rounded-t-sm bg-primary/70 transition-all duration-300" style={{ height: `${(count / maxHist) * 100}%`, minHeight: count > 0 ? "4px" : "0" }} />
+                            <div className="w-full rounded-t bg-primary/80 transition-all duration-500" style={{ height: `${(count / maxHist) * 100}%`, minHeight: count > 0 ? "6px" : "0" }} />
                           </div>
                           <span className="text-[10px] text-muted-foreground">{i + 1}★</span>
                         </div>

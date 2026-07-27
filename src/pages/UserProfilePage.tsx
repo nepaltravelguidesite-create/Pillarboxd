@@ -20,7 +20,7 @@ export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "review
   const { username } = useParams<{ username: string }>();
   const { user, refreshProfile } = useAuth();
   const { userShows, userLogs, loading } = useUserData();
-  const { following, toggleFollow, allProfiles } = useSocial();
+  const { following, toggleFollow, allProfiles, myLists } = useSocial();
 
   const isOwnProfile = !username || username === user?.username;
 
@@ -65,7 +65,7 @@ export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "review
   const showsThisYear = userLogs.filter((l) =>
     l.watched_date?.startsWith(String(thisYear))
   ).length;
-  const listCount = 0;
+  const listCount = isOwnProfile ? myLists.length : 0;
 
   const favoriteShows: FavoriteShow[] = useMemo(() => {
     if (isOwnProfile) return user?.favoriteShows ?? [];
@@ -83,8 +83,6 @@ export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "review
     setDraftFavorites(saved);
     refreshProfile();
   }, [refreshProfile]);
-
-  const recentWatched = useMemo(() => [...userLogs].slice(0, 6), [userLogs]);
 
   const recentReviewed = useMemo(() => {
     return userLogs.filter((l) => l.review && l.review.trim()).slice(0, 6);
@@ -201,7 +199,7 @@ export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "review
           {/* Content */}
           {tab === "reviews" ? (
             config.items.length > 0 ? (
-              <div className="divide-y divide-border/30">
+              <div className="flex flex-col">
                 {(config.items as UserLog[]).map((log) => (
                   <ReviewLogEntry key={log.id} log={log} />
                 ))}
@@ -335,26 +333,11 @@ export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "review
           </section>
         )}
 
-        {/* Recent Watched */}
-        {recentWatched.length > 0 && (
-          <section className="space-y-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Recent Watched</h2>
-            <Link to="/log" className="text-xs text-accent hover:underline">See All</Link>
-          </div>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
-            {recentWatched.slice(0, 6).map((log) => (
-              <RatedPoster key={log.id} log={log} />
-            ))}
-          </div>
-          </section>
-        )}
-
-        {/* Recent Reviewed */}
+        {/* Recent Reviews */}
         {recentReviewed.length > 0 && (
           <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Recent Reviewed</h2>
+            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Recent Reviews</h2>
             <Link to="/profile/reviews" className="text-xs text-accent hover:underline">See All</Link>
           </div>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
@@ -398,7 +381,7 @@ function ReviewLogEntry({ log }: { log: UserLog }) {
   const ratingIcon = getShowRatingIcon(log.show_id);
 
   return (
-    <div className="py-5 flex gap-3">
+    <div className="bg-card rounded-2xl p-4 border border-border/50 shadow-sm flex gap-4 mb-3 last:mb-0">
       <Link to={`/show/${log.show_id}`} className="shrink-0">
         <div className="w-16 aspect-poster rounded-lg overflow-hidden bg-muted border border-border/50">
           {log.show_poster_path && !imgError ? (
@@ -463,7 +446,7 @@ function QuickLink({ to, icon: Icon, label, count }: { to: string; icon: typeof 
 function StatBlock({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col items-center gap-0.5 rounded-xl border border-border/50 bg-card p-2.5">
-      <span className="font-display text-xl font-bold text-foreground">{value}</span>
+      <span className="font-display text-xl font-bold text-primary">{value}</span>
       <span className="text-[10px] text-muted-foreground uppercase tracking-wide text-center leading-tight">{label}</span>
     </div>
   );

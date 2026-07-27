@@ -339,8 +339,19 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
       }
 
       setUserLogs((prev) => [data as UserLog, ...prev]);
+
+      // Sync overall rating if this is an overall show log
+      if (log.season_number === null && log.rating !== null) {
+        await setRating({
+          id: log.show_id,
+          name: log.show_name,
+          poster_path: log.show_poster_path ?? null,
+          backdrop_path: log.show_backdrop_path ?? null,
+          first_air_date: log.show_first_air_date ?? "",
+        } as TVShow, log.rating);
+      }
     },
-    [user]
+    [user, setRating]
   );
 
   // -------------------------------------------------------------------------
@@ -362,9 +373,21 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      setUserLogs((prev) => prev.map((l) => (l.id === logId ? (data as UserLog) : l)));
+      const updatedLog = data as UserLog;
+      setUserLogs((prev) => prev.map((l) => (l.id === logId ? updatedLog : l)));
+
+      // Sync overall rating if this is an overall show log and rating was updated
+      if (updatedLog.season_number === null && updatedLog.rating !== null && patch.rating !== undefined) {
+        await setRating({
+          id: updatedLog.show_id,
+          name: updatedLog.show_name,
+          poster_path: updatedLog.show_poster_path ?? null,
+          backdrop_path: updatedLog.show_backdrop_path ?? null,
+          first_air_date: updatedLog.show_first_air_date ?? "",
+        } as TVShow, updatedLog.rating);
+      }
     },
-    []
+    [setRating]
   );
 
   // -------------------------------------------------------------------------
