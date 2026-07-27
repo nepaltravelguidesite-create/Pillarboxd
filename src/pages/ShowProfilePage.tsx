@@ -24,7 +24,7 @@ import { ShowCarousel } from "@/components/shows/ShowCarousel";
 import { ReviewFeed } from "@/components/shows/ReviewFeed";
 import type { ReviewWithAuthor } from "@/components/shows/ReviewCard";
 import { CommentThread } from "@/components/shows/CommentThread";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2, Heart, Bookmark, Plus, ChevronLeft, Eye, List as ListIcon,
@@ -640,6 +640,9 @@ export function ShowProfilePage() {
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Comments</DialogTitle>
+            <DialogDescription className="sr-only">
+              Read and reply to comments on this review.
+            </DialogDescription>
           </DialogHeader>
           {activeCommentReview && (
             <div className="space-y-3">

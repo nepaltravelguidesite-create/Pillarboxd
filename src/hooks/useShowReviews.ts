@@ -89,7 +89,7 @@ export function useShowReviews(showId: number | null) {
         commentCounts.set(id, (commentCounts.get(id) ?? 0) + 1);
       });
 
-      const merged: ReviewWithAuthor[] = typedLogs.map((l) => {
+      const allMerged: ReviewWithAuthor[] = typedLogs.map((l) => {
         const profile = profileMap.get(l.user_id);
         return {
           id: l.id,
@@ -114,7 +114,15 @@ export function useShowReviews(showId: number | null) {
         };
       });
 
-      setReviews(merged);
+      // Only one review per user per show: keep the most recent log (highest created_at)
+      const seenUserIds = new Set<string>();
+      const deduped = allMerged.filter((r) => {
+        if (seenUserIds.has(r.user_id)) return false;
+        seenUserIds.add(r.user_id);
+        return true;
+      });
+
+      setReviews(deduped);
     } finally {
       setLoading(false);
     }

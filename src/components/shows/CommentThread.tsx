@@ -68,6 +68,8 @@ export function CommentThread({ logId }: CommentThreadProps) {
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const myComment = user ? comments.find((c) => c.user_id === user.id) : undefined;
+
   const loadComments = useCallback(async () => {
     setLoading(true);
     try {
@@ -267,8 +269,8 @@ export function CommentThread({ logId }: CommentThreadProps) {
         </div>
       )}
 
-      {/* Comment input */}
-      {user ? (
+      {/* Comment input - one comment per user per review */}
+      {user && !myComment ? (
         <div className="flex gap-2 mt-4">
           <textarea
             value={draft}
@@ -292,6 +294,10 @@ export function CommentThread({ logId }: CommentThreadProps) {
             Post
           </button>
         </div>
+      ) : user && myComment ? (
+        <p className="text-xs text-muted-foreground text-center mt-4">
+          You can leave one comment per review. Delete your comment to post a new one.
+        </p>
       ) : null}
     </div>
   );
