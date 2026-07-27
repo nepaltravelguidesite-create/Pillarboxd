@@ -4,19 +4,20 @@ import { cn } from "@/lib/utils";
 import { useSocial } from "@/context/SocialContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { ReviewCard } from "@/components/shows/ReviewCard";
+import { ReviewCard, type ReviewWithAuthor } from "@/components/shows/ReviewCard";
 import { useShowReviews } from "@/hooks/useShowReviews";
 
 interface ReviewFeedProps {
   showId: number;
   className?: string;
+  onExpand?: (review: ReviewWithAuthor) => void;
 }
 
 type SortTab = "newest" | "liked" | "friends";
 
 const PAGE_SIZE = 5;
 
-export function ReviewFeed({ showId, className }: ReviewFeedProps) {
+export function ReviewFeed({ showId, className, onExpand }: ReviewFeedProps) {
   const { following } = useSocial();
   const { reviews, loading } = useShowReviews(showId);
   const [tab, setTab] = useState<SortTab>("newest");
@@ -52,7 +53,7 @@ export function ReviewFeed({ showId, className }: ReviewFeedProps) {
   return (
     <div className={cn("w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-6", className)}>
       {/* Sort tabs */}
-      <div className="flex items-center gap-3 mb-2">
+      <div className="flex items-center gap-6 mb-2">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -103,11 +104,7 @@ export function ReviewFeed({ showId, className }: ReviewFeedProps) {
               <ReviewCard
                 key={review.id}
                 review={review}
-                onExpand={(r) => {
-                  window.dispatchEvent(
-                    new CustomEvent("open-comment-thread", { detail: r })
-                  );
-                }}
+                onExpand={onExpand}
               />
             ))}
           </div>

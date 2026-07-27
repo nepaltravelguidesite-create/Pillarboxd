@@ -551,11 +551,11 @@ export function SocialProvider({ children }: { children: ReactNode }) {
       if (reviewLikes.has(logId)) {
         setReviewLikes((prev) => { const next = new Set(prev); next.delete(logId); return next; });
         const { error: unlikeErr } = await supabase.from("review_likes").delete().eq("user_id", user.id).eq("log_id", logId);
-        if (unlikeErr) toast.error("Failed to update like");
+        if (unlikeErr) { console.error("[toggleReviewLike] unlike failed", unlikeErr); toast.error("Failed to update like"); }
       } else {
         setReviewLikes((prev) => new Set(prev).add(logId));
         const { error: likeErr } = await supabase.from("review_likes").insert({ user_id: user.id, log_id: logId });
-        if (likeErr) toast.error("Failed to update like");
+        if (likeErr) { console.error("[toggleReviewLike] like failed", likeErr); toast.error("Failed to update like"); }
       }
     },
     [user, reviewLikes]
@@ -572,12 +572,12 @@ export function SocialProvider({ children }: { children: ReactNode }) {
       if (listLikes.has(listId)) {
         setListLikes((prev) => { const next = new Set(prev); next.delete(listId); return next; });
         const { error: unlikeErr } = await supabase.from("list_likes").delete().eq("user_id", user.id).eq("list_id", listId);
-        if (unlikeErr) toast.error("Failed to update like");
+        if (unlikeErr) { console.error("[toggleListLike] unlike failed", unlikeErr); toast.error("Failed to update like"); }
         setMyLists((prev) => prev.map((l) => l.id === listId ? { ...l, like_count: Math.max(l.like_count - 1, 0) } : l));
       } else {
         setListLikes((prev) => new Set(prev).add(listId));
         const { error: likeErr } = await supabase.from("list_likes").insert({ user_id: user.id, list_id: listId });
-        if (likeErr) toast.error("Failed to update like");
+        if (likeErr) { console.error("[toggleListLike] like failed", likeErr); toast.error("Failed to update like"); }
         setMyLists((prev) => prev.map((l) => l.id === listId ? { ...l, like_count: l.like_count + 1 } : l));
       }
     },

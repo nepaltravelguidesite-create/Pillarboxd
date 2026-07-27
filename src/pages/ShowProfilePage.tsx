@@ -22,6 +22,9 @@ import { LogEntryModal } from "@/components/shows/LogEntryModal";
 import { AddToListModal } from "@/components/shows/AddToListModal";
 import { ShowCarousel } from "@/components/shows/ShowCarousel";
 import { ReviewFeed } from "@/components/shows/ReviewFeed";
+import type { ReviewWithAuthor } from "@/components/shows/ReviewCard";
+import { CommentThread } from "@/components/shows/CommentThread";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2, Heart, Bookmark, Plus, ChevronLeft, Eye, List as ListIcon,
@@ -49,6 +52,7 @@ export function ShowProfilePage() {
   const [existingLogForEdit, setExistingLogForEdit] = useState<UserLog | null>(null);
   const [addToListOpen, setAddToListOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"cast" | "crew" | "details">("cast");
+  const [activeCommentReview, setActiveCommentReview] = useState<ReviewWithAuthor | null>(null);
   const [editorialLists, setEditorialLists] = useState<EditorialListPreview[]>([]);
   const navigate = useNavigate();
 
@@ -335,7 +339,7 @@ export function ShowProfilePage() {
             </div>
 
             <div className="mt-6 -mx-4">
-              <ReviewFeed showId={numericId!} className="max-w-none px-0" />
+              <ReviewFeed showId={numericId!} className="max-w-none px-0" onExpand={setActiveCommentReview} />
             </div>
           </div>
         </div>
@@ -424,7 +428,7 @@ export function ShowProfilePage() {
               {/* Reviews */}
               <section>
                 <h2 className="text-lg font-display font-semibold text-foreground mb-4">Reviews</h2>
-                <ReviewFeed showId={numericId!} className="max-w-none px-0" />
+                <ReviewFeed showId={numericId!} className="max-w-none px-0" onExpand={setActiveCommentReview} />
               </section>
             </div>
 
@@ -629,6 +633,32 @@ export function ShowProfilePage() {
         onSuccess={refetchReviews}
       />
       <AddToListModal open={addToListOpen} onOpenChange={setAddToListOpen} show={show} />
+
+      <Dialog open={activeCommentReview !== null} onOpenChange={(open) => !open && setActiveCommentReview(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Comments</DialogTitle>
+          </DialogHeader>
+          {activeCommentReview && (
+            <div className="space-y-3">
+              <div className="rounded-lg border border-border/40 bg-card/50 p-3">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-sm font-medium text-foreground">
+                    {activeCommentReview.author_display_name || activeCommentReview.author_username}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {activeCommentReview.rating != null ? `${activeCommentReview.rating}★` : ""}
+                  </span>
+                </div>
+                <p className="text-sm text-foreground/80 leading-6 line-clamp-3">
+                  {activeCommentReview.review}
+                </p>
+              </div>
+              <CommentThread logId={activeCommentReview.id} />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
