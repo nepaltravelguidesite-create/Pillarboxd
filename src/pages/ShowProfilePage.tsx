@@ -21,8 +21,7 @@ import { StarRating } from "@/components/shows/StarRating";
 import { LogEntryModal } from "@/components/shows/LogEntryModal";
 import { AddToListModal } from "@/components/shows/AddToListModal";
 import { ShowCarousel } from "@/components/shows/ShowCarousel";
-import { MobileReviewCard } from "@/components/shows/MobileReviewCard";
-import { ReviewCard } from "@/components/shows/ReviewCard";
+import { ReviewFeed } from "@/components/shows/ReviewFeed";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2, Heart, Bookmark, Plus, ChevronLeft, Eye, List as ListIcon,
@@ -44,7 +43,7 @@ export function ShowProfilePage() {
   const { toggleWatchlist, toggleLike, getShowData, setRating, setShowStatus, userLogs } = useUserData();
   const { isListSaved, saveList, unsaveList } = useSocial();
   const { user } = useAuth();
-  const { reviews, loading: reviewsLoading, refetch: refetchReviews } = useShowReviews(numericId);
+  const { reviews, refetch: refetchReviews } = useShowReviews(numericId);
   const [logModalOpen, setLogModalOpen] = useState(false);
   const [logModalSeason, setLogModalSeason] = useState<number | null>(null);
   const [existingLogForEdit, setExistingLogForEdit] = useState<UserLog | null>(null);
@@ -255,10 +254,10 @@ export function ShowProfilePage() {
               </span>
             </div>
 
-            <div className="mt-3 rounded-xl border border-border/50 bg-card p-4">
+            <div className="mt-3 rounded-xl border border-border/50 bg-card p-5">
               <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">Ratings</h3>
               <div className="flex gap-4">
-                <div className="flex items-end gap-1.5 h-20 flex-1">
+                <div className="flex items-end gap-1.5 h-32 flex-1">
                   {histogram.map((count, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center gap-1">
                       <div className="w-full flex-1 flex items-end">
@@ -269,7 +268,7 @@ export function ShowProfilePage() {
                   ))}
                 </div>
                 <div className="flex flex-col items-center justify-center gap-1 shrink-0 w-20">
-                  <span className="font-display text-3xl font-bold text-foreground">{avgRating !== null ? avgRating.toFixed(1) : "—"}</span>
+                  <span className="font-display text-4xl font-bold text-foreground">{avgRating !== null ? avgRating.toFixed(1) : "—"}</span>
                   <StarRating value={avgRating} readOnly size="sm" />
                   <span className="text-[10px] text-muted-foreground">{ratedReviews.length} ratings</span>
                 </div>
@@ -335,22 +334,8 @@ export function ShowProfilePage() {
               </div>
             </div>
 
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">All Reviews</h3>
-                {reviews.length > 3 && <Link to="#" className="text-xs text-accent hover:underline">See All</Link>}
-              </div>
-              {reviewsLoading ? (
-                <div className="py-8 flex justify-center"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
-              ) : reviews.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No reviews yet. Be the first to review!</p>
-              ) : (
-                <div className="space-y-3">
-                  {reviews.slice(0, 3).map((review) => (
-                    <MobileReviewCard key={review.id} review={review} />
-                  ))}
-                </div>
-              )}
+            <div className="mt-6 -mx-4">
+              <ReviewFeed showId={numericId!} className="max-w-none px-0" />
             </div>
           </div>
         </div>
@@ -421,55 +406,25 @@ export function ShowProfilePage() {
                 </section>
               )}
 
-              {/* Cast grid */}
+              {/* Cast & Crew */}
               <section>
-                <h2 className="text-lg font-display font-semibold text-foreground mb-4">Cast</h2>
-                <CastGrid cast={cast} />
-              </section>
-
-              {/* Crew grid */}
-              <section>
-                <h2 className="text-lg font-display font-semibold text-foreground mb-4">Crew</h2>
-                <CrewList crew={crew} />
+                <div className="flex gap-1 border-b border-border/40 mb-4">
+                  {(["cast", "crew", "details"] as const).map((tab) => (
+                    <button key={tab} onClick={() => setActiveTab(tab)} className={cn("px-3 py-2 text-sm font-medium capitalize transition-colors relative", activeTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
+                      {tab}
+                      {activeTab === tab && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
+                    </button>
+                  ))}
+                </div>
+                {activeTab === "cast" && <CastGrid cast={cast} />}
+                {activeTab === "crew" && <CrewList crew={crew} />}
+                {activeTab === "details" && <DetailsBlock showDetail={showDetail} />}
               </section>
 
               {/* Reviews */}
               <section>
                 <h2 className="text-lg font-display font-semibold text-foreground mb-4">Reviews</h2>
-                {reviewsLoading ? (
-                  <div className="space-y-4">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="rounded-xl border border-border/50 bg-card p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="size-10 rounded-full bg-muted animate-pulse" />
-                          <div className="space-y-1.5">
-                            <div className="h-3 w-32 rounded bg-muted animate-pulse" />
-                            <div className="h-2.5 w-24 rounded bg-muted animate-pulse" />
-                          </div>
-                        </div>
-                        <div className="mt-3 space-y-1.5">
-                          <div className="h-3 w-full rounded bg-muted animate-pulse" />
-                          <div className="h-3 w-4/5 rounded bg-muted animate-pulse" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : reviews.length === 0 ? (
-                  <div className="rounded-xl border border-border/40 bg-card/50 p-8 text-center">
-                    <Tv className="size-10 mx-auto text-muted-foreground/30 mb-3" strokeWidth={1} />
-                    <p className="text-sm text-muted-foreground">No reviews yet. Be the first to share your thoughts!</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {reviews.map((review) => (
-                      <ReviewCard
-                        key={review.id}
-                        review={review}
-                        onExpand={(r) => window.dispatchEvent(new CustomEvent("open-comment-thread", { detail: r }))}
-                      />
-                    ))}
-                  </div>
-                )}
+                <ReviewFeed showId={numericId!} className="max-w-none px-0" />
               </section>
             </div>
 
@@ -512,10 +467,10 @@ export function ShowProfilePage() {
                 </div>
 
                 {/* Ratings histogram */}
-                <div className="rounded-xl border border-border/50 bg-card p-4">
+                <div className="rounded-xl border border-border/50 bg-card p-5">
                   <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">Ratings</h3>
                   <div className="flex gap-4">
-                    <div className="flex items-end gap-1.5 h-20 flex-1">
+                    <div className="flex items-end gap-1.5 h-32 flex-1">
                       {histogram.map((count, i) => (
                         <div key={i} className="flex-1 flex flex-col items-center gap-1">
                           <div className="w-full flex-1 flex items-end">
@@ -526,7 +481,7 @@ export function ShowProfilePage() {
                       ))}
                     </div>
                     <div className="flex flex-col items-center justify-center gap-1 shrink-0 w-20">
-                      <span className="font-display text-3xl font-bold text-foreground">{avgRating !== null ? avgRating.toFixed(1) : "—"}</span>
+                      <span className="font-display text-4xl font-bold text-foreground">{avgRating !== null ? avgRating.toFixed(1) : "—"}</span>
                       <StarRating value={avgRating} readOnly size="sm" />
                       <span className="text-[10px] text-muted-foreground">{ratedReviews.length} ratings</span>
                     </div>
@@ -771,53 +726,77 @@ function CommunityScoreGauge({ score, votes }: { score: number; votes: number })
 
 function CastRow({ cast }: { cast: CastMember[] }) {
   const [imgErrors, setImgErrors] = useState<Record<number, boolean>>({});
+  const [expanded, setExpanded] = useState(false);
   if (!cast || cast.length === 0) return <p className="text-sm text-muted-foreground py-4">No cast data available.</p>;
+  const visibleCast = expanded ? cast : cast.slice(0, 20);
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
-      <style>{`div::-webkit-scrollbar{display:none}`}</style>
-      {cast.slice(0, 20).map((member) => {
-        const errored = imgErrors[member.id];
-        return (
-          <Link key={member.id} to={`/person/${member.id}`} className="flex flex-col items-center gap-1.5 shrink-0 w-16">
-            <div className="size-16 rounded-full overflow-hidden bg-muted ring-1 ring-border/30">
-              {errored || !member.profile_path ? (
-                <div className="w-full h-full flex items-center justify-center bg-secondary/30"><Tv className="size-6 text-muted-foreground/30" strokeWidth={1} /></div>
-              ) : (
-                <img src={profileUrl(member.profile_path, "w185")} alt={member.name} loading="lazy" onError={() => setImgErrors((p) => ({ ...p, [member.id]: true }))} className="w-full h-full object-cover" />
-              )}
+    <div className="space-y-2">
+      <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+        <style>{`div::-webkit-scrollbar{display:none}`}</style>
+        {visibleCast.map((member) => {
+          const errored = imgErrors[member.id];
+          return (
+            <Link key={member.id} to={`/person/${member.id}`} className="flex flex-col items-center gap-1.5 shrink-0 w-16">
+              <div className="size-16 rounded-full overflow-hidden bg-muted ring-1 ring-border/30">
+                {errored || !member.profile_path ? (
+                  <div className="w-full h-full flex items-center justify-center bg-secondary/30"><Tv className="size-6 text-muted-foreground/30" strokeWidth={1} /></div>
+                ) : (
+                  <img src={profileUrl(member.profile_path, "w185")} alt={member.name} loading="lazy" onError={() => setImgErrors((p) => ({ ...p, [member.id]: true }))} className="w-full h-full object-cover" />
+                )}
+              </div>
+              <p className="text-xs font-medium text-foreground truncate text-center w-full">{member.name}</p>
+              <p className="text-[10px] text-muted-foreground truncate text-center w-full">{member.character}</p>
+            </Link>
+          );
+        })}
+        {!expanded && cast.length > 20 && (
+          <button onClick={() => setExpanded(true)} className="flex flex-col items-center justify-center gap-1.5 shrink-0 w-16">
+            <div className="size-16 rounded-full bg-secondary flex items-center justify-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+              +{cast.length - 20}
             </div>
-            <p className="text-xs font-medium text-foreground truncate text-center w-full">{member.name}</p>
-            <p className="text-[10px] text-muted-foreground truncate text-center w-full">{member.character}</p>
-          </Link>
-        );
-      })}
+            <span className="text-[10px] text-muted-foreground">View All</span>
+          </button>
+        )}
+      </div>
+      {expanded && cast.length > 20 && (
+        <button onClick={() => setExpanded(false)} className="text-xs text-accent hover:underline">Show Less</button>
+      )}
     </div>
   );
 }
 
 function CastGrid({ cast }: { cast: CastMember[] }) {
   const [imgErrors, setImgErrors] = useState<Record<number, boolean>>({});
+  const [expanded, setExpanded] = useState(false);
   if (!cast || cast.length === 0) return <p className="text-sm text-muted-foreground">No cast data available.</p>;
+  const visibleCast = expanded ? cast : cast.slice(0, 18);
   return (
-    <div className="grid grid-cols-4 lg:grid-cols-6 gap-4">
-      {cast.slice(0, 18).map((member) => {
-        const errored = imgErrors[member.id];
-        return (
-          <Link key={member.id} to={`/person/${member.id}`} className="flex flex-col items-center gap-2 group">
-            <div className="size-20 lg:size-24 rounded-full overflow-hidden bg-muted ring-1 ring-border/30 group-hover:ring-primary/50 transition-all pb-poster-glow">
-              {errored || !member.profile_path ? (
-                <div className="w-full h-full flex items-center justify-center bg-secondary/30"><Tv className="size-8 text-muted-foreground/30" strokeWidth={1} /></div>
-              ) : (
-                <img src={profileUrl(member.profile_path, "w185")} alt={member.name} loading="lazy" onError={() => setImgErrors((p) => ({ ...p, [member.id]: true }))} className="w-full h-full object-cover" />
-              )}
-            </div>
-            <div className="text-center">
-              <p className="text-xs font-medium text-foreground truncate w-full">{member.name}</p>
-              <p className="text-[10px] text-muted-foreground truncate w-full">{member.character}</p>
-            </div>
-          </Link>
-        );
-      })}
+    <div className="space-y-4">
+      <div className="grid grid-cols-4 lg:grid-cols-6 gap-4">
+        {visibleCast.map((member) => {
+          const errored = imgErrors[member.id];
+          return (
+            <Link key={member.id} to={`/person/${member.id}`} className="flex flex-col items-center gap-2 group">
+              <div className="size-20 lg:size-24 rounded-full overflow-hidden bg-muted ring-1 ring-border/30 group-hover:ring-primary/50 transition-all pb-poster-glow">
+                {errored || !member.profile_path ? (
+                  <div className="w-full h-full flex items-center justify-center bg-secondary/30"><Tv className="size-8 text-muted-foreground/30" strokeWidth={1} /></div>
+                ) : (
+                  <img src={profileUrl(member.profile_path, "w185")} alt={member.name} loading="lazy" onError={() => setImgErrors((p) => ({ ...p, [member.id]: true }))} className="w-full h-full object-cover" />
+                )}
+              </div>
+              <div className="text-center">
+                <p className="text-xs font-medium text-foreground truncate w-full">{member.name}</p>
+                <p className="text-[10px] text-muted-foreground truncate w-full">{member.character}</p>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+      {cast.length > 18 && (
+        <button onClick={() => setExpanded(!expanded)} className="text-sm text-accent hover:underline">
+          {expanded ? "Show Less" : `Show ${cast.length - 18} More`}
+        </button>
+      )}
     </div>
   );
 }

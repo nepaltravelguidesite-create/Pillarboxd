@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { MessageCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useSocial } from "@/context/SocialContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -8,13 +9,14 @@ import { useShowReviews } from "@/hooks/useShowReviews";
 
 interface ReviewFeedProps {
   showId: number;
+  className?: string;
 }
 
 type SortTab = "newest" | "liked" | "friends";
 
 const PAGE_SIZE = 5;
 
-export function ReviewFeed({ showId }: ReviewFeedProps) {
+export function ReviewFeed({ showId, className }: ReviewFeedProps) {
   const { following } = useSocial();
   const { reviews, loading } = useShowReviews(showId);
   const [tab, setTab] = useState<SortTab>("newest");
@@ -48,7 +50,7 @@ export function ReviewFeed({ showId }: ReviewFeedProps) {
   ];
 
   return (
-    <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className={cn("w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-6", className)}>
       {/* Sort tabs */}
       <div className="flex items-center gap-3 mb-2">
         {tabs.map((t) => (
