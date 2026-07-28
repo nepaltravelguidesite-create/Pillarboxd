@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useUserData, type UserLog } from "@/context/UserDataContext";
+import { useSocial } from "@/context/SocialContext";
 import { type TVShow } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
 import { StarRating } from "@/components/shows/StarRating";
@@ -41,6 +42,7 @@ export function LogEntryModal({
   onSuccess,
 }: LogEntryModalProps) {
   const { addLog, updateLog } = useUserData();
+  const { getShowProgress } = useSocial();
 
   const isEditMode = !!existingLog;
 
@@ -58,6 +60,7 @@ export function LogEntryModal({
 
   // Only show real seasons (skip season 0 specials)
   const realSeasons = seasons.filter((s) => s.season_number > 0);
+  const progress = getShowProgress(show.id, realSeasons);
 
   useEffect(() => {
     if (open) {
@@ -198,6 +201,10 @@ export function LogEntryModal({
                   const seasonLog = showLogs.find(
                     (l) => l.show_id === show.id && l.season_number === s.season_number && l.rating != null
                   );
+                  const seasonProgress = progress.perSeason.get(s.season_number);
+                  const seasonWatched = seasonProgress?.watched ?? 0;
+                  const seasonTotal = seasonProgress?.total ?? s.episode_count;
+                  const seasonPct = seasonTotal > 0 ? Math.min(100, Math.round((seasonWatched / seasonTotal) * 100)) : 0;
                   return (
                     <ScopePill
                       key={s.id}
@@ -205,6 +212,8 @@ export function LogEntryModal({
                       onClick={() => handleScopeChange(s.season_number)}
                       label={s.name}
                       rating={seasonLog?.rating ?? null}
+                      progressPct={seasonPct}
+                      progressLabel={`${seasonWatched}/${seasonTotal}`}
                     />
                   );
                 })}
@@ -350,23 +359,36 @@ export function LogEntryModal({
   );
 }
 
-function ScopePill({ active, onClick, label, rating }: { active: boolean; onClick: () => void; label: string; rating?: number | null }) {
+function ScopePill({ active, onClick, label, rating, progressPct, progressLabel }: { active: boolean; onClick: () => void; label: string; rating?: number | null; progressPct?: number; progressLabel?: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
+        "shrink-0 flex flex-col items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
         active
           ? "bg-primary text-primary-foreground"
           : "bg-secondary text-muted-foreground hover:text-foreground"
       )}
     >
-      {label}
-      {rating != null && (
-        <span className="flex items-center gap-0.5">
-          <Star className="size-3 fill-current" />
-          {rating}
+      <span className="flex items-center gap-1.5">
+        {label}
+        {rating != null && (
+          <span className="flex items-center gap-0.5">
+            <Star className="size-3 fill-current" />
+            {rating}
+          </span>
+        )}
+      </span>
+      {progressLabel != null && progressPct != null && (
+        <span className="flex items-center gap-1.5 w-full">
+          <span className="h-1 flex-1 rounded-full bg-current/20 overflow-hidden">
+            <span
+              className="block h-full rounded-full bg-current transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
+          </span>
+          <span className="text-[10px] tabular-nums opacity-80">{progressLabel}</span>
         </span>
       )}
     </button>

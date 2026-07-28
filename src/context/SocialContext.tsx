@@ -45,6 +45,7 @@ export interface UserEpisode {
   season_number: number;
   episode_number: number;
   episode_name: string | null;
+  runtime_minutes: number | null;
   rewatch: boolean;
   watched_at: string;
 }
@@ -82,9 +83,14 @@ interface SocialContextValue {
     show: TVShow,
     season: number,
     episode: number,
-    episodeName?: string
+    episodeName?: string,
+    runtimeMinutes?: number | null
   ) => Promise<void>;
-  getShowProgress: (showId: number) => { watched: number; perSeason: Map<number, { watched: number; total: number }> };
+  getShowProgress: (
+    showId: number,
+    seasons?: { season_number: number; episode_count: number }[]
+  ) => { watched: number; total: number; perSeason: Map<number, { watched: number; total: number }> };
+  getRewatchCount: (showId: number) => number;
 
   // Follows
   following: Set<string>;
@@ -307,7 +313,8 @@ export function SocialProvider({ children }: { children: ReactNode }) {
       show: TVShow,
       season: number,
       episode: number,
-      episodeName?: string
+      episodeName?: string,
+      runtimeMinutes?: number | null
     ) => {
       if (!user) return;
 
@@ -329,6 +336,8 @@ export function SocialProvider({ children }: { children: ReactNode }) {
       } else {
         // Optimistic add
         const tempId = crypto.randomUUID();
+        const resolvedRuntime =
+          runtimeMinutes && runtimeMinutes > 0 ? runtimeMinutes : null;
         const newEp: UserEpisode = {
           id: tempId,
           user_id: user.id,
@@ -338,6 +347,7 @@ export function SocialProvider({ children }: { children: ReactNode }) {
           season_number: season,
           episode_number: episode,
           episode_name: episodeName ?? null,
+          runtime_minutes: resolvedRuntime,
           rewatch: false,
           watched_at: new Date().toISOString(),
         };
@@ -353,6 +363,7 @@ export function SocialProvider({ children }: { children: ReactNode }) {
             season_number: season,
             episode_number: episode,
             episode_name: episodeName ?? null,
+            runtime_minutes: resolvedRuntime,
           })
           .select()
           .single();
@@ -369,16 +380,43 @@ export function SocialProvider({ children }: { children: ReactNode }) {
   );
 
   const getShowProgress = useCallback(
-    (showId: number) => {
+    (
+      showId: number,
+      seasons?: { season_number: number; episode_count: number }[]
+    ) => {
       const showEps = userEpisodes.filter((e) => e.show_id === showId);
       const perSeason = new Map<number, { watched: number; total: number }>();
+
+      // Initialize totals from season metadata (skip season 0 specials)
+      if (seasons) {
+        for (const s of seasons) {
+          if (s.season_number > 0) {
+            perSeason.set(s.season_number, { watched: 0, total: s.episode_count });
+          }
+        }
+      }
+
+      // Count watched episodes per season
       for (const ep of showEps) {
         const s = perSeason.get(ep.season_number) ?? { watched: 0, total: 0 };
         s.watched++;
         perSeason.set(ep.season_number, s);
       }
-      return { watched: showEps.length, perSeason };
+
+      const total = seasons
+        ? seasons
+            .filter((s) => s.season_number > 0)
+            .reduce((sum, s) => sum + s.episode_count, 0)
+        : showEps.length;
+
+      return { watched: showEps.length, total, perSeason };
     },
+    [userEpisodes]
+  );
+
+  const getRewatchCount = useCallback(
+    (showId: number) =>
+      userEpisodes.filter((e) => e.show_id === showId && e.rewatch).length,
     [userEpisodes]
   );
 
@@ -640,6 +678,7 @@ export function SocialProvider({ children }: { children: ReactNode }) {
         isEpisodeWatched,
         toggleEpisode,
         getShowProgress,
+        getRewatchCount,
         following,
         isFollowing,
         toggleFollow,

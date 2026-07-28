@@ -1,10 +1,11 @@
-import { useState, memo } from "react";
+import { useState, useEffect, memo } from "react";
 import { Link } from "react-router-dom";
 import { Tv, Star, Heart, Bookmark, Play } from "lucide-react";
-import { bestPosterUrl, type TVShow } from "@/lib/tmdb";
+import { bestPosterUrl, getShowDetail, type TVShow } from "@/lib/tmdb";
 import { useUserData } from "@/context/UserDataContext";
 import { useUI } from "@/context/UIContext";
 import { useAuth } from "@/context/AuthContext";
+import { useSocial } from "@/context/SocialContext";
 import { cn } from "@/lib/utils";
 import { getShowRatingIcon } from "@/lib/showRatingIcons";
 import { StatusBadge, StatusSelectPopover } from "@/components/shows/QuickStatusControl";
@@ -32,14 +33,36 @@ function ShowPosterCardInner({
 }: ShowPosterCardProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [seasons, setSeasons] = useState<{ season_number: number; episode_count: number }[]>([]);
   const { getShowData, toggleLike, toggleWatchlist } = useUserData();
   const { openAuthModal } = useUI();
   const { user } = useAuth();
+  const { getShowProgress } = useSocial();
 
   const showData = getShowData(show.id);
   const liked = showData?.liked ?? false;
   const watchlisted = showData?.watchlisted ?? false;
   const status = showData?.status ?? null;
+
+  // Fetch season metadata for progress bar when show is being watched
+  useEffect(() => {
+    if (status !== "watching") { setSeasons([]); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const detail = await getShowDetail(show.id, []);
+        if (!cancelled) setSeasons(detail.seasons ?? []);
+      } catch { if (!cancelled) setSeasons([]); }
+    })();
+    return () => { cancelled = true; };
+  }, [show.id, status]);
+
+  const progress = status === "watching" && seasons.length > 0
+    ? getShowProgress(show.id, seasons)
+    : null;
+  const progressPct = progress && progress.total > 0
+    ? Math.min(100, Math.round((progress.watched / progress.total) * 100))
+    : 0;
 
   const year = show.first_air_date ? show.first_air_date.slice(0, 4) : "";
   const rating = show.vote_average > 0 ? show.vote_average.toFixed(1) : null;
@@ -215,6 +238,21 @@ function ShowPosterCardInner({
               {year}
             </p>
           )}
+        </div>
+      )}
+
+      {/* Progress bar for watching shows */}
+      {progress && progress.watched > 0 && (
+        <div className="mt-1 px-0.5">
+          <div className="h-1 w-full rounded-full bg-secondary overflow-hidden">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-0.5 tabular-nums">
+            {progress.watched}/{progress.total} episodes
+          </p>
         </div>
       )}
     </Link>

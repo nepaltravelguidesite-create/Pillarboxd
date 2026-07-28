@@ -39,7 +39,7 @@ import { SubscriptionInsight } from "@/components/shows/SubscriptionInsight";
 // ---------------------------------------------------------------------------
 
 const REVIEW_YEAR = 2026;
-const MINUTES_PER_EPISODE = 45;
+const LEGACY_FALLBACK_MINUTES = 45; // used only for episodes logged before runtime tracking existed
 
 // Deterministic mock genre assignment — same show always maps to the same
 // genre so the breakdown is stable across renders. We have no real genre data
@@ -89,7 +89,11 @@ export default function StatsPage() {
   // -------------------------------------------------------------------------
   const stats = useMemo(() => {
     const totalEpisodes = userEpisodes.length;
-    const totalHours = Math.round((totalEpisodes * MINUTES_PER_EPISODE) / 60);
+    const totalMinutes = userEpisodes.reduce(
+      (sum, ep) => sum + (ep.runtime_minutes ?? LEGACY_FALLBACK_MINUTES),
+      0
+    );
+    const totalHours = Math.round(totalMinutes / 60);
     const showsTracked = new Set<number>([
       ...userShows.map((s) => s.show_id),
       ...userEpisodes.map((e) => e.show_id),
@@ -153,7 +157,11 @@ export default function StatsPage() {
     const yearEpisodes = userEpisodes.filter(
       (e) => new Date(e.watched_at).getFullYear() === REVIEW_YEAR
     );
-    const yearHours = Math.round((yearEpisodes.length * MINUTES_PER_EPISODE) / 60);
+    const yearMinutes = yearEpisodes.reduce(
+      (sum, ep) => sum + (ep.runtime_minutes ?? LEGACY_FALLBACK_MINUTES),
+      0
+    );
+    const yearHours = Math.round(yearMinutes / 60);
 
     // Most-watched show this year (by episode count).
     const yearShowCounts = new Map<number, { name: string; count: number }>();

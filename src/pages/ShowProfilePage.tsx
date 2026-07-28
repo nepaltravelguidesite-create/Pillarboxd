@@ -29,7 +29,7 @@ import { StatusSegmentedControl } from "@/components/shows/QuickStatusControl";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2, Heart, Bookmark, Plus, ChevronLeft, Eye, List as ListIcon,
-  Tv, BookmarkCheck,
+  Tv, BookmarkCheck, RotateCcw,
 } from "lucide-react";
 
 type EditorialListPreview = {
@@ -45,7 +45,7 @@ export function ShowProfilePage() {
   const numericId = showId ? parseInt(showId, 10) : null;
   const { data: showDetail, loading, error } = useShowDetail(numericId);
   const { toggleWatchlist, toggleLike, getShowData, setRating, userLogs } = useUserData();
-  const { isListSaved, saveList, unsaveList } = useSocial();
+  const { isListSaved, saveList, unsaveList, getRewatchCount } = useSocial();
   const { user } = useAuth();
   const { reviews, refetch: refetchReviews } = useShowReviews(numericId);
   const [logModalOpen, setLogModalOpen] = useState(false);
@@ -176,6 +176,7 @@ export function ShowProfilePage() {
     : null;
 
   const showData = getShowData(show.id);
+  const rewatchCount = getRewatchCount(show.id);
   const communityScore = showDetail.vote_average > 0
     ? Math.round((showDetail.vote_average / 10) * 100)
     : null;
@@ -257,6 +258,11 @@ export function ShowProfilePage() {
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <ListIcon className="size-3.5" />{reviews.length}
               </span>
+              {rewatchCount > 0 && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <RotateCcw className="size-3.5" />{rewatchCount} {rewatchCount === 1 ? "rewatch" : "rewatches"}
+                </span>
+              )}
             </div>
 
             <div className="mt-3 rounded-xl border border-border/50 bg-card p-5">
