@@ -25,10 +25,11 @@ import { ReviewFeed } from "@/components/shows/ReviewFeed";
 import type { ReviewWithAuthor } from "@/components/shows/ReviewCard";
 import { CommentThread } from "@/components/shows/CommentThread";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { StatusSegmentedControl } from "@/components/shows/QuickStatusControl";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2, Heart, Bookmark, Plus, ChevronLeft, Eye, List as ListIcon,
-  Tv, CheckCircle, BookmarkCheck,
+  Tv, BookmarkCheck,
 } from "lucide-react";
 
 type EditorialListPreview = {
@@ -43,7 +44,7 @@ export function ShowProfilePage() {
   const { showId } = useParams<{ showId: string }>();
   const numericId = showId ? parseInt(showId, 10) : null;
   const { data: showDetail, loading, error } = useShowDetail(numericId);
-  const { toggleWatchlist, toggleLike, getShowData, setRating, setShowStatus, userLogs } = useUserData();
+  const { toggleWatchlist, toggleLike, getShowData, setRating, userLogs } = useUserData();
   const { isListSaved, saveList, unsaveList } = useSocial();
   const { user } = useAuth();
   const { reviews, refetch: refetchReviews } = useShowReviews(numericId);
@@ -280,13 +281,10 @@ export function ShowProfilePage() {
             </div>
 
             <div className="mt-3 rounded-xl border border-border/50 bg-card p-4 space-y-3">
-              <div className="flex items-center justify-around">
-                <ToggleIcon
-                  icon={CheckCircle}
-                  label="Watched"
-                  active={showData?.status === "completed"}
-                  onClick={() => setShowStatus(show, showData?.status === "completed" ? null : "completed")}
-                />
+              <div className="flex items-center justify-center">
+                <StatusSegmentedControl show={show} />
+              </div>
+              <div className="flex items-center justify-around pt-1">
                 <ToggleIcon
                   icon={Heart}
                   label="Liked"
@@ -434,13 +432,10 @@ export function ShowProfilePage() {
               <div className="sticky top-20 space-y-4">
                 {/* Toggle row + rating */}
                 <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
-                  <div className="flex items-center justify-around">
-                    <ToggleIcon
-                      icon={CheckCircle}
-                      label="Watched"
-                      active={showData?.status === "completed"}
-                      onClick={() => setShowStatus(show, showData?.status === "completed" ? null : "completed")}
-                    />
+                  <div className="flex items-center justify-center">
+                    <StatusSegmentedControl show={show} />
+                  </div>
+                  <div className="flex items-center justify-around pt-1">
                     <ToggleIcon
                       icon={Heart}
                       label="Liked"

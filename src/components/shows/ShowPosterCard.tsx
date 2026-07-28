@@ -1,12 +1,13 @@
 import { useState, memo } from "react";
 import { Link } from "react-router-dom";
-import { Tv, Star, Heart, Bookmark } from "lucide-react";
+import { Tv, Star, Heart, Bookmark, Play } from "lucide-react";
 import { bestPosterUrl, type TVShow } from "@/lib/tmdb";
 import { useUserData } from "@/context/UserDataContext";
 import { useUI } from "@/context/UIContext";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { getShowRatingIcon } from "@/lib/showRatingIcons";
+import { StatusBadge, StatusSelectPopover } from "@/components/shows/QuickStatusControl";
 
 interface ShowPosterCardProps {
   show: TVShow;
@@ -38,6 +39,7 @@ function ShowPosterCardInner({
   const showData = getShowData(show.id);
   const liked = showData?.liked ?? false;
   const watchlisted = showData?.watchlisted ?? false;
+  const status = showData?.status ?? null;
 
   const year = show.first_air_date ? show.first_air_date.slice(0, 4) : "";
   const rating = show.vote_average > 0 ? show.vote_average.toFixed(1) : null;
@@ -102,6 +104,9 @@ function ShowPosterCardInner({
           />
         )}
 
+        {/* Status badge */}
+        <StatusBadge status={status} />
+
         {/* Rating badge */}
         {showRating && rating && (
           <div className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 rounded-md bg-black/75 px-1.5 py-0.5 backdrop-blur-sm">
@@ -134,6 +139,23 @@ function ShowPosterCardInner({
         >
           {/* Quick action buttons */}
           <div className="flex items-center gap-1.5">
+            <StatusSelectPopover show={show} align="center">
+              <button
+                type="button"
+                aria-label="Set status"
+                className={cn(
+                  "flex items-center justify-center size-8 rounded-full",
+                  "border border-border/50 backdrop-blur-sm",
+                  "transition-all duration-150 hover:scale-110 active:scale-95",
+                  status
+                    ? "bg-primary text-background border-primary"
+                    : "bg-black/40 text-foreground/80 hover:text-foreground"
+                )}
+              >
+                <Play className="size-4" strokeWidth={2} fill={status ? "currentColor" : "none"} />
+              </button>
+            </StatusSelectPopover>
+
             <button
               type="button"
               onClick={(e) => {

@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useSocial } from "@/context/SocialContext";
+import { useUserData } from "@/context/UserDataContext";
 import { useTrendingShows } from "@/hooks/use-tmdb";
 import { type TVShow } from "@/lib/tmdb";
 import { ShowPosterCard } from "@/components/shows/ShowPosterCard";
+import { ContinueWatchingCard } from "@/components/shows/ContinueWatchingCard";
 import { MobileListCard } from "@/components/shows/MobileListCard";
 import { MobileReviewCard } from "@/components/shows/MobileReviewCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -55,7 +57,14 @@ type ListItemRow = {
 export function HomePage() {
   const { user } = useAuth();
   const { following, isListLiked } = useSocial();
+  const { userShows } = useUserData();
   const { data: trending } = useTrendingShows("week");
+
+  const watchingShows = user
+    ? userShows
+        .filter((s) => s.status === "watching")
+        .slice(0, 10)
+    : [];
 
   const [reviews, setReviews] = useState<ReviewWithAuthor[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
@@ -266,6 +275,37 @@ export function HomePage() {
           </div>
         )}
       </div>
+
+      {/* Continue Watching — only for logged-in users with shows in progress */}
+      {user && watchingShows.length > 0 && (
+        <section className="space-y-3">
+          <SectionHeader title="Continue Watching" />
+          <HorizontalScrollRow>
+            {watchingShows.map((s) => (
+              <ContinueWatchingCard
+                key={s.id}
+                show={{
+                  id: s.show_id,
+                  name: s.show_name,
+                  poster_path: s.show_poster_path,
+                  backdrop_path: s.show_backdrop_path,
+                  first_air_date: s.show_first_air_date ?? "",
+                  vote_average: 0,
+                  vote_count: 0,
+                  popularity: 0,
+                  genre_ids: [],
+                  original_name: s.show_name,
+                  origin_country: [],
+                  original_language: "",
+                  overview: "",
+                } as TVShow}
+                backdropPath={s.show_backdrop_path}
+                className="shrink-0"
+              />
+            ))}
+          </HorizontalScrollRow>
+        </section>
+      )}
 
       {/* Popular This Month — horizontal scroll-snap row */}
       <section className="space-y-3">

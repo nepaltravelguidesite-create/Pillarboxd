@@ -38,6 +38,7 @@ const JournalPage        = lazy(() => import("@/pages/JournalPage"));
 const PersonPage         = lazy(() => import("@/pages/PersonPage"));
 const StatsPage          = lazy(() => import("@/pages/StatsPage"));
 const SettingsPage       = lazy(() => import("@/pages/SettingsPage"));
+const SchedulePage        = lazy(() => import("@/pages/SchedulePage").then(m => ({ default: m.SchedulePage })));
 
 // ---------------------------------------------------------------------------
 // Page-level suspense fallback
@@ -142,6 +143,7 @@ const router = createBrowserRouter([
       { path: "profile/:username/stats",       element: <S><StatsPage /></S> },
       { path: "settings",                      element: <S><SettingsPage /></S> },
       { path: "lists",                         element: <S><ListsPage /></S> },
+      { path: "schedule",                      element: <S><SchedulePage /></S> },
       { path: "lists/:listId",                 element: <S><ListDetailPage /></S> },
       { path: "members",                       element: <S><MembersPage /></S> },
       { path: "log",                           element: <S><LogPage /></S> },

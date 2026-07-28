@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { to: "/shows", label: "Shows" },
+  { to: "/schedule", label: "Schedule" },
   { to: "/lists", label: "Lists" },
   { to: "/members", label: "Members" },
   { to: "/journal", label: "Journal" },
