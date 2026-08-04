@@ -17,6 +17,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { Calendar, Trash2, RotateCcw, Eye, Star } from "lucide-react";
+import { SEOMeta } from "@/components/SEOMeta";
 
 // ---------------------------------------------------------------------------
 // LogPage — /log route
@@ -127,6 +128,8 @@ export default function LogPage() {
   // Timeline
   // -------------------------------------------------------------------------
   return (
+    <>
+    <SEOMeta title="Diary" />
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <LogHeader />
@@ -149,6 +152,7 @@ export default function LogPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

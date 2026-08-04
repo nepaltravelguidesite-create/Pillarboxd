@@ -159,7 +159,7 @@ export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "review
 
     return (
       <>
-        <SEOMeta title={`${config.title} — Aftershow`} />
+        <SEOMeta title={config.title} />
         <div className="w-full max-w-screen-lg mx-auto px-4 py-4 space-y-5 md:py-8">
           {/* Header */}
           <div className="flex items-center gap-3">
@@ -239,7 +239,7 @@ export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "review
   // Default profile view
   return (
     <>
-      <SEOMeta title={`${displayName} — Aftershow`} />
+      <SEOMeta title={displayName} />
       <div className="w-full max-w-screen-lg mx-auto px-4 py-4 space-y-5 md:py-8">
         {/* Profile header */}
         <div className="flex items-start gap-4">
@@ -419,7 +419,7 @@ function ReviewLogEntry({ log }: { log: UserLog }) {
         {log.review && (
           <p className="text-sm text-foreground/80 leading-7 mt-2">
             {log.contains_spoiler ? (
-              <span className="text-xs text-muted-foreground italic">Contains spoilers — view on show page</span>
+              <span className="text-xs text-muted-foreground italic">Contains spoilers. View on show page</span>
             ) : (
               log.review
             )}

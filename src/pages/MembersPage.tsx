@@ -6,6 +6,7 @@ import { useUI } from "@/context/UIContext";
 import { cn } from "@/lib/utils";
 import { Search, UserPlus, UserCheck, Users, Loader2 } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { SEOMeta } from "@/components/SEOMeta";
 
 // ---------------------------------------------------------------------------
 // MembersPage — /members route
@@ -33,6 +34,8 @@ export default function MembersPage() {
   }, [allProfiles, user, query]);
 
   return (
+    <>
+    <SEOMeta title="Members" />
     <div className="min-h-screen bg-background text-foreground pb-page-enter">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Heading */}
@@ -89,6 +92,7 @@ export default function MembersPage() {
         )}
       </div>
     </div>
+    </>
   );
 }
 

@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
 import { bestPosterUrl } from "@/lib/tmdb";
 import { Calendar, Check, Star, Heart, Activity } from "lucide-react";
+import { SEOMeta } from "@/components/SEOMeta";
 
 // ---------------------------------------------------------------------------
 // JournalPage — /journal route
@@ -154,6 +155,8 @@ export default function JournalPage() {
   // Feed — grouped by month
   // -------------------------------------------------------------------------
   return (
+    <>
+    <SEOMeta title="Activity Feed" />
     <div className="min-h-screen bg-background text-foreground pb-page-enter">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <JournalHeader />
@@ -174,6 +177,7 @@ export default function JournalPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

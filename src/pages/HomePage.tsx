@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { ReviewWithAuthor } from "@/components/shows/ReviewCard";
+import { SEOMeta } from "@/components/SEOMeta";
 
 type LogRow = {
   id: string;
@@ -236,6 +237,8 @@ export function HomePage() {
   const firstName = user?.displayName?.split(" ")[0] ?? "there";
 
   return (
+    <>
+    <SEOMeta title={user ? "Home" : "Aftershow. Track, rate & log your TV shows"} />
     <div className="w-full max-w-screen-lg mx-auto px-4 py-4 space-y-6 md:px-6 md:py-8 md:space-y-8">
       {/* Header row */}
       <div className="flex items-start justify-between">
@@ -394,6 +397,7 @@ export function HomePage() {
       </section>
 
     </div>
+    </>
   );
 }
 

@@ -7,6 +7,7 @@ import { getTVGenres, type Genre } from "@/lib/tmdb";
 import { ShowPosterCard } from "@/components/shows/ShowPosterCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { SEOMeta } from "@/components/SEOMeta";
 
 // ---------------------------------------------------------------------------
 // Sort options — mapped to TMDB sort_by values (or a dedicated endpoint)
@@ -149,6 +150,8 @@ export default function BrowsePage() {
   const isEmpty = !loading && !error && shows.length === 0;
 
   return (
+    <>
+    <SEOMeta title="Discover Shows" />
     <div className="min-h-screen bg-background text-foreground pb-page-enter">
       <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
         {/* ---------------------------------------------------------------- */}
@@ -383,6 +386,7 @@ export default function BrowsePage() {
         )}
       </div>
     </div>
+    </>
   );
 }
 

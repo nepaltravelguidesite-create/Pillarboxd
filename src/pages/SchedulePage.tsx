@@ -13,6 +13,7 @@ import { useUserData } from "@/context/UserDataContext";
 import { useSocial } from "@/context/SocialContext";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SEOMeta } from "@/components/SEOMeta";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -390,6 +391,8 @@ export function SchedulePage() {
   const grouped = groupByDate(filtered, tab);
 
   return (
+    <>
+    <SEOMeta title="Schedule" />
     <div className="min-h-screen">
       {/* Page header */}
       <div className="px-4 sm:px-6 lg:px-8 max-w-screen-xl mx-auto pt-6 pb-4">
@@ -463,6 +466,7 @@ export function SchedulePage() {
         )}
       </div>
     </div>
+    </>
   );
 }
 

@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useUserData, type UserLog } from "@/context/UserDataContext";
 import { useSocial } from "@/context/SocialContext";
-import { type TVShow } from "@/lib/tmdb";
+import { type TVShow, getShowSeason } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
 import { StarRating } from "@/components/shows/StarRating";
 import { getShowRatingIcon } from "@/lib/showRatingIcons";
-import { Loader2, Calendar, X, Star } from "lucide-react";
+import { Loader2, Calendar, X, Star, Check } from "lucide-react";
 import { toast } from "sonner";
 
 type Season = {
@@ -42,7 +42,8 @@ export function LogEntryModal({
   onSuccess,
 }: LogEntryModalProps) {
   const { addLog, updateLog } = useUserData();
-  const { getShowProgress } = useSocial();
+  const { getShowProgress, toggleEpisode, userEpisodes } = useSocial();
+  const [markingSeason, setMarkingSeason] = useState(false);
 
   const isEditMode = !!existingLog;
 
@@ -184,6 +185,63 @@ export function LogEntryModal({
         </div>
 
         <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-3">
+          {/* Mark season watched quick action */}
+          {seasonNumber !== null && (() => {
+            const sp = progress.perSeason.get(seasonNumber);
+            const sw = sp?.watched ?? 0;
+            const st = sp?.total ?? realSeasons.find((s) => s.season_number === seasonNumber)?.episode_count ?? 0;
+            const seasonName = realSeasons.find((s) => s.season_number === seasonNumber)?.name ?? `Season ${seasonNumber}`;
+            return sw < st ? (
+              <button
+                type="button"
+                disabled={markingSeason}
+                onClick={async () => {
+                  const season = realSeasons.find((s) => s.season_number === seasonNumber);
+                  if (!season) return;
+                  setMarkingSeason(true);
+                  try {
+                    const detail = await getShowSeason(show.id, seasonNumber);
+                    const watchedNums = new Set(
+                      userEpisodes
+                        .filter((e) => e.show_id === show.id && e.season_number === seasonNumber)
+                        .map((e) => e.episode_number)
+                    );
+                    const unwatched = (detail.episodes ?? []).filter(
+                      (e) => !watchedNums.has(e.episode_number)
+                    );
+                    for (const ep of unwatched) {
+                      await toggleEpisode(
+                        show,
+                        seasonNumber,
+                        ep.episode_number,
+                        ep.name,
+                        ep.runtime ?? null
+                      );
+                    }
+                    toast.success(`Marked all ${season.name} episodes as watched`);
+                  } catch {
+                    toast.error("Failed to mark season as watched");
+                  } finally {
+                    setMarkingSeason(false);
+                  }
+                }}
+                className={cn(
+                  "w-full flex items-center justify-center gap-1.5 py-2 rounded-lg",
+                  "text-xs font-medium transition-colors",
+                  "bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground",
+                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                )}
+              >
+                {markingSeason ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Check className="size-3.5" />
+                )}
+                Mark {seasonName} Watched ({sw}/{st})
+              </button>
+            ) : null;
+          })()}
+
           {/* Season scope selector */}
           {realSeasons.length > 0 && (
             <div className="space-y-1.5">

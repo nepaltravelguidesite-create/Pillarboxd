@@ -279,7 +279,7 @@ export function ShowProfilePage() {
                   ))}
                 </div>
                 <div className="flex flex-col items-center justify-center gap-1 shrink-0 w-20">
-                  <span className="font-display text-4xl font-bold text-foreground">{avgRating !== null ? avgRating.toFixed(1) : "—"}</span>
+                  <span className="font-display text-4xl font-bold text-foreground">{avgRating !== null ? avgRating.toFixed(1) : "N/A"}</span>
                   <StarRating value={avgRating} readOnly size="sm" />
                   <span className="text-[10px] text-muted-foreground">{ratedReviews.length} ratings</span>
                 </div>
@@ -488,7 +488,7 @@ export function ShowProfilePage() {
                       ))}
                     </div>
                     <div className="flex flex-col items-center justify-center gap-1 shrink-0 w-20">
-                      <span className="font-display text-4xl font-bold text-foreground">{avgRating !== null ? avgRating.toFixed(1) : "—"}</span>
+                      <span className="font-display text-4xl font-bold text-foreground">{avgRating !== null ? avgRating.toFixed(1) : "N/A"}</span>
                       <StarRating value={avgRating} readOnly size="sm" />
                       <span className="text-[10px] text-muted-foreground">{ratedReviews.length} ratings</span>
                     </div>

@@ -1,6 +1,7 @@
 import { useSearchParams } from "react-router-dom";
 import { useSearchShows } from "@/hooks/use-tmdb";
 import { ShowPosterCard } from "@/components/shows/ShowPosterCard";
+import { SEOMeta } from "@/components/SEOMeta";
 import { Loader2, SearchX, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -15,6 +16,8 @@ export function SearchResultsPage() {
   const totalResults = data?.total_results ?? 0;
 
   return (
+    <>
+    <SEOMeta title={query ? `Search: "${query}"` : "Search"} />
     <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Search bar — visible on mobile where there's no persistent search input */}
       <div className="md:hidden mb-4">
@@ -96,5 +99,6 @@ export function SearchResultsPage() {
         </div>
       )}
     </div>
+    </>
   );
 }

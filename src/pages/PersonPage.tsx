@@ -8,6 +8,7 @@ import {
   type TVShow,
 } from "@/lib/tmdb";
 import { ShowPosterCard } from "@/components/shows/ShowPosterCard";
+import { SEOMeta } from "@/components/SEOMeta";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -101,6 +102,8 @@ export default function PersonPage() {
   const bornLine = birthBits.length > 0 ? birthBits.join(" · ") : null;
 
   return (
+    <>
+    <SEOMeta title={person.name} />
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
         {/* ----------------------------------------------------------- Header */}
@@ -203,6 +206,7 @@ export default function PersonPage() {
         </section>
       </div>
     </div>
+    </>
   );
 }
 

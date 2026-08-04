@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { List, Plus, Trash2, Globe, Lock, Heart, Loader2 } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { SEOMeta } from "@/components/SEOMeta";
 
 // ---------------------------------------------------------------------------
 // ListsPage — /lists route
@@ -95,6 +96,8 @@ export default function ListsPage() {
   // -------------------------------------------------------------------------
 
   return (
+    <>
+    <SEOMeta title="My Lists" />
     <div className="min-h-screen bg-background text-foreground pb-page-enter">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Heading + Create button */}
@@ -276,6 +279,7 @@ export default function ListsPage() {
         )}
       </div>
     </div>
+    </>
   );
 }
 
