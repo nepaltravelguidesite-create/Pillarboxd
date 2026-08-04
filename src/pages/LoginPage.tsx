@@ -126,7 +126,7 @@ export function LoginPage() {
               </div>
               <div className="flex justify-end">
                 <Link
-                  to="/login"
+                  to="/forgot-password"
                   className="text-xs text-muted-foreground hover:text-accent transition-colors"
                 >
                   Forgot Password?
@@ -261,7 +261,7 @@ export function LoginPage() {
               </div>
               <div className="flex justify-end">
                 <Link
-                  to="/login"
+                  to="/forgot-password"
                   className="text-xs text-muted-foreground hover:text-accent transition-colors"
                 >
                   Forgot Password?

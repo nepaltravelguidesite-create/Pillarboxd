@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { Navigate } from "react-router-dom";
-import { Loader2, Upload, ImageIcon, Globe, Tv, Pencil } from "lucide-react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { Loader2, Upload, ImageIcon, Globe, Tv, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 import { SEOMeta } from "@/components/SEOMeta";
@@ -23,6 +23,17 @@ import { bestPosterUrl } from "@/lib/tmdb";
 import { EditFavoritesModal } from "@/components/shows/EditFavoritesModal";
 import type { FavoriteShow } from "@/context/SocialContext";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // ---------------------------------------------------------------------------
 // SettingsPage — /settings route
@@ -81,7 +92,8 @@ function initialsFromName(name: string): string {
 }
 
 export default function SettingsPage() {
-  const { user, session, authState, refreshProfile } = useAuth();
+  const { user, session, authState, refreshProfile, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -90,6 +102,9 @@ export default function SettingsPage() {
   const [form, setForm] = useState<ProfileForm>(EMPTY_FORM);
   const [favorites, setFavorites] = useState<FavoriteShow[]>([]);
   const [editFavoritesOpen, setEditFavoritesOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -329,6 +344,30 @@ export default function SettingsPage() {
       toast.error("Could not save settings. Please try again.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Delete account
+  // -------------------------------------------------------------------------
+  async function handleDeleteAccount() {
+    if (!user || !session) return;
+    setDeleting(true);
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke("delete-account", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (invokeError) throw invokeError;
+      if (data && data.error) throw new Error(data.error);
+
+      await signOut();
+      toast.success("Your account has been deleted.");
+      navigate("/", { replace: true });
+    } catch (err) {
+      console.error("[SettingsPage] account deletion failed", err);
+      toast.error(err instanceof Error ? err.message : "Could not delete account. Please try again.");
+      setDeleting(false);
+      setDeleteOpen(false);
     }
   }
 
@@ -645,6 +684,75 @@ export default function SettingsPage() {
           currentFavorites={favorites}
           onSaved={handleFavoritesSaved}
         />
+
+        {/* Danger zone — Delete Account */}
+        <div className="mt-12">
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6">
+            <div className="flex items-start gap-3">
+              <div className="flex-1">
+                <h2 className="font-display text-lg font-bold text-destructive">
+                  Delete Account
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+                  Permanently delete your account and all associated data — reviews, logs, lists, comments, and follows. This action cannot be undone.
+                </p>
+              </div>
+              <AlertDialog open={deleteOpen} onOpenChange={(open) => {
+                setDeleteOpen(open);
+                if (!open) {
+                  setDeleteConfirmText("");
+                  setDeleting(false);
+                }
+              }}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="shrink-0">
+                    <Trash2 className="size-4" />
+                    Delete Account
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-destructive flex items-center gap-2">
+                      <AlertTriangle className="size-5" />
+                      Delete your account?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete your account and all your data — reviews, logs, lists, comments, and follows. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="space-y-2 py-2">
+                    <p className="text-sm text-muted-foreground">
+                      Type <span className="font-semibold text-foreground">DELETE</span> to confirm:
+                    </p>
+                    <Input
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value)}
+                      placeholder="DELETE"
+                      autoComplete="off"
+                      disabled={deleting}
+                      className="border-destructive/30"
+                    />
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deleting}>
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      disabled={deleteConfirmText !== "DELETE" || deleting}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleDeleteAccount();
+                      }}
+                    >
+                      {deleting ? <Loader2 className="size-4 animate-spin" /> : "Delete Forever"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

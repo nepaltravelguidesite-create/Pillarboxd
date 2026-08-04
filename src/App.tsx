@@ -22,6 +22,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const LoginPage          = lazy(() => import("@/pages/LoginPage").then(m => ({ default: m.LoginPage })));
 const SignupPage         = lazy(() => import("@/pages/SignupPage").then(m => ({ default: m.SignupPage })));
+const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage").then(m => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage  = lazy(() => import("@/pages/ResetPasswordPage").then(m => ({ default: m.ResetPasswordPage })));
 const HomePage           = lazy(() => import("@/pages/HomePage").then(m => ({ default: m.HomePage })));
 const AboutPage          = lazy(() => import("@/pages/AboutPage"));
 const ContactPage        = lazy(() => import("@/pages/ContactPage"));
@@ -110,6 +112,22 @@ const router = createBrowserRouter([
     element: (
       <AppProviders>
         <S><SignupPage /></S>
+      </AppProviders>
+    ),
+  },
+  {
+    path: "/forgot-password",
+    element: (
+      <AppProviders>
+        <S><ForgotPasswordPage /></S>
+      </AppProviders>
+    ),
+  },
+  {
+    path: "/reset-password",
+    element: (
+      <AppProviders>
+        <S><ResetPasswordPage /></S>
       </AppProviders>
     ),
   },
