@@ -64,16 +64,18 @@ export function HomePage() {
   const { data: trending } = useTrendingShows("week");
 
   const watchingShows = user
-    ? userShows
-        .filter((s) => s.status === "watching")
-        .slice(0, 10)
+    ? userShows.filter((s) => s.status === "watching").slice(0, 10)
     : [];
 
   const [reviews, setReviews] = useState<ReviewWithAuthor[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [lists, setLists] = useState<ListRow[]>([]);
-  const [listItems, setListItems] = useState<Record<string, (string | null)[]>>({});
-  const [listCurators, setListCurators] = useState<Record<string, ProfileRow>>({});
+  const [listItems, setListItems] = useState<Record<string, (string | null)[]>>(
+    {},
+  );
+  const [listCurators, setListCurators] = useState<Record<string, ProfileRow>>(
+    {},
+  );
   const [listsLoading, setListsLoading] = useState(true);
   const [onThisDay, setOnThisDay] = useState<LogRow | null>(null);
   const [onThisDayYears, setOnThisDayYears] = useState<number>(0);
@@ -99,7 +101,7 @@ export function HomePage() {
 
       // Filter to friends + own
       const visibleLogs = typedLogs.filter(
-        (l) => following.has(l.user_id) || l.user_id === user?.id
+        (l) => following.has(l.user_id) || l.user_id === user?.id,
       );
 
       if (visibleLogs.length === 0) {
@@ -158,7 +160,8 @@ export function HomePage() {
           vibe_tag: l.vibe_tag,
           created_at: l.created_at,
           author_username: profile?.username ?? "unknown",
-          author_display_name: profile?.display_name ?? profile?.username ?? "Unknown",
+          author_display_name:
+            profile?.display_name ?? profile?.username ?? "Unknown",
           author_avatar_url: profile?.avatar_url ?? null,
           like_count: likeCounts.get(l.id) ?? 0,
           comment_count: commentCounts.get(l.id) ?? 0,
@@ -214,7 +217,7 @@ export function HomePage() {
           .limit(3);
 
         const paths = (items ?? []).map(
-          (item) => (item as ListItemRow).show_poster_path
+          (item) => (item as ListItemRow).show_poster_path,
         );
         return { listId: list.id, paths };
       });
@@ -260,7 +263,11 @@ export function HomePage() {
       const matches = typedLogs.filter((log) => {
         if (!log.watched_date) return false;
         const d = new Date(log.watched_date);
-        return d.getMonth() + 1 === month && d.getDate() === day && d.getFullYear() !== year;
+        return (
+          d.getMonth() + 1 === month &&
+          d.getDate() === day &&
+          d.getFullYear() !== year
+        );
       });
 
       if (matches.length > 0) {
@@ -276,173 +283,188 @@ export function HomePage() {
 
   return (
     <>
-    <SEOMeta title={user ? "Home" : "Aftershow. Track, rate & log your TV shows"} />
-    <div className="w-full max-w-screen-lg mx-auto px-4 py-4 space-y-6 md:px-6 md:py-8 md:space-y-8">
-      {/* Header row */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-0.5">
-          {user ? (
-            <>
-              <h1 className="font-display text-xl font-bold text-foreground tracking-tight">
-                Hello, {firstName}!
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                What are you watching today?
-              </p>
-            </>
-          ) : (
-            <>
-              <h1 className="font-display text-xl font-bold text-foreground tracking-tight">
-                Welcome to Aftershow
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                Track, rate, and discuss every show you've ever watched.
-              </p>
-            </>
+      <SEOMeta
+        title={user ? "Home" : "Aftershow. Track, rate & log your TV shows"}
+      />
+      <div className="w-full max-w-screen-lg mx-auto px-4 py-4 space-y-6 md:px-6 md:py-8 md:space-y-8">
+        {/* Header row */}
+        <div className="flex items-start justify-between">
+          <div className="space-y-0.5">
+            {user ? (
+              <>
+                <h1 className="font-display text-xl font-bold text-foreground tracking-tight">
+                  Hello, {firstName}!
+                </h1>
+                <p className="text-xs text-muted-foreground">
+                  What are you watching today?
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="font-display text-xl font-bold text-foreground tracking-tight">
+                  Welcome to Aftershow
+                </h1>
+                <p className="text-xs text-muted-foreground">
+                  Track, rate, and discuss every show you've ever watched.
+                </p>
+              </>
+            )}
+          </div>
+          {user && (
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Avatar className="size-9 border border-border/40">
+                  <AvatarImage src={user?.avatarUrl} alt={user?.displayName} />
+                  <AvatarFallback className="bg-secondary text-foreground text-xs font-semibold">
+                    {user?.displayName?.charAt(0).toUpperCase() ?? "?"}
+                  </AvatarFallback>
+                </Avatar>
+                {/* Online status dot */}
+                <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-status-watched border-2 border-nav" />
+              </div>
+            </div>
           )}
         </div>
-        {user && (
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Avatar className="size-9 border border-border/40">
-                <AvatarImage src={user?.avatarUrl} alt={user?.displayName} />
-                <AvatarFallback className="bg-secondary text-foreground text-xs font-semibold">
-                  {user?.displayName?.charAt(0).toUpperCase() ?? "?"}
-                </AvatarFallback>
-              </Avatar>
-              {/* Online status dot */}
-              <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-status-watched border-2 border-nav" />
-            </div>
-          </div>
+
+        {/* On This Day memory */}
+        {user && onThisDay && (
+          <section className="space-y-3">
+            <SectionHeader title="On This Day" />
+            <OnThisDayCard log={onThisDay} yearsAgo={onThisDayYears} />
+          </section>
         )}
-      </div>
 
-      {/* On This Day memory */}
-      {user && onThisDay && (
-        <section className="space-y-3">
-          <SectionHeader title="On This Day" />
-          <OnThisDayCard log={onThisDay} yearsAgo={onThisDayYears} />
-        </section>
-      )}
+        {/* Continue Watching - only for logged-in users with shows in progress */}
+        {user && watchingShows.length > 0 && (
+          <section className="space-y-3">
+            <SectionHeader title="Continue Watching" />
+            <HorizontalScrollRow>
+              {watchingShows.map((s) => (
+                <ContinueWatchingCard
+                  key={s.id}
+                  show={
+                    {
+                      id: s.show_id,
+                      name: s.show_name,
+                      poster_path: s.show_poster_path,
+                      backdrop_path: s.show_backdrop_path,
+                      first_air_date: s.show_first_air_date ?? "",
+                      vote_average: 0,
+                      vote_count: 0,
+                      popularity: 0,
+                      genre_ids: [],
+                      original_name: s.show_name,
+                      origin_country: [],
+                      original_language: "",
+                      overview: "",
+                    } as TVShow
+                  }
+                  backdropPath={s.show_backdrop_path}
+                  className="shrink-0"
+                />
+              ))}
+            </HorizontalScrollRow>
+          </section>
+        )}
 
-      {/* Continue Watching — only for logged-in users with shows in progress */}
-      {user && watchingShows.length > 0 && (
+        {/* Popular This Month - horizontal scroll-snap row */}
         <section className="space-y-3">
-          <SectionHeader title="Continue Watching" />
+          <SectionHeader title="Popular This Month" />
           <HorizontalScrollRow>
-            {watchingShows.map((s) => (
-              <ContinueWatchingCard
-                key={s.id}
-                show={{
-                  id: s.show_id,
-                  name: s.show_name,
-                  poster_path: s.show_poster_path,
-                  backdrop_path: s.show_backdrop_path,
-                  first_air_date: s.show_first_air_date ?? "",
-                  vote_average: 0,
-                  vote_count: 0,
-                  popularity: 0,
-                  genre_ids: [],
-                  original_name: s.show_name,
-                  origin_country: [],
-                  original_language: "",
-                  overview: "",
-                } as TVShow}
-                backdropPath={s.show_backdrop_path}
+            {(trending?.results ?? []).slice(0, 10).map((show: TVShow) => (
+              <ShowPosterCard
+                key={show.id}
+                show={show}
+                size="sm"
+                showRating={false}
                 className="shrink-0"
               />
             ))}
+            {trending === undefined && <ScrollSkeletonRow count={6} />}
           </HorizontalScrollRow>
         </section>
-      )}
 
-      {/* Popular This Month — horizontal scroll-snap row */}
-      <section className="space-y-3">
-        <SectionHeader title="Popular This Month" />
-        <HorizontalScrollRow>
-          {(trending?.results ?? []).slice(0, 10).map((show: TVShow) => (
-            <ShowPosterCard
-              key={show.id}
-              show={show}
-              size="sm"
-              showRating={false}
-              className="shrink-0"
-            />
-          ))}
-          {trending === undefined && (
-            <ScrollSkeletonRow count={6} />
+        {/* Popular Lists This Month */}
+        <section className="space-y-3">
+          <SectionHeader title="Popular Lists This Month" />
+          {listsLoading ? (
+            <HorizontalScrollRow>
+              <ScrollSkeletonRow count={3} cardWidth="w-44" />
+            </HorizontalScrollRow>
+          ) : lists.length === 0 ? (
+            <p className="text-sm text-muted-foreground px-1">No lists yet.</p>
+          ) : (
+            <HorizontalScrollRow>
+              {lists.slice(0, 6).map((list) => {
+                const curator = listCurators[list.user_id];
+                return (
+                  <MobileListCard
+                    key={list.id}
+                    list={list}
+                    curatorName={
+                      curator?.display_name ?? curator?.username ?? "Unknown"
+                    }
+                    curatorAvatarUrl={curator?.avatar_url}
+                    posterPaths={listItems[list.id] ?? []}
+                    isLiked={isListLiked(list.id)}
+                    className="shrink-0"
+                  />
+                );
+              })}
+            </HorizontalScrollRow>
           )}
-        </HorizontalScrollRow>
-      </section>
+        </section>
 
-      {/* Popular Lists This Month */}
-      <section className="space-y-3">
-        <SectionHeader title="Popular Lists This Month" />
-        {listsLoading ? (
-          <HorizontalScrollRow>
-            <ScrollSkeletonRow count={3} cardWidth="w-44" />
-          </HorizontalScrollRow>
-        ) : lists.length === 0 ? (
-          <p className="text-sm text-muted-foreground px-1">No lists yet.</p>
-        ) : (
-          <HorizontalScrollRow>
-            {lists.slice(0, 6).map((list) => {
-              const curator = listCurators[list.user_id];
-              return (
-                <MobileListCard
-                  key={list.id}
-                  list={list}
-                  curatorName={curator?.display_name ?? curator?.username ?? "Unknown"}
-                  curatorAvatarUrl={curator?.avatar_url}
-                  posterPaths={listItems[list.id] ?? []}
-                  isLiked={isListLiked(list.id)}
-                  className="shrink-0"
-                />
-              );
-            })}
-          </HorizontalScrollRow>
-        )}
-      </section>
-
-      {/* Recent Friends' Reviews */}
-      <section className="space-y-3">
-        <SectionHeader title="Recent Friends' Reviews" />
-        {reviewsLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-card rounded-2xl border border-border/50 p-4">
-                <div className="flex items-start gap-3">
-                  <Skeleton className="size-8 rounded-full shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-3 w-40" />
-                    <Skeleton className="h-3 w-24" />
+        {/* Recent Friends' Reviews */}
+        <section className="space-y-3">
+          <SectionHeader title="Recent Friends' Reviews" />
+          {reviewsLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-card rounded-2xl border border-border/50 p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <Skeleton className="size-8 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-3 w-40" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                    <Skeleton
+                      className="w-10 rounded-lg shrink-0"
+                      style={{ aspectRatio: "2/3" }}
+                    />
                   </div>
-                  <Skeleton className="w-10 rounded-lg shrink-0" style={{ aspectRatio: '2/3' }} />
+                  <Skeleton className="h-3 w-full mt-3" />
+                  <Skeleton className="h-3 w-3/4 mt-1.5" />
                 </div>
-                <Skeleton className="h-3 w-full mt-3" />
-                <Skeleton className="h-3 w-3/4 mt-1.5" />
-              </div>
-            ))}
-          </div>
-        ) : reviews.length === 0 ? (
-          <div className="rounded-2xl border border-border/50 bg-card p-6 text-center space-y-2">
-            <p className="text-sm font-medium text-foreground">No reviews from friends yet</p>
-            <p className="text-xs text-muted-foreground">Follow other members to see their reviews and ratings here.</p>
-            <a href="/members" className="inline-flex mt-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors">Discover Members</a>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {reviews.slice(0, 5).map((review) => (
-              <MobileReviewCard
-                key={review.id}
-                review={review}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-    </div>
+              ))}
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="rounded-2xl border border-border/50 bg-card p-6 text-center space-y-2">
+              <p className="text-sm font-medium text-foreground">
+                No reviews from friends yet
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Follow other members to see their reviews and ratings here.
+              </p>
+              <a
+                href="/members"
+                className="inline-flex mt-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
+              >
+                Discover Members
+              </a>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {reviews.slice(0, 5).map((review) => (
+                <MobileReviewCard key={review.id} review={review} />
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </>
   );
 }
@@ -473,12 +495,20 @@ function HorizontalScrollRow({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ScrollSkeletonRow({ count, cardWidth = "w-24" }: { count: number; cardWidth?: string }) {
+function ScrollSkeletonRow({
+  count,
+  cardWidth = "w-24",
+}: {
+  count: number;
+  cardWidth?: string;
+}) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className={cn("shrink-0", cardWidth)}>
-          <Skeleton className={cn("aspect-poster w-full rounded-lg", cardWidth)} />
+          <Skeleton
+            className={cn("aspect-poster w-full rounded-lg", cardWidth)}
+          />
           <Skeleton className="h-3 w-3/4 mt-2" />
         </div>
       ))}
@@ -487,7 +517,9 @@ function ScrollSkeletonRow({ count, cardWidth = "w-24" }: { count: number; cardW
 }
 
 function OnThisDayCard({ log, yearsAgo }: { log: LogRow; yearsAgo: number }) {
-  const poster = log.show_poster_path ? posterUrl(log.show_poster_path, "w342") : null;
+  const poster = log.show_poster_path
+    ? posterUrl(log.show_poster_path, "w342")
+    : null;
 
   return (
     <Link

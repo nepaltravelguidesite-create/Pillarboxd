@@ -10,7 +10,7 @@ const WELCOME_KEY = "aftershow:welcome-seen";
 function pickBestBackdrop(shows: TVShow[]): string | null {
   const withBackdrop = shows.filter((s) => s.backdrop_path);
   if (withBackdrop.length === 0) return null;
-  // Pick the most popular show that has a backdrop — trending results are
+  // Pick the most popular show that has a backdrop - trending results are
   // already sorted by popularity, so the first match is the best choice.
   return backdropUrl(withBackdrop[0].backdrop_path, "w780");
 }
@@ -57,7 +57,7 @@ export function WelcomeScreen({ onDone }: { onDone: () => void }) {
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-background" />
       </div>
 
-      {/* Content area — overlaps the fade boundary */}
+      {/* Content area - overlaps the fade boundary */}
       <div className="flex flex-1 flex-col items-center px-6 -mt-10 relative z-10">
         <AftershowLogo size={44} className="text-primary" />
 

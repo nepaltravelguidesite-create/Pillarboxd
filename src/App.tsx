@@ -17,30 +17,60 @@ import { WelcomeScreen } from "@/components/auth/WelcomeScreen";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // ---------------------------------------------------------------------------
-// Lazy page imports — each becomes its own chunk
+// Lazy page imports - each becomes its own chunk
 // ---------------------------------------------------------------------------
 
-const LoginPage          = lazy(() => import("@/pages/LoginPage").then(m => ({ default: m.LoginPage })));
-const SignupPage         = lazy(() => import("@/pages/SignupPage").then(m => ({ default: m.SignupPage })));
-const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage").then(m => ({ default: m.ForgotPasswordPage })));
-const ResetPasswordPage  = lazy(() => import("@/pages/ResetPasswordPage").then(m => ({ default: m.ResetPasswordPage })));
-const HomePage           = lazy(() => import("@/pages/HomePage").then(m => ({ default: m.HomePage })));
-const AboutPage          = lazy(() => import("@/pages/AboutPage"));
-const ContactPage        = lazy(() => import("@/pages/ContactPage"));
-const NotFoundPage       = lazy(() => import("@/pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
-const SearchResultsPage  = lazy(() => import("@/pages/SearchResultsPage").then(m => ({ default: m.SearchResultsPage })));
-const ShowProfilePage    = lazy(() => import("@/pages/ShowProfilePage").then(m => ({ default: m.ShowProfilePage })));
-const UserProfilePage    = lazy(() => import("@/pages/UserProfilePage").then(m => ({ default: m.UserProfilePage })));
-const BrowsePage         = lazy(() => import("@/pages/BrowsePage"));
-const ListsPage          = lazy(() => import("@/pages/ListsPage"));
-const ListDetailPage     = lazy(() => import("@/pages/ListDetailPage"));
-const MembersPage        = lazy(() => import("@/pages/MembersPage"));
-const LogPage            = lazy(() => import("@/pages/LogPage"));
-const JournalPage        = lazy(() => import("@/pages/JournalPage"));
-const PersonPage         = lazy(() => import("@/pages/PersonPage"));
-const StatsPage          = lazy(() => import("@/pages/StatsPage"));
-const SettingsPage       = lazy(() => import("@/pages/SettingsPage"));
-const SchedulePage        = lazy(() => import("@/pages/SchedulePage").then(m => ({ default: m.SchedulePage })));
+const LoginPage = lazy(() =>
+  import("@/pages/LoginPage").then((m) => ({ default: m.LoginPage })),
+);
+const SignupPage = lazy(() =>
+  import("@/pages/SignupPage").then((m) => ({ default: m.SignupPage })),
+);
+const ForgotPasswordPage = lazy(() =>
+  import("@/pages/ForgotPasswordPage").then((m) => ({
+    default: m.ForgotPasswordPage,
+  })),
+);
+const ResetPasswordPage = lazy(() =>
+  import("@/pages/ResetPasswordPage").then((m) => ({
+    default: m.ResetPasswordPage,
+  })),
+);
+const HomePage = lazy(() =>
+  import("@/pages/HomePage").then((m) => ({ default: m.HomePage })),
+);
+const AboutPage = lazy(() => import("@/pages/AboutPage"));
+const ContactPage = lazy(() => import("@/pages/ContactPage"));
+const NotFoundPage = lazy(() =>
+  import("@/pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage })),
+);
+const SearchResultsPage = lazy(() =>
+  import("@/pages/SearchResultsPage").then((m) => ({
+    default: m.SearchResultsPage,
+  })),
+);
+const ShowProfilePage = lazy(() =>
+  import("@/pages/ShowProfilePage").then((m) => ({
+    default: m.ShowProfilePage,
+  })),
+);
+const UserProfilePage = lazy(() =>
+  import("@/pages/UserProfilePage").then((m) => ({
+    default: m.UserProfilePage,
+  })),
+);
+const BrowsePage = lazy(() => import("@/pages/BrowsePage"));
+const ListsPage = lazy(() => import("@/pages/ListsPage"));
+const ListDetailPage = lazy(() => import("@/pages/ListDetailPage"));
+const MembersPage = lazy(() => import("@/pages/MembersPage"));
+const LogPage = lazy(() => import("@/pages/LogPage"));
+const JournalPage = lazy(() => import("@/pages/JournalPage"));
+const PersonPage = lazy(() => import("@/pages/PersonPage"));
+const StatsPage = lazy(() => import("@/pages/StatsPage"));
+const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
+const SchedulePage = lazy(() =>
+  import("@/pages/SchedulePage").then((m) => ({ default: m.SchedulePage })),
+);
 
 // ---------------------------------------------------------------------------
 // Page-level suspense fallback
@@ -66,7 +96,7 @@ function S({ children }: { children: React.ReactNode }) {
 }
 
 // ---------------------------------------------------------------------------
-// Providers wrapper — shared by all routes
+// Providers wrapper - shared by all routes
 // ---------------------------------------------------------------------------
 
 function AppProviders({ children }: { children: React.ReactNode }) {
@@ -103,7 +133,9 @@ const router = createBrowserRouter([
     path: "/login",
     element: (
       <AppProviders>
-        <S><LoginPage /></S>
+        <S>
+          <LoginPage />
+        </S>
       </AppProviders>
     ),
   },
@@ -111,7 +143,9 @@ const router = createBrowserRouter([
     path: "/signup",
     element: (
       <AppProviders>
-        <S><SignupPage /></S>
+        <S>
+          <SignupPage />
+        </S>
       </AppProviders>
     ),
   },
@@ -119,7 +153,9 @@ const router = createBrowserRouter([
     path: "/forgot-password",
     element: (
       <AppProviders>
-        <S><ForgotPasswordPage /></S>
+        <S>
+          <ForgotPasswordPage />
+        </S>
       </AppProviders>
     ),
   },
@@ -127,7 +163,9 @@ const router = createBrowserRouter([
     path: "/reset-password",
     element: (
       <AppProviders>
-        <S><ResetPasswordPage /></S>
+        <S>
+          <ResetPasswordPage />
+        </S>
       </AppProviders>
     ),
   },
@@ -143,33 +181,194 @@ const router = createBrowserRouter([
       </AppProviders>
     ),
     children: [
-      { index: true,                           element: <S><HomePage /></S> },
-      { path: "shows",                         element: <S><BrowsePage /></S> },
-      { path: "show/:showId",                  element: <S><ShowProfilePage /></S> },
-      { path: "show/:showId/season/:seasonNumber", element: <S><ShowProfilePage /></S> },
-      { path: "search",                        element: <S><SearchResultsPage /></S> },
-      { path: "person/:personId",              element: <S><PersonPage /></S> },
-      { path: "sign-in",                       element: <Navigate to="/login" replace /> },
-      { path: "create-account",                element: <Navigate to="/signup" replace /> },
+      {
+        index: true,
+        element: (
+          <S>
+            <HomePage />
+          </S>
+        ),
+      },
+      {
+        path: "shows",
+        element: (
+          <S>
+            <BrowsePage />
+          </S>
+        ),
+      },
+      {
+        path: "show/:showId",
+        element: (
+          <S>
+            <ShowProfilePage />
+          </S>
+        ),
+      },
+      {
+        path: "show/:showId/season/:seasonNumber",
+        element: (
+          <S>
+            <ShowProfilePage />
+          </S>
+        ),
+      },
+      {
+        path: "search",
+        element: (
+          <S>
+            <SearchResultsPage />
+          </S>
+        ),
+      },
+      {
+        path: "person/:personId",
+        element: (
+          <S>
+            <PersonPage />
+          </S>
+        ),
+      },
+      { path: "sign-in", element: <Navigate to="/login" replace /> },
+      { path: "create-account", element: <Navigate to="/signup" replace /> },
       // Named profile sub-routes MUST come before :username to avoid matching as username
-      { path: "profile",                       element: <S><UserProfilePage /></S> },
-      { path: "profile/watchlist",             element: <S><UserProfilePage tab="watchlist" /></S> },
-      { path: "profile/likes",                 element: <S><UserProfilePage tab="likes" /></S> },
-      { path: "profile/reviews",               element: <S><UserProfilePage tab="reviews" /></S> },
-      { path: "profile/stats",                 element: <S><StatsPage /></S> },
-      { path: "profile/:username",             element: <S><UserProfilePage /></S> },
-      { path: "profile/:username/stats",       element: <S><StatsPage /></S> },
-      { path: "settings",                      element: <S><SettingsPage /></S> },
-      { path: "lists",                         element: <S><ListsPage /></S> },
-      { path: "schedule",                      element: <S><SchedulePage /></S> },
-      { path: "lists/:listId",                 element: <S><ListDetailPage /></S> },
-      { path: "members",                       element: <S><MembersPage /></S> },
-      { path: "log",                           element: <S><LogPage /></S> },
-      { path: "journal",                       element: <S><JournalPage /></S> },
-      { path: "about",                         element: <S><AboutPage /></S> },
-      { path: "contact",                       element: <S><ContactPage /></S> },
-      { path: "films",                         element: <Navigate to="/shows" replace /> },
-      { path: "*",                             element: <S><NotFoundPage /></S> },
+      {
+        path: "profile",
+        element: (
+          <S>
+            <UserProfilePage />
+          </S>
+        ),
+      },
+      {
+        path: "profile/watchlist",
+        element: (
+          <S>
+            <UserProfilePage tab="watchlist" />
+          </S>
+        ),
+      },
+      {
+        path: "profile/likes",
+        element: (
+          <S>
+            <UserProfilePage tab="likes" />
+          </S>
+        ),
+      },
+      {
+        path: "profile/reviews",
+        element: (
+          <S>
+            <UserProfilePage tab="reviews" />
+          </S>
+        ),
+      },
+      {
+        path: "profile/stats",
+        element: (
+          <S>
+            <StatsPage />
+          </S>
+        ),
+      },
+      {
+        path: "profile/:username",
+        element: (
+          <S>
+            <UserProfilePage />
+          </S>
+        ),
+      },
+      {
+        path: "profile/:username/stats",
+        element: (
+          <S>
+            <StatsPage />
+          </S>
+        ),
+      },
+      {
+        path: "settings",
+        element: (
+          <S>
+            <SettingsPage />
+          </S>
+        ),
+      },
+      {
+        path: "lists",
+        element: (
+          <S>
+            <ListsPage />
+          </S>
+        ),
+      },
+      {
+        path: "schedule",
+        element: (
+          <S>
+            <SchedulePage />
+          </S>
+        ),
+      },
+      {
+        path: "lists/:listId",
+        element: (
+          <S>
+            <ListDetailPage />
+          </S>
+        ),
+      },
+      {
+        path: "members",
+        element: (
+          <S>
+            <MembersPage />
+          </S>
+        ),
+      },
+      {
+        path: "log",
+        element: (
+          <S>
+            <LogPage />
+          </S>
+        ),
+      },
+      {
+        path: "journal",
+        element: (
+          <S>
+            <JournalPage />
+          </S>
+        ),
+      },
+      {
+        path: "about",
+        element: (
+          <S>
+            <AboutPage />
+          </S>
+        ),
+      },
+      {
+        path: "contact",
+        element: (
+          <S>
+            <ContactPage />
+          </S>
+        ),
+      },
+      { path: "films", element: <Navigate to="/shows" replace /> },
+      {
+        path: "*",
+        element: (
+          <S>
+            <NotFoundPage />
+          </S>
+        ),
+      },
     ],
   },
 ]);

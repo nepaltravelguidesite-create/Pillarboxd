@@ -1,8 +1,18 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Bell, Heart, MessageCircle, UserPlus, AtSign, Info } from "lucide-react";
+import {
+  Bell,
+  Heart,
+  MessageCircle,
+  UserPlus,
+  AtSign,
+  Info,
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useNotifications, type Notification } from "@/context/NotificationsContext";
+import {
+  useNotifications,
+  type Notification,
+} from "@/context/NotificationsContext";
 import {
   Popover,
   PopoverTrigger,
@@ -55,7 +65,11 @@ function notificationHref(n: Notification): string | null {
   if (n.type === "follow") {
     return n.actor_username ? `/profile/${n.actor_username}` : null;
   }
-  if ((n.type === "like" || n.type === "comment") && n.entity_id && n.entity_type === "log") {
+  if (
+    (n.type === "like" || n.type === "comment") &&
+    n.entity_id &&
+    n.entity_type === "log"
+  ) {
     return `/log`;
   }
   return null;
@@ -98,7 +112,7 @@ function NotificationItem({
         <p
           className={cn(
             "text-xs leading-snug",
-            n.read ? "text-foreground/60" : "text-foreground"
+            n.read ? "text-foreground/60" : "text-foreground",
           )}
         >
           {n.message}
@@ -120,7 +134,7 @@ function NotificationItem({
   const itemClass = cn(
     "flex items-start gap-3 px-3 py-2.5 rounded-md transition-colors",
     "hover:bg-secondary/40",
-    n.read ? "opacity-70" : "opacity-100"
+    n.read ? "opacity-70" : "opacity-100",
   );
 
   if (href) {
@@ -167,7 +181,7 @@ export function NotificationBell() {
             "relative flex items-center justify-center size-8 rounded",
             "text-muted-foreground hover:text-foreground",
             "hover:bg-secondary/50 transition-colors duration-150",
-            "focus:outline-none focus:ring-2 focus:ring-ring/40"
+            "focus:outline-none focus:ring-2 focus:ring-ring/40",
           )}
         >
           <Bell className="size-5" strokeWidth={2} aria-hidden />
@@ -178,7 +192,7 @@ export function NotificationBell() {
                 "absolute -top-0.5 -right-0.5 flex items-center justify-center",
                 "min-w-[16px] h-4 px-1 rounded-full",
                 "bg-primary text-background text-[10px] font-bold leading-none",
-                "ring-2 ring-background"
+                "ring-2 ring-background",
               )}
             >
               {unreadCount > 99 ? "99+" : unreadCount}
@@ -235,17 +249,14 @@ export function NotificationBell() {
             <ul className="py-1">
               {notifications.map((n) => (
                 <li key={n.id} className="px-1">
-                  <NotificationItem
-                    n={n}
-                    onNavigate={() => setOpen(false)}
-                  />
+                  <NotificationItem n={n} onNavigate={() => setOpen(false)} />
                 </li>
               ))}
             </ul>
           )}
         </div>
 
-        {/* Footer — mark all as read */}
+        {/* Footer - mark all as read */}
         {notifications.length > 0 && (
           <div className="border-t border-border p-1.5">
             <button
@@ -257,7 +268,7 @@ export function NotificationBell() {
                 "transition-colors duration-150",
                 hasUnread
                   ? "text-primary hover:bg-primary/10"
-                  : "text-muted-foreground/50 cursor-not-allowed"
+                  : "text-muted-foreground/50 cursor-not-allowed",
               )}
             >
               Mark all as read

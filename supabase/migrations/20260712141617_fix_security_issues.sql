@@ -3,16 +3,16 @@
 
 ## Overview
 This migration addresses three security findings:
-1. Three trigger functions have mutable search_path — hardened with `SET search_path = public, pg_temp`.
-2. The `notifications` table INSERT policy uses `WITH CHECK (true)` — tightened to `WITH CHECK (auth.uid() = actor_id)`.
+1. Three trigger functions have mutable search_path - hardened with `SET search_path = public, pg_temp`.
+2. The `notifications` table INSERT policy uses `WITH CHECK (true)` - tightened to `WITH CHECK (auth.uid() = actor_id)`.
 
 ## Changes
 
 ### 1. Function search path hardening
 The following functions are recreated with `SET search_path = public, pg_temp`:
-- `public.update_updated_at_column()` — trigger function for updated_at columns
-- `public.sync_follow_counts()` — trigger function for follower/following counts
-- `public.sync_list_item_count()` — trigger function for list item counts
+- `public.update_updated_at_column()` - trigger function for updated_at columns
+- `public.sync_follow_counts()` - trigger function for follower/following counts
+- `public.sync_list_item_count()` - trigger function for list item counts
 
 This prevents search_path hijacking by ensuring only `public` and `pg_temp` are in the path,
 and `pg_temp` is always last (so user-created objects can't shadow real tables).
@@ -27,7 +27,7 @@ This is correct because:
 - A malicious user cannot forge notifications appearing to come from someone else.
 
 ## Important Notes
-1. Existing triggers are preserved — only the function definitions change.
+1. Existing triggers are preserved - only the function definitions change.
 2. The search_path fix is the recommended Supabase/Postgres security hardening pattern.
 3. The notifications policy change means the application must always set actor_id = auth.uid()
    when inserting. The NotificationsContext already does this correctly.

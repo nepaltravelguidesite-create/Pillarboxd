@@ -16,9 +16,9 @@ The functions read actor profile info (username, display_name) to build a
 human-readable message and skip self-notifications (you never notify yourself).
 
 ## New Functions
-- `notify_on_follow()` — AFTER INSERT on `follows`
-- `notify_on_review_like()` — AFTER INSERT on `review_likes`
-- `notify_on_comment()` — AFTER INSERT on `comments`
+- `notify_on_follow()` - AFTER INSERT on `follows`
+- `notify_on_review_like()` - AFTER INSERT on `review_likes`
+- `notify_on_comment()` - AFTER INSERT on `comments`
 
 ## New Triggers
 - `trg_notify_follow` on `follows`
@@ -28,12 +28,12 @@ human-readable message and skip self-notifications (you never notify yourself).
 ## Security
 - All trigger functions are SECURITY DEFINER (run as the postgres role).
 - Each function guards against self-notifications.
-- No new RLS policies needed — the existing `insert_notifications` policy
+- No new RLS policies needed - the existing `insert_notifications` policy
   allows authenticated inserts, and SECURITY DEFINER functions bypass RLS.
 
 ## Important Notes
 1. Notifications are only created for the recipient (the followed user, the
-   review owner, or the log owner) — never the actor.
+   review owner, or the log owner) - never the actor.
 2. The `message` column is pre-rendered with the actor's username for display.
 3. `entity_type` is set to 'log' for review likes and comments, 'profile' for
    follows, so the frontend can deep-link correctly.

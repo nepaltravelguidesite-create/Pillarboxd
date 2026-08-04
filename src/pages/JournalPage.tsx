@@ -10,7 +10,7 @@ import { TagChips } from "@/components/shows/TagChips";
 import { SEOMeta } from "@/components/SEOMeta";
 
 // ---------------------------------------------------------------------------
-// JournalPage — /journal route
+// JournalPage - /journal route
 // Unified activity feed of the user's recent actions: diary logs, episode
 // watches, ratings, and likes. Sorted by created_at / watched_at descending.
 // ---------------------------------------------------------------------------
@@ -60,19 +60,22 @@ export default function JournalPage() {
     }));
 
     return [...logs, ...episodes].sort((a, b) =>
-      a.timestamp < b.timestamp ? 1 : a.timestamp > b.timestamp ? -1 : 0
+      a.timestamp < b.timestamp ? 1 : a.timestamp > b.timestamp ? -1 : 0,
     );
   }, [userLogs, userEpisodes]);
 
   // -------------------------------------------------------------------------
   // Group activities by month (declared unconditionally to satisfy the
-  // Rules of Hooks — hooks must not follow early returns).
+  // Rules of Hooks - hooks must not follow early returns).
   // -------------------------------------------------------------------------
   const monthGroups = useMemo(() => {
     const groups: Record<string, ActivityItem[]> = {};
     activities.forEach((item) => {
       const d = new Date(item.timestamp);
-      const monthKey = d.toLocaleDateString(undefined, { year: "numeric", month: "long" });
+      const monthKey = d.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+      });
       if (!groups[monthKey]) groups[monthKey] = [];
       groups[monthKey].push(item);
     });
@@ -85,13 +88,15 @@ export default function JournalPage() {
   if (authState === "loading") {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <div className="text-sm text-muted-foreground">Loading your journal…</div>
+        <div className="text-sm text-muted-foreground">
+          Loading your journal…
+        </div>
       </div>
     );
   }
 
   // -------------------------------------------------------------------------
-  // Not signed in — prompt
+  // Not signed in - prompt
   // -------------------------------------------------------------------------
   if (!user) {
     return (
@@ -155,31 +160,31 @@ export default function JournalPage() {
   }
 
   // -------------------------------------------------------------------------
-  // Feed — grouped by month
+  // Feed - grouped by month
   // -------------------------------------------------------------------------
   return (
     <>
-    <SEOMeta title="Activity Feed" />
-    <div className="min-h-screen bg-background text-foreground pb-page-enter">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <JournalHeader />
+      <SEOMeta title="Activity Feed" />
+      <div className="min-h-screen bg-background text-foreground pb-page-enter">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          <JournalHeader />
 
-        <div className="mt-8 space-y-8">
-          {monthGroups.map(([month, items]) => (
-            <div key={month}>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 pb-2 border-b border-border/40">
-                {month}
-              </h2>
-              <ol className="space-y-3">
-                {items.map((item) => (
-                  <ActivityRow key={item.id} item={item} />
-                ))}
-              </ol>
-            </div>
-          ))}
+          <div className="mt-8 space-y-8">
+            {monthGroups.map(([month, items]) => (
+              <div key={month}>
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 pb-2 border-b border-border/40">
+                  {month}
+                </h2>
+                <ol className="space-y-3">
+                  {items.map((item) => (
+                    <ActivityRow key={item.id} item={item} />
+                  ))}
+                </ol>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 }
@@ -203,7 +208,7 @@ function JournalHeader() {
 }
 
 // ---------------------------------------------------------------------------
-// Activity row — icon + description + timestamp, with poster thumbnail
+// Activity row - icon + description + timestamp, with poster thumbnail
 // ---------------------------------------------------------------------------
 
 function ActivityRow({ item }: { item: ActivityItem }) {
@@ -226,7 +231,10 @@ function ActivityRow({ item }: { item: ActivityItem }) {
         aria-label={`Open ${item.showName}`}
       >
         <img
-          src={bestPosterUrl({ id: item.showId, poster_path: item.posterPath }, "w92")}
+          src={bestPosterUrl(
+            { id: item.showId, poster_path: item.posterPath },
+            "w92",
+          )}
           alt={item.showName}
           loading="lazy"
           className="w-9 h-[54px] rounded object-cover bg-secondary/40"
@@ -245,7 +253,9 @@ function ActivityRow({ item }: { item: ActivityItem }) {
           {formatRelative(item.timestamp)}
         </time>
         {item.tags && item.tags.length > 0 && (
-          <div className="mt-1"><TagChips tags={item.tags} size="xs" /></div>
+          <div className="mt-1">
+            <TagChips tags={item.tags} size="xs" />
+          </div>
         )}
       </div>
     </li>
@@ -283,16 +293,18 @@ function buildLogDescription(log: {
   const parts: string[] = [];
   if (log.seasons_watched > 0) {
     parts.push(
-      `${log.seasons_watched} ${log.seasons_watched === 1 ? "season" : "seasons"}`
+      `${log.seasons_watched} ${log.seasons_watched === 1 ? "season" : "seasons"}`,
     );
   }
   if (log.episodes_watched > 0) {
     parts.push(
-      `${log.episodes_watched} ${log.episodes_watched === 1 ? "episode" : "episodes"}`
+      `${log.episodes_watched} ${log.episodes_watched === 1 ? "episode" : "episodes"}`,
     );
   }
   const watched = parts.length > 0 ? parts.join(" + ") : "a session";
-  const prefix = log.rewatch ? `Rewatched ${watched} of` : `Watched ${watched} of`;
+  const prefix = log.rewatch
+    ? `Rewatched ${watched} of`
+    : `Watched ${watched} of`;
   return `${prefix} ${log.show_name}`;
 }
 

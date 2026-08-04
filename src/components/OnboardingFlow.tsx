@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { Bookmark, BookmarkCheck, Star, Sparkles, CheckCircle2 } from "lucide-react";
+import {
+  Bookmark,
+  BookmarkCheck,
+  Star,
+  Sparkles,
+  CheckCircle2,
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
 import { useUserData } from "@/context/UserDataContext";
@@ -20,7 +26,7 @@ const ONBOARDING_KEY = "aftershow_onboarding_complete";
 const SHOWS_PER_STEP = 6;
 
 // ---------------------------------------------------------------------------
-// OnboardingFlow — first-time signup modal flow
+// OnboardingFlow - first-time signup modal flow
 // ---------------------------------------------------------------------------
 
 export function OnboardingFlow() {
@@ -37,7 +43,9 @@ export function OnboardingFlow() {
   // Track ratings made during the flow by show id
   const [ratedShowIds, setRatedShowIds] = useState<Set<number>>(new Set());
   // Track watchlist toggles during the flow by show id
-  const [watchlistedShowIds, setWatchlistedShowIds] = useState<Set<number>>(new Set());
+  const [watchlistedShowIds, setWatchlistedShowIds] = useState<Set<number>>(
+    new Set(),
+  );
 
   // -------------------------------------------------------------------------
   // Decide whether the flow should be shown.
@@ -53,7 +61,7 @@ export function OnboardingFlow() {
       setOpen(true);
       setStep(0);
     } else if (!user && open) {
-      // Signed out mid-flow — close and reset
+      // Signed out mid-flow - close and reset
       setOpen(false);
     }
   }, [user, userShows.length, authModalOpen, open]);
@@ -77,7 +85,7 @@ export function OnboardingFlow() {
         ]);
         if (cancelled) return;
         const combined = [...page1.results, ...page2.results].filter(
-          (s) => s.poster_path
+          (s) => s.poster_path,
         );
         setShows(combined);
       } catch (err) {
@@ -113,7 +121,7 @@ export function OnboardingFlow() {
       await setRating(show, rating);
       setRatedShowIds((prev) => new Set(prev).add(show.id));
     },
-    [setRating]
+    [setRating],
   );
 
   const handleToggleWatchlist = useCallback(
@@ -127,7 +135,7 @@ export function OnboardingFlow() {
         return next;
       });
     },
-    [toggleWatchlist, watchlistedShowIds]
+    [toggleWatchlist, watchlistedShowIds],
   );
 
   function handleComplete() {
@@ -163,8 +171,8 @@ export function OnboardingFlow() {
               idx === step
                 ? "w-6 bg-primary"
                 : idx < step
-                ? "w-1.5 bg-primary/60"
-                : "w-1.5 bg-border"
+                  ? "w-1.5 bg-primary/60"
+                  : "w-1.5 bg-border",
             )}
           />
         ))}
@@ -211,7 +219,7 @@ export function OnboardingFlow() {
           </div>
         ) : step === 0 ? (
           // -----------------------------------------------------------------
-          // Step 1 — Welcome
+          // Step 1 - Welcome
           // -----------------------------------------------------------------
           <div className="flex flex-col items-center text-center py-6 gap-5">
             <div className="flex items-center justify-center size-16 rounded-full bg-primary/10">
@@ -221,10 +229,10 @@ export function OnboardingFlow() {
               Welcome to Aftershow!
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground leading-relaxed max-w-sm">
-              The show's over. Let's talk about it. Aftershow is your
-              personal TV tracker. Rate shows you've watched, keep a watchlist
-              of what's next, log episodes as you go, and follow friends to
-              see what they're loving. Let's set you up in a few quick steps.
+              The show's over. Let's talk about it. Aftershow is your personal
+              TV tracker. Rate shows you've watched, keep a watchlist of what's
+              next, log episodes as you go, and follow friends to see what
+              they're loving. Let's set you up in a few quick steps.
             </DialogDescription>
             <Button className="w-full" size="lg" onClick={() => setStep(1)}>
               Get Started
@@ -239,7 +247,7 @@ export function OnboardingFlow() {
           </div>
         ) : step === 1 ? (
           // -----------------------------------------------------------------
-          // Step 2 — Rate a few shows
+          // Step 2 - Rate a few shows
           // -----------------------------------------------------------------
           <div className="flex flex-col gap-4">
             <div>
@@ -253,9 +261,8 @@ export function OnboardingFlow() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               {ratingShows.map((show) => {
-                const rating = userShows.find(
-                  (s) => s.show_id === show.id
-                )?.rating ?? null;
+                const rating =
+                  userShows.find((s) => s.show_id === show.id)?.rating ?? null;
                 return (
                   <div
                     key={show.id}
@@ -300,7 +307,7 @@ export function OnboardingFlow() {
           </div>
         ) : step === 2 ? (
           // -----------------------------------------------------------------
-          // Step 3 — Add to your watchlist
+          // Step 3 - Add to your watchlist
           // -----------------------------------------------------------------
           <div className="flex flex-col gap-4">
             <div>
@@ -344,7 +351,7 @@ export function OnboardingFlow() {
                         "flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-all duration-150 active:scale-95",
                         watchlisted
                           ? "bg-accent text-accent-foreground border-accent"
-                          : "bg-background text-foreground/80 border-border hover:border-foreground/30 hover:text-foreground"
+                          : "bg-background text-foreground/80 border-border hover:border-foreground/30 hover:text-foreground",
                       )}
                     >
                       {watchlisted ? (
@@ -359,11 +366,7 @@ export function OnboardingFlow() {
               })}
             </div>
             <div className="flex items-center justify-between gap-3 pt-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setStep(1)}
-              >
+              <Button variant="ghost" size="sm" onClick={() => setStep(1)}>
                 Back
               </Button>
               <Button
@@ -377,7 +380,7 @@ export function OnboardingFlow() {
           </div>
         ) : (
           // -----------------------------------------------------------------
-          // Step 4 — You're all set!
+          // Step 4 - You're all set!
           // -----------------------------------------------------------------
           <div className="flex flex-col items-center text-center py-6 gap-5">
             <div className="flex items-center justify-center size-16 rounded-full bg-primary/10">

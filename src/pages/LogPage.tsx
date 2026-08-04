@@ -21,7 +21,7 @@ import { TagChips } from "@/components/shows/TagChips";
 import { SEOMeta } from "@/components/SEOMeta";
 
 // ---------------------------------------------------------------------------
-// LogPage — /log route
+// LogPage - /log route
 // Personal diary timeline of the user's own user_logs, grouped by date,
 // with inline delete (the "editable inline" affordance).
 // ---------------------------------------------------------------------------
@@ -62,7 +62,7 @@ export default function LogPage() {
   }
 
   // -------------------------------------------------------------------------
-  // Not signed in — prompt
+  // Not signed in - prompt
   // -------------------------------------------------------------------------
   if (!user) {
     return (
@@ -130,29 +130,29 @@ export default function LogPage() {
   // -------------------------------------------------------------------------
   return (
     <>
-    <SEOMeta title="Diary" />
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <LogHeader />
+      <SEOMeta title="Diary" />
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          <LogHeader />
 
-        <div className="mt-8 space-y-10">
-          {grouped.map(([date, logs]) => (
-            <section key={date}>
-              <DateHeader dateStr={date} count={logs.length} />
-              <div className="mt-3 space-y-3">
-                {logs.map((log) => (
-                  <LogEntry
-                    key={log.id}
-                    log={log}
-                    onDelete={() => deleteLog(log.id)}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
+          <div className="mt-8 space-y-10">
+            {grouped.map(([date, logs]) => (
+              <section key={date}>
+                <DateHeader dateStr={date} count={logs.length} />
+                <div className="mt-3 space-y-3">
+                  {logs.map((log) => (
+                    <LogEntry
+                      key={log.id}
+                      log={log}
+                      onDelete={() => deleteLog(log.id)}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 }
@@ -175,7 +175,7 @@ function LogHeader() {
 }
 
 // ---------------------------------------------------------------------------
-// Date header — chronological reverse order (most recent first)
+// Date header - chronological reverse order (most recent first)
 // ---------------------------------------------------------------------------
 
 function DateHeader({ dateStr, count }: { dateStr: string; count: number }) {
@@ -193,17 +193,11 @@ function DateHeader({ dateStr, count }: { dateStr: string; count: number }) {
 }
 
 // ---------------------------------------------------------------------------
-// Single log entry — poster thumbnail, show name link, episodes/seasons,
+// Single log entry - poster thumbnail, show name link, episodes/seasons,
 // rewatch badge, rating stars, review text, delete button (inline edit).
 // ---------------------------------------------------------------------------
 
-function LogEntry({
-  log,
-  onDelete,
-}: {
-  log: UserLog;
-  onDelete: () => void;
-}) {
+function LogEntry({ log, onDelete }: { log: UserLog; onDelete: () => void }) {
   return (
     <article className="flex gap-3 sm:gap-4 rounded-lg border border-border bg-secondary/20 p-3 sm:p-4">
       {/* Poster thumbnail */}
@@ -213,7 +207,10 @@ function LogEntry({
         aria-label={`Open ${log.show_name}`}
       >
         <img
-          src={bestPosterUrl({ id: log.show_id, poster_path: log.show_poster_path }, "w185")}
+          src={bestPosterUrl(
+            { id: log.show_id, poster_path: log.show_poster_path },
+            "w185",
+          )}
           alt={log.show_name}
           loading="lazy"
           className="w-12 h-[72px] sm:w-14 sm:h-[84px] rounded object-cover bg-secondary/40"
@@ -277,10 +274,7 @@ function LogEntry({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  variant="destructive"
-                  onClick={onDelete}
-                >
+                <AlertDialogAction variant="destructive" onClick={onDelete}>
                   Delete
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -308,7 +302,9 @@ function LogEntry({
 
         {/* Personal tags */}
         {log.tags && log.tags.length > 0 && (
-          <div className="mt-2"><TagChips tags={log.tags} size="xs" /></div>
+          <div className="mt-2">
+            <TagChips tags={log.tags} size="xs" />
+          </div>
         )}
       </div>
     </article>
@@ -316,7 +312,7 @@ function LogEntry({
 }
 
 // ---------------------------------------------------------------------------
-// Date formatting — friendly label with weekday, keeps YYYY-MM-DD as fallback
+// Date formatting - friendly label with weekday, keeps YYYY-MM-DD as fallback
 // ---------------------------------------------------------------------------
 
 function formatDateLabel(dateStr: string): string {
@@ -331,7 +327,7 @@ function formatDateLabel(dateStr: string): string {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const diffDays = Math.round(
-    (today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)
+    (today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   if (diffDays === 0) return "Today";

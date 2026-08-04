@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 // ---------------------------------------------------------------------------
-// SEOMeta — manages document head meta tags for the Vite SPA.
+// SEOMeta - manages document head meta tags for the Vite SPA.
 //
 // Two-tier SEO approach:
 //   1. Client-side (this component): updates document.title and og/twitter
@@ -11,7 +11,7 @@ import { useEffect } from "react";
 //      supabase/functions/og-proxy serves pre-rendered HTML with correct
 //      Open Graph meta tags when it detects a social/crawler user-agent
 //      (Discord, WhatsApp, iMessage, X/Twitter, Slack, etc.). Crawlers don't
-//      execute JavaScript, so they can't see these client-side tags — the
+//      execute JavaScript, so they can't see these client-side tags - the
 //      edge function handles that case by fetching data from TMDB/Supabase
 //      and returning static <meta> tags instead of the SPA shell.
 //
@@ -51,7 +51,9 @@ export function SEOMeta({
   ogType = "website",
 }: SEOMetaProps) {
   useEffect(() => {
-    const fullTitle = title.includes("Aftershow") ? title : `${title} ${BRAND_SUFFIX}`;
+    const fullTitle = title.includes("Aftershow")
+      ? title
+      : `${title} ${BRAND_SUFFIX}`;
     document.title = fullTitle;
 
     if (description) {

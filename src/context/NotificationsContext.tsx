@@ -15,7 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 // ---------------------------------------------------------------------------
 
 /**
- * Notification type — matches the `type` text column on the `notifications`
+ * Notification type - matches the `type` text column on the `notifications`
  * table. Drives the icon + link target shown in the bell dropdown.
  */
 export type NotificationType =
@@ -35,7 +35,7 @@ export interface Notification {
   message: string;
   read: boolean;
   created_at: string;
-  /** Joined from `profiles` on actor_id — used to build deep links. */
+  /** Joined from `profiles` on actor_id - used to build deep links. */
   actor_username?: string | null;
   actor_display_name?: string | null;
   actor_avatar_url?: string | null;
@@ -54,13 +54,15 @@ interface NotificationsContextValue {
 // ---------------------------------------------------------------------------
 
 const NotificationsContext = createContext<NotificationsContextValue | null>(
-  null
+  null,
 );
 
 export function useNotifications(): NotificationsContextValue {
   const ctx = useContext(NotificationsContext);
   if (!ctx)
-    throw new Error("useNotifications must be used within NotificationsProvider");
+    throw new Error(
+      "useNotifications must be used within NotificationsProvider",
+    );
   return ctx;
 }
 
@@ -94,7 +96,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase
       .from("notifications")
       .select(
-        "id, user_id, actor_id, type, entity_id, entity_type, message, read, created_at"
+        "id, user_id, actor_id, type, entity_id, entity_type, message, read, created_at",
       )
       .eq("user_id", uid)
       .order("created_at", { ascending: false })
@@ -109,14 +111,21 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
     const rows = (data ?? []) as any[];
 
-    // Fetch actor profiles separately — the notifications.actor_id FK
+    // Fetch actor profiles separately - the notifications.actor_id FK
     // references auth.users (not profiles), so PostgREST can't resolve an
     // embedded `profiles!actor_id` join. We resolve them in a second query.
     const actorIds = Array.from(
-      new Set(rows.map((r) => r.actor_id).filter((id): id is string => !!id))
+      new Set(rows.map((r) => r.actor_id).filter((id): id is string => !!id)),
     );
 
-    const actorMap: Record<string, { username: string | null; display_name: string | null; avatar_url: string | null }> = {};
+    const actorMap: Record<
+      string,
+      {
+        username: string | null;
+        display_name: string | null;
+        avatar_url: string | null;
+      }
+    > = {};
     if (actorIds.length > 0) {
       const { data: actors } = await supabase
         .from("profiles")
@@ -167,7 +176,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [user, loadNotifications]);
 
   // -------------------------------------------------------------------------
-  // Real-time subscription — listen for INSERTs on notifications owned by the
+  // Real-time subscription - listen for INSERTs on notifications owned by the
   // current user and prepend them. Subscribed once; reads the live user id
   // from the ref so it survives sign-in/out without tearing down the channel.
   // -------------------------------------------------------------------------
@@ -227,15 +236,16 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
                       ? {
                           ...n,
                           actor_username: (actor as any).username ?? null,
-                          actor_display_name: (actor as any).display_name ?? null,
+                          actor_display_name:
+                            (actor as any).display_name ?? null,
                           actor_avatar_url: (actor as any).avatar_url ?? null,
                         }
-                      : n
-                  )
+                      : n,
+                  ),
                 );
               });
           }
-        }
+        },
       )
       .subscribe();
 
@@ -245,12 +255,12 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   // -------------------------------------------------------------------------
-  // markAsRead — optimistic update
+  // markAsRead - optimistic update
   // -------------------------------------------------------------------------
 
   const markAsRead = useCallback((id: string) => {
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
     supabase
       .from("notifications")

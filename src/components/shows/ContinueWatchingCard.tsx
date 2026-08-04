@@ -1,7 +1,23 @@
 import { useState, useEffect, memo } from "react";
 import { Link } from "react-router-dom";
-import { Play, Tv, ChevronRight, Check, CheckCircle2, CalendarClock, Loader2 } from "lucide-react";
-import { bestPosterUrl, backdropUrl, getShowDetail, getShowSeason, type TVShow, type TVShowDetail, type Episode } from "@/lib/tmdb";
+import {
+  Play,
+  Tv,
+  ChevronRight,
+  Check,
+  CheckCircle2,
+  CalendarClock,
+  Loader2,
+} from "lucide-react";
+import {
+  bestPosterUrl,
+  backdropUrl,
+  getShowDetail,
+  getShowSeason,
+  type TVShow,
+  type TVShowDetail,
+  type Episode,
+} from "@/lib/tmdb";
 import { useSocial } from "@/context/SocialContext";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
@@ -28,13 +44,19 @@ function formatDaysUntilAir(airDate: string): string {
   const date = new Date(airDate + "T00:00:00");
   const now = new Date();
   now.setHours(0, 0, 0, 0);
-  const diff = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const diff = Math.ceil(
+    (date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+  );
   if (diff <= 0) return "airs today";
   if (diff === 1) return "airs tomorrow";
   return `airs in ${diff} days`;
 }
 
-function ContinueWatchingCardInner({ show, backdropPath, className }: ContinueWatchingCardProps) {
+function ContinueWatchingCardInner({
+  show,
+  backdropPath,
+  className,
+}: ContinueWatchingCardProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [nextEpisode, setNextEpisode] = useState<NextEpisodeInfo | null>(null);
@@ -62,20 +84,29 @@ function ContinueWatchingCardInner({ show, backdropPath, className }: ContinueWa
         let foundNext: NextEpisodeInfo | null = null;
         let isCaughtUp = false;
 
-        for (const season of realSeasons.sort((a, b) => a.season_number - b.season_number)) {
+        for (const season of realSeasons.sort(
+          (a, b) => a.season_number - b.season_number,
+        )) {
           const seasonProgress = progress.perSeason.get(season.season_number);
           const watchedInSeason = seasonProgress?.watched ?? 0;
 
           if (watchedInSeason < season.episode_count) {
-            // User has unwatched episodes in this season — find the first one
+            // User has unwatched episodes in this season - find the first one
             try {
-              const seasonDetail = await getShowSeason(show.id, season.season_number);
+              const seasonDetail = await getShowSeason(
+                show.id,
+                season.season_number,
+              );
               if (cancelled) return;
 
               const watchedEpNumbers = new Set(
                 userEpisodes
-                  .filter((e) => e.show_id === show.id && e.season_number === season.season_number)
-                  .map((e) => e.episode_number)
+                  .filter(
+                    (e) =>
+                      e.show_id === show.id &&
+                      e.season_number === season.season_number,
+                  )
+                  .map((e) => e.episode_number),
               );
 
               const now = new Date();
@@ -83,7 +114,7 @@ function ContinueWatchingCardInner({ show, backdropPath, className }: ContinueWa
                 (e) =>
                   !watchedEpNumbers.has(e.episode_number) &&
                   e.air_date &&
-                  new Date(e.air_date + "T00:00:00") <= now
+                  new Date(e.air_date + "T00:00:00") <= now,
               );
 
               if (firstUnwatched) {
@@ -91,7 +122,9 @@ function ContinueWatchingCardInner({ show, backdropPath, className }: ContinueWa
                   season: firstUnwatched.season_number,
                   episode: firstUnwatched.episode_number,
                   name: firstUnwatched.name,
-                  runtime: (firstUnwatched.runtime || detail.episode_run_time?.[0]) ?? null,
+                  runtime:
+                    (firstUnwatched.runtime || detail.episode_run_time?.[0]) ??
+                    null,
                 };
               } else {
                 // All aired episodes in this season are watched
@@ -129,7 +162,9 @@ function ContinueWatchingCardInner({ show, backdropPath, className }: ContinueWa
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [show.id, userEpisodes.length]);
 
@@ -145,7 +180,7 @@ function ContinueWatchingCardInner({ show, backdropPath, className }: ContinueWa
         nextEpisode.season,
         nextEpisode.episode,
         nextEpisode.name,
-        nextEpisode.runtime
+        nextEpisode.runtime,
       );
     } finally {
       setMarking(false);
@@ -164,11 +199,13 @@ function ContinueWatchingCardInner({ show, backdropPath, className }: ContinueWa
         "border border-border/40 bg-card",
         "transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5",
         "focus:outline-none focus:ring-2 focus:ring-ring/40",
-        className
+        className,
       )}
     >
       <div className="relative h-32 sm:h-36 overflow-hidden bg-muted">
-        {!imgLoaded && !imgError && <div className="absolute inset-0 animate-pulse bg-secondary/40" />}
+        {!imgLoaded && !imgError && (
+          <div className="absolute inset-0 animate-pulse bg-secondary/40" />
+        )}
         {imgError ? (
           <div className="absolute inset-0 flex items-center justify-center bg-secondary/30">
             <Tv className="size-8 text-muted-foreground/40" strokeWidth={1.5} />
@@ -183,7 +220,7 @@ function ContinueWatchingCardInner({ show, backdropPath, className }: ContinueWa
             className={cn(
               "absolute inset-0 w-full h-full object-cover",
               "transition-all duration-500 group-hover:scale-105",
-              imgLoaded ? "opacity-100" : "opacity-0"
+              imgLoaded ? "opacity-100" : "opacity-0",
             )}
           />
         )}
@@ -194,7 +231,9 @@ function ContinueWatchingCardInner({ show, backdropPath, className }: ContinueWa
           </div>
         </div>
         <div className="absolute bottom-2 left-3 right-3">
-          <p className="text-sm font-bold text-white truncate leading-tight">{show.name}</p>
+          <p className="text-sm font-bold text-white truncate leading-tight">
+            {show.name}
+          </p>
         </div>
       </div>
 
@@ -207,7 +246,9 @@ function ContinueWatchingCardInner({ show, backdropPath, className }: ContinueWa
         <div className="px-3 py-2.5 space-y-1">
           <div className="flex items-center gap-1.5">
             <CheckCircle2 className="size-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
-            <p className="text-xs font-medium text-foreground">You're all caught up</p>
+            <p className="text-xs font-medium text-foreground">
+              You're all caught up
+            </p>
           </div>
           {nextAirDate && (
             <p className="text-[11px] text-muted-foreground flex items-center gap-1 pl-5">
@@ -220,11 +261,16 @@ function ContinueWatchingCardInner({ show, backdropPath, className }: ContinueWa
         <div className="space-y-1.5 px-3 py-2">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground truncate">
-              Up next: <span className="text-foreground font-medium">S{nextEpisode.season}E{nextEpisode.episode}</span>
+              Up next:{" "}
+              <span className="text-foreground font-medium">
+                S{nextEpisode.season}E{nextEpisode.episode}
+              </span>
             </p>
             <ChevronRight className="size-4 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
           </div>
-          <p className="text-xs text-muted-foreground truncate">{nextEpisode.name}</p>
+          <p className="text-xs text-muted-foreground truncate">
+            {nextEpisode.name}
+          </p>
           {user && (
             <button
               type="button"
@@ -234,7 +280,7 @@ function ContinueWatchingCardInner({ show, backdropPath, className }: ContinueWa
                 "w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg",
                 "text-xs font-medium transition-colors",
                 "bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground",
-                "disabled:opacity-50 disabled:cursor-not-allowed"
+                "disabled:opacity-50 disabled:cursor-not-allowed",
               )}
             >
               {marking ? (

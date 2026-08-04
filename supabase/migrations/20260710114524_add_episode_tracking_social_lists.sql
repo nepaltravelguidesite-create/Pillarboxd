@@ -25,15 +25,15 @@ bio, and follower/following counts (denormalized via trigger).
 - `created_at` (timestamptz)
 
 ### `user_episodes`
-Individual episode watched records — the source of truth for watched state.
+Individual episode watched records - the source of truth for watched state.
 - `id` (uuid PK)
 - `user_id` (uuid, DEFAULT auth.uid(), FK auth.users)
-- `show_id` (int — TMDB series ID)
-- `show_name` (text — denormalized)
+- `show_id` (int - TMDB series ID)
+- `show_name` (text - denormalized)
 - `show_poster_path` (text, nullable)
 - `season_number` (int)
 - `episode_number` (int)
-- `episode_name` (text, nullable — denormalized)
+- `episode_name` (text, nullable - denormalized)
 - `rewatch` (boolean, default false)
 - `watched_at` (timestamptz, default now())
 - UNIQUE(user_id, show_id, season_number, episode_number) when rewatch=false
@@ -55,11 +55,11 @@ User-created curated show lists (like Letterboxd lists).
 Ordered shows within a list, with optional personal note.
 - `id` (uuid PK)
 - `list_id` (uuid FK lists.id)
-- `show_id` (int — TMDB series ID)
-- `show_name` (text — denormalized)
+- `show_id` (int - TMDB series ID)
+- `show_name` (text - denormalized)
 - `show_poster_path` (text, nullable)
 - `show_first_air_date` (text, nullable)
-- `position` (int — for ordering)
+- `position` (int - for ordering)
 - `note` (text, nullable)
 - `added_at` (timestamptz)
 - UNIQUE(list_id, show_id)
@@ -107,12 +107,12 @@ Likes placed by users on lists.
 - review_likes / list_likes: any authenticated can read; owner can insert/delete.
 
 ## Important Notes
-1. profiles.id mirrors auth.users.id — no separate sequence.
+1. profiles.id mirrors auth.users.id - no separate sequence.
 2. follower_count / following_count are denormalized integers updated by triggers
    for performance. They start at 0.
 3. list_items.position allows drag-to-reorder. Frontend must handle gaps.
 4. user_episodes unique constraint only on (user_id, show_id, season_number, episode_number)
-   without rewatch flag — rewatches are tracked via separate rows keyed on watched_at.
+   without rewatch flag - rewatches are tracked via separate rows keyed on watched_at.
    A simple "is watched" query uses DISTINCT or MAX(watched_at).
 */
 

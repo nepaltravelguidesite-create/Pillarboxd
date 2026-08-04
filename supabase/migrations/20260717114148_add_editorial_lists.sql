@@ -2,11 +2,11 @@
 # Add editorial lists support
 
 1. New Columns
-- `lists.is_editorial` (boolean, NOT NULL, default false) — marks system-curated
+- `lists.is_editorial` (boolean, NOT NULL, default false) - marks system-curated
   lists distinct from user-created ones. Editorial lists have no owner.
 
 2. Modified Columns
-- `lists.user_id` — dropped NOT NULL constraint so editorial lists can have
+- `lists.user_id` - dropped NOT NULL constraint so editorial lists can have
   a NULL owner. The DEFAULT auth.uid() remains so regular user inserts still
   work without explicitly passing user_id.
 
@@ -18,7 +18,7 @@
 - INSERT: added `AND is_editorial = false` so authenticated users can never
   create editorial lists through the app. Only the service role (which bypasses
   RLS) can insert rows with is_editorial = true.
-- UPDATE: same restriction — users cannot flip the is_editorial flag on.
+- UPDATE: same restriction - users cannot flip the is_editorial flag on.
 - SELECT and DELETE policies are unchanged (public lists remain readable;
   only owners can delete their own lists).
 

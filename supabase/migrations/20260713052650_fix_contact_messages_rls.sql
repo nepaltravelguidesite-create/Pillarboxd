@@ -3,9 +3,9 @@
 
 ## Problem
 Three policies on contact_messages use always-true clauses:
-- INSERT: WITH CHECK (true) — anyone can insert arbitrary rows
-- UPDATE: USING (true) WITH CHECK (true) — anyone can modify any row
-- DELETE: USING (true) — anyone can delete any row
+- INSERT: WITH CHECK (true) - anyone can insert arbitrary rows
+- UPDATE: USING (true) WITH CHECK (true) - anyone can modify any row
+- DELETE: USING (true) - anyone can delete any row
 
 ## Fix
 Add a `user_id` column (nullable, DEFAULT auth.uid()) so submissions are
@@ -14,7 +14,7 @@ ownership-based checks:
 
 - INSERT: user_id IS NULL (anon submission) OR auth.uid() = user_id (authenticated)
 - UPDATE/DELETE: auth.uid() = user_id (only the submitter can modify)
-- SELECT: stays USING (true) — authenticated admins need to read all messages
+- SELECT: stays USING (true) - authenticated admins need to read all messages
 
 Admin triage (reading/handling all messages) is done via the service role key,
 which bypasses RLS entirely, so the SELECT (true) policy is only for the

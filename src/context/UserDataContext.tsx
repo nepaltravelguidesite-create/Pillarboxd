@@ -15,7 +15,12 @@ import type { TVShow } from "@/lib/tmdb";
 // Types
 // ---------------------------------------------------------------------------
 
-export type WatchStatus = 'watching' | 'completed' | 'want_to_watch' | 'on_hold' | 'dropped';
+export type WatchStatus =
+  | "watching"
+  | "completed"
+  | "want_to_watch"
+  | "on_hold"
+  | "dropped";
 
 export interface UserShow {
   id: string;
@@ -63,8 +68,13 @@ interface UserDataContextValue {
   toggleLike: (show: TVShow) => Promise<void>;
   toggleWatchlist: (show: TVShow) => Promise<void>;
   setShowStatus: (show: TVShow, status: WatchStatus | null) => Promise<void>;
-  addLog: (log: Omit<UserLog, "id" | "user_id" | "created_at">) => Promise<void>;
-  updateLog: (logId: string, patch: Partial<Omit<UserLog, "id" | "user_id" | "created_at">>) => Promise<void>;
+  addLog: (
+    log: Omit<UserLog, "id" | "user_id" | "created_at">,
+  ) => Promise<void>;
+  updateLog: (
+    logId: string,
+    patch: Partial<Omit<UserLog, "id" | "user_id" | "created_at">>,
+  ) => Promise<void>;
   deleteLog: (logId: string) => Promise<void>;
 }
 
@@ -142,16 +152,16 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
   }
 
   // -------------------------------------------------------------------------
-  // getShowData — local lookup
+  // getShowData - local lookup
   // -------------------------------------------------------------------------
 
   const getShowData = useCallback(
     (showId: number) => userShows.find((s) => s.show_id === showId) ?? null,
-    [userShows]
+    [userShows],
   );
 
   // -------------------------------------------------------------------------
-  // setRating — atomic upsert (null clears rating)
+  // setRating - atomic upsert (null clears rating)
   // Spreads any existing row so other fields (liked/watchlisted/status) are
   // preserved on conflict; only rating is changed.
   // -------------------------------------------------------------------------
@@ -165,12 +175,17 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
         .from("user_shows")
         .upsert(
           {
-            ...(existing ?? { rating: null, liked: false, watchlisted: false, status: null }),
+            ...(existing ?? {
+              rating: null,
+              liked: false,
+              watchlisted: false,
+              status: null,
+            }),
             ...denormalizeShow(show),
             user_id: user.id,
             rating,
           },
-          { onConflict: "user_id,show_id" }
+          { onConflict: "user_id,show_id" },
         )
         .select()
         .single();
@@ -189,7 +204,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
         return next;
       });
     },
-    [user, userShows]
+    [user, userShows],
   );
 
   // -------------------------------------------------------------------------
@@ -206,12 +221,17 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
         .from("user_shows")
         .upsert(
           {
-            ...(existing ?? { rating: null, liked: false, watchlisted: false, status: null }),
+            ...(existing ?? {
+              rating: null,
+              liked: false,
+              watchlisted: false,
+              status: null,
+            }),
             ...denormalizeShow(show),
             user_id: user.id,
             liked: newLiked,
           },
-          { onConflict: "user_id,show_id" }
+          { onConflict: "user_id,show_id" },
         )
         .select()
         .single();
@@ -230,7 +250,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
         return next;
       });
     },
-    [user, userShows]
+    [user, userShows],
   );
 
   // -------------------------------------------------------------------------
@@ -247,12 +267,17 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
         .from("user_shows")
         .upsert(
           {
-            ...(existing ?? { rating: null, liked: false, watchlisted: false, status: null }),
+            ...(existing ?? {
+              rating: null,
+              liked: false,
+              watchlisted: false,
+              status: null,
+            }),
             ...denormalizeShow(show),
             user_id: user.id,
             watchlisted: newWatchlisted,
           },
-          { onConflict: "user_id,show_id" }
+          { onConflict: "user_id,show_id" },
         )
         .select()
         .single();
@@ -271,7 +296,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
         return next;
       });
     },
-    [user, userShows]
+    [user, userShows],
   );
 
   // -------------------------------------------------------------------------
@@ -286,18 +311,23 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
       // Preserve existing watchlisted unless this is a fresh row setting want_to_watch
       const watchlisted = existing
         ? existing.watchlisted
-        : status === 'want_to_watch';
+        : status === "want_to_watch";
       const { data, error } = await supabase
         .from("user_shows")
         .upsert(
           {
-            ...(existing ?? { rating: null, liked: false, watchlisted: false, status: null }),
+            ...(existing ?? {
+              rating: null,
+              liked: false,
+              watchlisted: false,
+              status: null,
+            }),
             ...denormalizeShow(show),
             user_id: user.id,
             watchlisted,
             status,
           },
-          { onConflict: "user_id,show_id" }
+          { onConflict: "user_id,show_id" },
         )
         .select()
         .single();
@@ -316,11 +346,11 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
         return next;
       });
     },
-    [user, userShows]
+    [user, userShows],
   );
 
   // -------------------------------------------------------------------------
-  // addLog — insert a diary entry
+  // addLog - insert a diary entry
   // -------------------------------------------------------------------------
 
   const addLog = useCallback(
@@ -343,16 +373,19 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
 
       // Sync overall rating if this is an overall show log
       if (log.season_number === null && log.rating !== null) {
-        await setRating({
-          id: log.show_id,
-          name: log.show_name,
-          poster_path: log.show_poster_path ?? null,
-          backdrop_path: log.show_backdrop_path ?? null,
-          first_air_date: log.show_first_air_date ?? "",
-        } as TVShow, log.rating);
+        await setRating(
+          {
+            id: log.show_id,
+            name: log.show_name,
+            poster_path: log.show_poster_path ?? null,
+            backdrop_path: log.show_backdrop_path ?? null,
+            first_air_date: log.show_first_air_date ?? "",
+          } as TVShow,
+          log.rating,
+        );
       }
     },
-    [user, setRating]
+    [user, setRating],
   );
 
   // -------------------------------------------------------------------------
@@ -360,7 +393,10 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
   // -------------------------------------------------------------------------
 
   const updateLog = useCallback(
-    async (logId: string, patch: Partial<Omit<UserLog, "id" | "user_id" | "created_at">>) => {
+    async (
+      logId: string,
+      patch: Partial<Omit<UserLog, "id" | "user_id" | "created_at">>,
+    ) => {
       const { data, error } = await supabase
         .from("user_logs")
         .update(patch)
@@ -378,40 +414,41 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
       setUserLogs((prev) => prev.map((l) => (l.id === logId ? updatedLog : l)));
 
       // Sync overall rating if this is an overall show log and rating was updated
-      if (updatedLog.season_number === null && updatedLog.rating !== null && patch.rating !== undefined) {
-        await setRating({
-          id: updatedLog.show_id,
-          name: updatedLog.show_name,
-          poster_path: updatedLog.show_poster_path ?? null,
-          backdrop_path: updatedLog.show_backdrop_path ?? null,
-          first_air_date: updatedLog.show_first_air_date ?? "",
-        } as TVShow, updatedLog.rating);
+      if (
+        updatedLog.season_number === null &&
+        updatedLog.rating !== null &&
+        patch.rating !== undefined
+      ) {
+        await setRating(
+          {
+            id: updatedLog.show_id,
+            name: updatedLog.show_name,
+            poster_path: updatedLog.show_poster_path ?? null,
+            backdrop_path: updatedLog.show_backdrop_path ?? null,
+            first_air_date: updatedLog.show_first_air_date ?? "",
+          } as TVShow,
+          updatedLog.rating,
+        );
       }
     },
-    [setRating]
+    [setRating],
   );
 
   // -------------------------------------------------------------------------
   // deleteLog
   // -------------------------------------------------------------------------
 
-  const deleteLog = useCallback(
-    async (logId: string) => {
-      const { error } = await supabase
-        .from("user_logs")
-        .delete()
-        .eq("id", logId);
+  const deleteLog = useCallback(async (logId: string) => {
+    const { error } = await supabase.from("user_logs").delete().eq("id", logId);
 
-      if (error) {
-        console.error("[UserData] deleteLog error:", error);
-        toast.error("Failed to delete diary entry");
-        return;
-      }
+    if (error) {
+      console.error("[UserData] deleteLog error:", error);
+      toast.error("Failed to delete diary entry");
+      return;
+    }
 
-      setUserLogs((prev) => prev.filter((l) => l.id !== logId));
-    },
-    []
-  );
+    setUserLogs((prev) => prev.filter((l) => l.id !== logId));
+  }, []);
 
   return (
     <UserDataContext.Provider

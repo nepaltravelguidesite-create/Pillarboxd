@@ -1,5 +1,5 @@
 /*
-# Add saved_lists table — bookmark editorial lists
+# Add saved_lists table - bookmark editorial lists
 
 1. New Tables
 - `saved_lists`

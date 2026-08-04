@@ -8,14 +8,14 @@
 /*
   ============================================================
   AFTERSHOW DESIGN SYSTEM
-  Palette — deep indigo-navy surfaces with coral accents.
+  Palette - deep indigo-navy surfaces with coral accents.
 
   --background   : deep indigo-navy page background
   --nav          : deepest surface (bottom nav / sticky top bar)
   --card         : elevated surface (cards, list rows, reviews)
   --border       : hairline borders slightly lighter than surface
-  --primary      : soft coral — CTAs, links, active nav
-  --rating       : brighter red — stars + liked hearts
+  --primary      : soft coral - CTAs, links, active nav
+  --rating       : brighter red - stars + liked hearts
   --status-*     : semantic stat icon colors
   ============================================================
 */
@@ -65,7 +65,8 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   --font-sans: "DM Sans Variable", "system-ui", sans-serif;
-  --font-display: "Bricolage Grotesque Variable", "DM Sans Variable", sans-serif;
+  --font-display:
+    "Bricolage Grotesque Variable", "DM Sans Variable", sans-serif;
 
   --text-display: 2.75rem;
   --text-h1: 1.875rem;
@@ -79,104 +80,104 @@
 :root {
   --radius: 0.75rem; /* softer base radius */
 
-  /* Core palette — deep indigo/navy for a warm, premium feel */
-  --background: #1A1A24;
-  --foreground: #F1F3F5;
-  --nav: #1F1E2E;
+  /* Core palette - deep indigo/navy for a warm, premium feel */
+  --background: #1a1a24;
+  --foreground: #f1f3f5;
+  --nav: #1f1e2e;
   --card: #242333;
-  --card-foreground: #F1F3F5;
+  --card-foreground: #f1f3f5;
   --popover: #242333;
-  --popover-foreground: #F1F3F5;
+  --popover-foreground: #f1f3f5;
 
   /* Primary = soft coral pink */
-  --primary: #EFA9A9;
-  --primary-foreground: #1A1A24;
+  --primary: #efa9a9;
+  --primary-foreground: #1a1a24;
 
   /* Secondary = elevated surface */
-  --secondary: #2A2A3C;
-  --secondary-foreground: #F1F3F5;
+  --secondary: #2a2a3c;
+  --secondary-foreground: #f1f3f5;
 
   /* Muted = subdued text / bg */
-  --muted: #2A2A3C;
-  --muted-foreground: #9AA0C3;
+  --muted: #2a2a3c;
+  --muted-foreground: #9aa0c3;
 
   /* Accent = alias of primary for links/highlights */
-  --accent: #EFA9A9;
-  --accent-foreground: #1A1A24;
+  --accent: #efa9a9;
+  --accent-foreground: #1a1a24;
 
   /* Destructive */
-  --destructive: #E5484D;
-  --destructive-foreground: #FFFFFF;
+  --destructive: #e5484d;
+  --destructive-foreground: #ffffff;
 
-  /* Border / input — slightly lighter than surface */
-  --border: #34334A;
-  --input: #34334A;
-  --ring: #EFA9A9;
+  /* Border / input - slightly lighter than surface */
+  --border: #34334a;
+  --input: #34334a;
+  --ring: #efa9a9;
 
-  /* Rating — vibrant red */
-  --rating: #E82C2F;
+  /* Rating - vibrant red */
+  --rating: #e82c2f;
 
   /* Status colors */
-  --status-watched: #EFA9A9;
-  --status-list: #6B8AFF;
+  --status-watched: #efa9a9;
+  --status-list: #6b8aff;
 
   /* Charts */
-  --chart-1: #EFA9A9;   /* coral (primary) */
-  --chart-2: #B8A4E8;   /* soft violet */
-  --chart-3: #5EB8B0;   /* muted teal */
-  --chart-4: #D4A84B;   /* dusty gold */
-  --chart-5: #7B8FB5;   /* slate blue */
+  --chart-1: #efa9a9; /* coral (primary) */
+  --chart-2: #b8a4e8; /* soft violet */
+  --chart-3: #5eb8b0; /* muted teal */
+  --chart-4: #d4a84b; /* dusty gold */
+  --chart-5: #7b8fb5; /* slate blue */
 
   /* Sidebar inherits nav colors */
-  --sidebar: #1F1E2E;
-  --sidebar-foreground: #F1F3F5;
-  --sidebar-primary: #EFA9A9;
-  --sidebar-primary-foreground: #1A1A24;
-  --sidebar-accent: #2A2A3C;
-  --sidebar-accent-foreground: #F1F3F5;
-  --sidebar-border: #34334A;
-  --sidebar-ring: #EFA9A9;
+  --sidebar: #1f1e2e;
+  --sidebar-foreground: #f1f3f5;
+  --sidebar-primary: #efa9a9;
+  --sidebar-primary-foreground: #1a1a24;
+  --sidebar-accent: #2a2a3c;
+  --sidebar-accent-foreground: #f1f3f5;
+  --sidebar-border: #34334a;
+  --sidebar-ring: #efa9a9;
 }
 
-/* Aftershow is always dark — no .dark variant needed. */
+/* Aftershow is always dark - no .dark variant needed. */
 /* Force dark so shadcn tokens still work if ThemeProvider emits .dark */
 .dark {
-  --background: #1A1A24;
-  --foreground: #F1F3F5;
-  --nav: #1F1E2E;
+  --background: #1a1a24;
+  --foreground: #f1f3f5;
+  --nav: #1f1e2e;
   --card: #242333;
-  --card-foreground: #F1F3F5;
+  --card-foreground: #f1f3f5;
   --popover: #242333;
-  --popover-foreground: #F1F3F5;
-  --primary: #EFA9A9;
-  --primary-foreground: #1A1A24;
-  --secondary: #2A2A3C;
-  --secondary-foreground: #F1F3F5;
-  --muted: #2A2A3C;
-  --muted-foreground: #9AA0C3;
-  --accent: #EFA9A9;
-  --accent-foreground: #1A1A24;
-  --destructive: #E5484D;
-  --destructive-foreground: #FFFFFF;
-  --border: #34334A;
-  --input: #34334A;
-  --ring: #EFA9A9;
-  --rating: #E82C2F;
-  --status-watched: #EFA9A9;
-  --status-list: #6B8AFF;
-  --chart-1: #EFA9A9;
-  --chart-2: #B8A4E8;
-  --chart-3: #5EB8B0;
-  --chart-4: #D4A84B;
-  --chart-5: #7B8FB5;
-  --sidebar: #1F1E2E;
-  --sidebar-foreground: #F1F3F5;
-  --sidebar-primary: #EFA9A9;
-  --sidebar-primary-foreground: #1A1A24;
-  --sidebar-accent: #2A2A3C;
-  --sidebar-accent-foreground: #F1F3F5;
-  --sidebar-border: #34334A;
-  --sidebar-ring: #EFA9A9;
+  --popover-foreground: #f1f3f5;
+  --primary: #efa9a9;
+  --primary-foreground: #1a1a24;
+  --secondary: #2a2a3c;
+  --secondary-foreground: #f1f3f5;
+  --muted: #2a2a3c;
+  --muted-foreground: #9aa0c3;
+  --accent: #efa9a9;
+  --accent-foreground: #1a1a24;
+  --destructive: #e5484d;
+  --destructive-foreground: #ffffff;
+  --border: #34334a;
+  --input: #34334a;
+  --ring: #efa9a9;
+  --rating: #e82c2f;
+  --status-watched: #efa9a9;
+  --status-list: #6b8aff;
+  --chart-1: #efa9a9;
+  --chart-2: #b8a4e8;
+  --chart-3: #5eb8b0;
+  --chart-4: #d4a84b;
+  --chart-5: #7b8fb5;
+  --sidebar: #1f1e2e;
+  --sidebar-foreground: #f1f3f5;
+  --sidebar-primary: #efa9a9;
+  --sidebar-primary-foreground: #1a1a24;
+  --sidebar-accent: #2a2a3c;
+  --sidebar-accent-foreground: #f1f3f5;
+  --sidebar-border: #34334a;
+  --sidebar-ring: #efa9a9;
 }
 
 @layer base {
@@ -213,7 +214,10 @@
   }
 
   /* Display font for headings */
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-display);
     font-weight: 700;
     letter-spacing: -0.025em;
@@ -329,50 +333,95 @@
 
   /* Projector-beam logo animations */
   @keyframes beam-breathe-outer {
-    0%, 100% { opacity: 0.18; }
-    50% { opacity: 0.5; }
+    0%,
+    100% {
+      opacity: 0.18;
+    }
+    50% {
+      opacity: 0.5;
+    }
   }
 
   @keyframes beam-breathe-inner {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 0.85; }
+    0%,
+    100% {
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 0.85;
+    }
   }
 
   @keyframes lens-pulse {
-    0%, 100% { opacity: 0.85; }
-    50% { opacity: 1; }
+    0%,
+    100% {
+      opacity: 0.85;
+    }
+    50% {
+      opacity: 1;
+    }
   }
 
   @keyframes dust-twinkle-1 {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 0.8; }
+    0%,
+    100% {
+      opacity: 0.2;
+    }
+    50% {
+      opacity: 0.8;
+    }
   }
 
   @keyframes dust-twinkle-2 {
-    0%, 100% { opacity: 0.15; }
-    50% { opacity: 0.65; }
+    0%,
+    100% {
+      opacity: 0.15;
+    }
+    50% {
+      opacity: 0.65;
+    }
   }
 
   @keyframes dust-twinkle-3 {
-    0%, 100% { opacity: 0.1; }
-    50% { opacity: 0.55; }
+    0%,
+    100% {
+      opacity: 0.1;
+    }
+    50% {
+      opacity: 0.55;
+    }
   }
 
   /* Shimmer skeleton animation */
   @keyframes pb-shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
   }
   .pb-shimmer {
-    background: linear-gradient(90deg, var(--muted) 25%, var(--secondary) 50%, var(--muted) 75%);
+    background: linear-gradient(
+      90deg,
+      var(--muted) 25%,
+      var(--secondary) 50%,
+      var(--muted) 75%
+    );
     background-size: 200% 100%;
     animation: pb-shimmer 1.5s ease-in-out infinite;
   }
 
   /* Page transition animation */
   @keyframes pb-page-enter {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   .pb-page-enter {
     animation: pb-page-enter 0.2s ease-out both;
@@ -380,17 +429,25 @@
 
   /* Poster hover glow */
   .pb-poster-glow {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
   }
   .pb-poster-glow:hover {
     transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 12px 40px rgba(239, 169, 169, 0.15), 0 4px 16px rgba(0, 0, 0, 0.4);
+    box-shadow:
+      0 12px 40px rgba(239, 169, 169, 0.15),
+      0 4px 16px rgba(0, 0, 0, 0.4);
   }
 
-  /* Auth collage — vertical poster scroll (desktop) */
+  /* Auth collage - vertical poster scroll (desktop) */
   @keyframes pb-scroll-up {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-50%); }
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(-50%);
+    }
   }
 
   .pb-scroll-col {
@@ -404,15 +461,23 @@
     }
   }
 
-  /* Auth collage — horizontal poster scroll (mobile) */
+  /* Auth collage - horizontal poster scroll (mobile) */
   @keyframes pb-scroll-left {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
   }
 
   @keyframes pb-scroll-right {
-    0% { transform: translateX(-50%); }
-    100% { transform: translateX(0); }
+    0% {
+      transform: translateX(-50%);
+    }
+    100% {
+      transform: translateX(0);
+    }
   }
 
   .pb-scroll-row-left {

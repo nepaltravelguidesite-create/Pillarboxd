@@ -1,6 +1,22 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Loader2, Upload, ImageIcon, Globe, Tv, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import {
+  Loader2,
+  Upload,
+  ImageIcon,
+  Globe,
+  Tv,
+  Pencil,
+  Trash2,
+  AlertTriangle,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { SEOMeta } from "@/components/SEOMeta";
@@ -36,7 +52,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 // ---------------------------------------------------------------------------
-// SettingsPage — /settings route
+// SettingsPage - /settings route
 // Authenticated users can manage their profile (avatar, username, display
 // name, bio) and social links (Twitter/X, Instagram, website). Avatar files
 // are validated client-side and uploaded to the public `avatars` storage
@@ -73,7 +89,7 @@ function normalizeUrl(value: string): string {
   return `https://${trimmed}`;
 }
 
-/** Very light URL validation — must start with http(s) and have a host-ish bit. */
+/** Very light URL validation - must start with http(s) and have a host-ish bit. */
 function isValidUrl(value: string): boolean {
   if (!value) return true; // optional fields
   try {
@@ -119,7 +135,7 @@ export default function SettingsPage() {
     );
   }
 
-  // Not authenticated — redirect home.
+  // Not authenticated - redirect home.
   if (!user || !session) {
     return <Navigate to="/" replace />;
   }
@@ -133,7 +149,7 @@ export default function SettingsPage() {
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "username, display_name, avatar_url, bio, twitter_url, instagram_url, website_url, favorite_shows"
+        "username, display_name, avatar_url, bio, twitter_url, instagram_url, website_url, favorite_shows",
       )
       .eq("id", user.id)
       .maybeSingle();
@@ -154,7 +170,7 @@ export default function SettingsPage() {
         websiteUrl: data.website_url ?? "",
       });
     } else if (user) {
-      // No profile row yet — seed from auth context fallback values.
+      // No profile row yet - seed from auth context fallback values.
       setAvatarUrl(user.avatarUrl);
       setForm({
         username: user.username ?? "",
@@ -178,7 +194,7 @@ export default function SettingsPage() {
       refreshProfile();
       toast.success("Favorites updated.");
     },
-    [refreshProfile]
+    [refreshProfile],
   );
 
   // -------------------------------------------------------------------------
@@ -283,7 +299,9 @@ export default function SettingsPage() {
       ["Website", websiteUrl],
     ] as const) {
       if (!isValidUrl(value)) {
-        toast.error(`${label} URL is not valid. Make sure it starts with http:// or https://.`);
+        toast.error(
+          `${label} URL is not valid. Make sure it starts with http:// or https://.`,
+        );
         return;
       }
     }
@@ -329,8 +347,13 @@ export default function SettingsPage() {
 
       if (error) {
         // Handle the unique constraint on username if the pre-check raced.
-        if (error.code === "23505" || /profiles_username_key/i.test(error.message)) {
-          toast.error("That username is already in use. Please choose another.");
+        if (
+          error.code === "23505" ||
+          /profiles_username_key/i.test(error.message)
+        ) {
+          toast.error(
+            "That username is already in use. Please choose another.",
+          );
         } else {
           throw error;
         }
@@ -354,9 +377,12 @@ export default function SettingsPage() {
     if (!user || !session) return;
     setDeleting(true);
     try {
-      const { data, error: invokeError } = await supabase.functions.invoke("delete-account", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
+      const { data, error: invokeError } = await supabase.functions.invoke(
+        "delete-account",
+        {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        },
+      );
       if (invokeError) throw invokeError;
       if (data && data.error) throw new Error(data.error);
 
@@ -365,7 +391,11 @@ export default function SettingsPage() {
       navigate("/", { replace: true });
     } catch (err) {
       console.error("[SettingsPage] account deletion failed", err);
-      toast.error(err instanceof Error ? err.message : "Could not delete account. Please try again.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Could not delete account. Please try again.",
+      );
       setDeleting(false);
       setDeleteOpen(false);
     }
@@ -407,9 +437,12 @@ export default function SettingsPage() {
               <CardContent className="space-y-6">
                 {/* Avatar */}
                 <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                  <Avatar className="size-20 rounded-full" >
+                  <Avatar className="size-20 rounded-full">
                     {avatarUrl ? (
-                      <AvatarImage src={avatarUrl} alt={form.displayName || "Your avatar"} />
+                      <AvatarImage
+                        src={avatarUrl}
+                        alt={form.displayName || "Your avatar"}
+                      />
                     ) : null}
                     <AvatarFallback className="text-base font-semibold">
                       {initialsFromName(form.displayName || form.username)}
@@ -516,7 +549,9 @@ export default function SettingsPage() {
                     <span
                       className={cn(
                         "text-[11px] tabular-nums",
-                        bioTooLong ? "text-destructive" : "text-muted-foreground"
+                        bioTooLong
+                          ? "text-destructive"
+                          : "text-muted-foreground",
                       )}
                     >
                       {bioCount}/{BIO_MAX}
@@ -535,7 +570,8 @@ export default function SettingsPage() {
                   />
                   {bioTooLong && (
                     <p className="text-xs text-destructive">
-                      Bio is {bioCount - BIO_MAX} character{bioCount - BIO_MAX === 1 ? "" : "s"} too long.
+                      Bio is {bioCount - BIO_MAX} character
+                      {bioCount - BIO_MAX === 1 ? "" : "s"} too long.
                     </p>
                   )}
                 </div>
@@ -585,7 +621,9 @@ export default function SettingsPage() {
                     type="url"
                     inputMode="url"
                     value={form.instagramUrl}
-                    onChange={(e) => updateField("instagramUrl", e.target.value)}
+                    onChange={(e) =>
+                      updateField("instagramUrl", e.target.value)
+                    }
                     disabled={saving}
                     placeholder="https://instagram.com/yourhandle"
                   />
@@ -626,9 +664,22 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-3">
                     <div className="flex flex-1 gap-2">
                       {favorites.map((show) => (
-                        <div key={show.tmdb_id} className="w-12 h-18 rounded-md overflow-hidden bg-muted shrink-0">
+                        <div
+                          key={show.tmdb_id}
+                          className="w-12 h-18 rounded-md overflow-hidden bg-muted shrink-0"
+                        >
                           {show.poster_path ? (
-                            <img src={bestPosterUrl({ id: show.tmdb_id, poster_path: show.poster_path }, "w92")} alt={show.name} className="w-full h-full object-cover" />
+                            <img
+                              src={bestPosterUrl(
+                                {
+                                  id: show.tmdb_id,
+                                  poster_path: show.poster_path,
+                                },
+                                "w92",
+                              )}
+                              alt={show.name}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <Tv className="size-4 text-muted-foreground/30" />
@@ -649,7 +700,10 @@ export default function SettingsPage() {
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center gap-3 py-6">
-                    <Tv className="size-8 text-muted-foreground/30" strokeWidth={1} />
+                    <Tv
+                      className="size-8 text-muted-foreground/30"
+                      strokeWidth={1}
+                    />
                     <Button
                       type="button"
                       variant="outline"
@@ -667,7 +721,12 @@ export default function SettingsPage() {
             <div className="flex items-center justify-end gap-3 pt-2">
               <Button
                 type="submit"
-                disabled={saving || uploadingAvatar || bioTooLong || !form.username.trim()}
+                disabled={
+                  saving ||
+                  uploadingAvatar ||
+                  bioTooLong ||
+                  !form.username.trim()
+                }
                 className="font-bold uppercase tracking-widest"
               >
                 {saving && <Loader2 className="size-4 animate-spin" />}
@@ -685,7 +744,7 @@ export default function SettingsPage() {
           onSaved={handleFavoritesSaved}
         />
 
-        {/* Danger zone — Delete Account */}
+        {/* Danger zone - Delete Account */}
         <div className="mt-12">
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6">
             <div className="flex items-start gap-3">
@@ -694,16 +753,21 @@ export default function SettingsPage() {
                   Delete Account
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-                  Permanently delete your account and all associated data — reviews, logs, lists, comments, and follows. This action cannot be undone.
+                  Permanently delete your account and all associated data -
+                  reviews, logs, lists, comments, and follows. This action
+                  cannot be undone.
                 </p>
               </div>
-              <AlertDialog open={deleteOpen} onOpenChange={(open) => {
-                setDeleteOpen(open);
-                if (!open) {
-                  setDeleteConfirmText("");
-                  setDeleting(false);
-                }
-              }}>
+              <AlertDialog
+                open={deleteOpen}
+                onOpenChange={(open) => {
+                  setDeleteOpen(open);
+                  if (!open) {
+                    setDeleteConfirmText("");
+                    setDeleting(false);
+                  }
+                }}
+              >
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm" className="shrink-0">
                     <Trash2 className="size-4" />
@@ -717,12 +781,18 @@ export default function SettingsPage() {
                       Delete your account?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently delete your account and all your data — reviews, logs, lists, comments, and follows. This action cannot be undone.
+                      This will permanently delete your account and all your
+                      data - reviews, logs, lists, comments, and follows. This
+                      action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <div className="space-y-2 py-2">
                     <p className="text-sm text-muted-foreground">
-                      Type <span className="font-semibold text-foreground">DELETE</span> to confirm:
+                      Type{" "}
+                      <span className="font-semibold text-foreground">
+                        DELETE
+                      </span>{" "}
+                      to confirm:
                     </p>
                     <Input
                       value={deleteConfirmText}
@@ -745,7 +815,11 @@ export default function SettingsPage() {
                         handleDeleteAccount();
                       }}
                     >
-                      {deleting ? <Loader2 className="size-4 animate-spin" /> : "Delete Forever"}
+                      {deleting ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        "Delete Forever"
+                      )}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

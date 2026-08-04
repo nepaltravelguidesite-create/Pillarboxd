@@ -1,12 +1,12 @@
 /**
- * fanart.tv API helper — secondary poster source for a curated set of shows.
+ * fanart.tv API helper - secondary poster source for a curated set of shows.
  *
  * Authentication:
  *   Set VITE_FANART_API_KEY in your .env file.
  *   Get one at: https://fanart.tv/get-an-api-key/
  *
  * This module is only used by the one-time resolution script that produces
- * src/lib/fanartPosterMap.ts. The map itself is shipped statically — regular
+ * src/lib/fanartPosterMap.ts. The map itself is shipped statically - regular
  * users never hit fanart.tv at runtime.
  */
 
@@ -18,7 +18,7 @@ if (!API_KEY) {
   console.warn(
     "[Aftershow] No fanart.tv API key found. " +
       "Set VITE_FANART_API_KEY in your .env file. " +
-      "(Only needed for the poster resolution script — not at runtime.)"
+      "(Only needed for the poster resolution script - not at runtime.)",
   );
 }
 
@@ -37,11 +37,11 @@ export interface FanartTvResponse {
 }
 
 /**
- * GET /tv/{tvdb_id} — fetches artwork for a show keyed by TheTVDB id.
+ * GET /tv/{tvdb_id} - fetches artwork for a show keyed by TheTVDB id.
  * Returns the raw response or null if the request fails.
  */
 export async function getFanartPosters(
-  tvdbId: number | string
+  tvdbId: number | string,
 ): Promise<FanartTvResponse | null> {
   if (!API_KEY) return null;
 
@@ -63,9 +63,7 @@ export async function getFanartPosters(
  * Falls back to hdposter if no tvposter entries exist.
  * Returns null if no suitable poster is found.
  */
-export function pickBestFanartPoster(
-  data: FanartTvResponse
-): string | null {
+export function pickBestFanartPoster(data: FanartTvResponse): string | null {
   const posters = data.tvposter ?? data.hdposter ?? [];
   if (posters.length === 0) return null;
 

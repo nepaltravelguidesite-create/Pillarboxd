@@ -4,11 +4,13 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
-const TMDB_TOKEN = Deno.env.get("TMDB_READ_TOKEN") ?? Deno.env.get("TMDB_API_KEY");
+const TMDB_TOKEN =
+  Deno.env.get("TMDB_READ_TOKEN") ?? Deno.env.get("TMDB_API_KEY");
 
 interface UserEpisodeRow {
   id: string;
@@ -52,15 +54,24 @@ Deno.serve(async (req: Request) => {
 
     if (fetchErr) {
       return new Response(
-        JSON.stringify({ error: "Failed to fetch episodes needing backfill", details: fetchErr.message }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          error: "Failed to fetch episodes needing backfill",
+          details: fetchErr.message,
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     if (!nullRows || nullRows.length === 0) {
       return new Response(
         JSON.stringify({ message: "No episodes need backfill", updated: 0 }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -85,9 +96,10 @@ Deno.serve(async (req: Request) => {
 
         // Fetch show detail for episode_run_time fallback
         const showRes = await fetch(`${TMDB_BASE}/tv/${showId}`, {
-          headers: TMDB_TOKEN.length > 50
-            ? { Authorization: `Bearer ${TMDB_TOKEN}` }
-            : {},
+          headers:
+            TMDB_TOKEN.length > 50
+              ? { Authorization: `Bearer ${TMDB_TOKEN}` }
+              : {},
         });
         if (!showRes.ok) {
           errors.push(`Show ${showId}: TMDB ${showRes.status}`);
@@ -106,27 +118,32 @@ Deno.serve(async (req: Request) => {
           const seasonRes = await fetch(
             `${TMDB_BASE}/tv/${showId}/season/${seasonNum}`,
             {
-              headers: TMDB_TOKEN.length > 50
-                ? { Authorization: `Bearer ${TMDB_TOKEN}` }
-                : {},
-            }
+              headers:
+                TMDB_TOKEN.length > 50
+                  ? { Authorization: `Bearer ${TMDB_TOKEN}` }
+                  : {},
+            },
           );
           if (!seasonRes.ok) {
-            errors.push(`Show ${showId} season ${seasonNum}: TMDB ${seasonRes.status}`);
+            errors.push(
+              `Show ${showId} season ${seasonNum}: TMDB ${seasonRes.status}`,
+            );
             continue;
           }
           const seasonDetail = (await seasonRes.json()) as TMDBSeasonDetail;
           for (const ep of seasonDetail.episodes ?? []) {
             runtimeMap.set(
               `${ep.season_number}-${ep.episode_number}`,
-              ep.runtime && ep.runtime > 0 ? ep.runtime : fallbackRuntime
+              ep.runtime && ep.runtime > 0 ? ep.runtime : fallbackRuntime,
             );
           }
         }
 
         // 3. Update each row with its runtime
         for (const row of rows) {
-          const runtime = runtimeMap.get(`${row.season_number}-${row.episode_number}`) ?? null;
+          const runtime =
+            runtimeMap.get(`${row.season_number}-${row.episode_number}`) ??
+            null;
           if (runtime && runtime > 0) {
             const { error: updateErr } = await supabase
               .from("user_episodes")
@@ -138,7 +155,7 @@ Deno.serve(async (req: Request) => {
               updated++;
             }
           }
-          // If still null, leave it — the Stats page falls back to a default
+          // If still null, leave it - the Stats page falls back to a default
         }
       } catch (err) {
         errors.push(`Show ${showId}: ${String(err)}`);
@@ -152,12 +169,15 @@ Deno.serve(async (req: Request) => {
         totalNeeded: nullRows.length,
         errors: errors.length > 0 ? errors : undefined,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: String(err) }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: String(err) }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

@@ -1,7 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { searchShows, bestPosterUrl, type TVShow } from "@/lib/tmdb";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -117,11 +123,12 @@ export function EditFavoritesModal({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Current favorites — ordered, with reorder/remove controls */}
+          {/* Current favorites - ordered, with reorder/remove controls */}
           <div className="space-y-2">
             {favorites.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-4">
-                No favorites selected yet. Search below to add up to {MAX_FAVORITES}.
+                No favorites selected yet. Search below to add up to{" "}
+                {MAX_FAVORITES}.
               </p>
             ) : (
               favorites.map((fav, idx) => (
@@ -132,7 +139,10 @@ export function EditFavoritesModal({
                   <div className="h-14 w-10 shrink-0 overflow-hidden rounded bg-muted">
                     {fav.poster_path ? (
                       <img
-                        src={bestPosterUrl({ id: fav.tmdb_id, poster_path: fav.poster_path }, "w92")}
+                        src={bestPosterUrl(
+                          { id: fav.tmdb_id, poster_path: fav.poster_path },
+                          "w92",
+                        )}
                         alt={fav.name}
                         className="h-full w-full object-cover"
                       />
@@ -199,7 +209,9 @@ export function EditFavoritesModal({
                 <ScrollArea className="h-48 rounded-md border border-border/50">
                   <div className="p-1.5 space-y-1">
                     {results.map((show) => {
-                      const alreadyAdded = favorites.some((f) => f.tmdb_id === show.id);
+                      const alreadyAdded = favorites.some(
+                        (f) => f.tmdb_id === show.id,
+                      );
                       return (
                         <button
                           key={show.id}
@@ -224,7 +236,9 @@ export function EditFavoritesModal({
                             {show.name}
                           </span>
                           {alreadyAdded && (
-                            <span className="text-[10px] text-muted-foreground">Added</span>
+                            <span className="text-[10px] text-muted-foreground">
+                              Added
+                            </span>
                           )}
                         </button>
                       );

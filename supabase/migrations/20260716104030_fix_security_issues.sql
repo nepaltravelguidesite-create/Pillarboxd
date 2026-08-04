@@ -4,7 +4,7 @@
 ## 1. Public Bucket Allows Listing (avatars)
 The `public_read_avatars` SELECT policy on `storage.objects` allows any client to list
 all files in the public `avatars` bucket. Public buckets don't need a SELECT policy
-for object URL access — `getPublicUrl()` works without it. Dropping the policy prevents
+for object URL access - `getPublicUrl()` works without it. Dropping the policy prevents
 clients from enumerating all avatar files while still allowing public URL access to
 individual objects.
 
@@ -13,7 +13,7 @@ individual objects.
 privileges). It was callable by `anon` and `authenticated` roles via the REST RPC
 endpoint, which could allow privilege escalation. We revoke EXECUTE from both roles.
 The function is only meant to be invoked by the `on_auth_user_created` trigger on
-`auth.users`, which runs with superuser privileges — it does not need direct EXECUTE
+`auth.users`, which runs with superuser privileges - it does not need direct EXECUTE
 grants.
 
 ## 3. Leaked Password Protection

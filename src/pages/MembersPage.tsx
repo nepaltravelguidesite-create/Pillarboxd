@@ -9,11 +9,12 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { SEOMeta } from "@/components/SEOMeta";
 
 // ---------------------------------------------------------------------------
-// MembersPage — /members route
+// MembersPage - /members route
 // ---------------------------------------------------------------------------
 
 export default function MembersPage() {
-  const { allProfiles, loadingProfiles, isFollowing, toggleFollow } = useSocial();
+  const { allProfiles, loadingProfiles, isFollowing, toggleFollow } =
+    useSocial();
   const { user } = useAuth();
   const { openAuthModal } = useUI();
 
@@ -35,63 +36,67 @@ export default function MembersPage() {
 
   return (
     <>
-    <SEOMeta title="Members" />
-    <div className="min-h-screen bg-background text-foreground pb-page-enter">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        {/* Heading */}
-        <header className="mb-8">
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
-            Members
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Browse the community and follow other viewers.
-          </p>
-        </header>
+      <SEOMeta title="Members" />
+      <div className="min-h-screen bg-background text-foreground pb-page-enter">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          {/* Heading */}
+          <header className="mb-8">
+            <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
+              Members
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Browse the community and follow other viewers.
+            </p>
+          </header>
 
-        {/* Search */}
-        <div className="relative mb-8">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by username or display name…"
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-secondary/40 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-          />
+          {/* Search */}
+          <div className="relative mb-8">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by username or display name…"
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-secondary/40 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+            />
+          </div>
+
+          {/* Content */}
+          {loadingProfiles ? (
+            <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
+              <Loader2 className="size-8 animate-spin mb-3" />
+              <p className="text-sm">Loading members…</p>
+            </div>
+          ) : filteredProfiles.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title={query ? "No members found" : "No members yet"}
+              description={
+                query
+                  ? "Try a different search term."
+                  : "Check back once people join."
+              }
+            />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {filteredProfiles.map((profile) => (
+                <MemberCard
+                  key={profile.id}
+                  profile={profile}
+                  following={isFollowing(profile.id)}
+                  onToggleFollow={async () => {
+                    if (!user) {
+                      openAuthModal("signup");
+                      return;
+                    }
+                    await toggleFollow(profile.id);
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
-
-        {/* Content */}
-        {loadingProfiles ? (
-          <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
-            <Loader2 className="size-8 animate-spin mb-3" />
-            <p className="text-sm">Loading members…</p>
-          </div>
-        ) : filteredProfiles.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title={query ? "No members found" : "No members yet"}
-            description={query ? "Try a different search term." : "Check back once people join."}
-          />
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredProfiles.map((profile) => (
-              <MemberCard
-                key={profile.id}
-                profile={profile}
-                following={isFollowing(profile.id)}
-                onToggleFollow={async () => {
-                  if (!user) {
-                    openAuthModal("signup");
-                    return;
-                  }
-                  await toggleFollow(profile.id);
-                }}
-              />
-            ))}
-          </div>
-        )}
       </div>
-    </div>
     </>
   );
 }
@@ -163,7 +168,7 @@ function MemberCard({ profile, following, onToggleFollow }: MemberCardProps) {
           "disabled:opacity-70 disabled:cursor-not-allowed",
           following
             ? "border border-border bg-transparent text-foreground hover:bg-secondary/40"
-            : "bg-primary text-primary-foreground hover:bg-primary/90"
+            : "bg-primary text-primary-foreground hover:bg-primary/90",
         )}
       >
         {followLoading ? (

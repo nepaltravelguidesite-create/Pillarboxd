@@ -48,7 +48,7 @@ export function LogEntryModal({
   const isEditMode = !!existingLog;
 
   const [watchedDate, setWatchedDate] = useState<string | null>(() =>
-    new Date().toISOString().slice(0, 10)
+    new Date().toISOString().slice(0, 10),
   );
   const [rating, setRating] = useState<number | null>(null);
   const [review, setReview] = useState("");
@@ -104,7 +104,7 @@ export function LogEntryModal({
   function handleScopeChange(seasonNum: number | null) {
     setSeasonNumber(seasonNum);
     const existing = showLogs.find(
-      (l) => l.show_id === show.id && l.season_number === seasonNum
+      (l) => l.show_id === show.id && l.season_number === seasonNum,
     );
     if (existing) {
       setWatchedDate(existing.watched_date ?? null);
@@ -174,11 +174,11 @@ export function LogEntryModal({
         onClick={() => onOpenChange(false)}
       />
 
-      {/* Modal — bottom sheet on mobile, centered on desktop */}
+      {/* Modal - bottom sheet on mobile, centered on desktop */}
       <div
         className={cn(
           "relative w-full sm:max-w-md bg-card border border-border/60 rounded-t-2xl sm:rounded-2xl shadow-xl shadow-black/40",
-          "max-h-[90vh] overflow-y-auto"
+          "max-h-[90vh] overflow-y-auto",
         )}
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
@@ -193,7 +193,9 @@ export function LogEntryModal({
             <h2 className="font-display text-base font-bold text-foreground shrink-0">
               {headerText}
             </h2>
-            <span className="text-xs text-muted-foreground truncate">{show.name}</span>
+            <span className="text-xs text-muted-foreground truncate">
+              {show.name}
+            </span>
           </div>
           <button
             onClick={() => onOpenChange(false)}
@@ -206,61 +208,76 @@ export function LogEntryModal({
 
         <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-3">
           {/* Mark season watched quick action */}
-          {seasonNumber !== null && (() => {
-            const sp = progress.perSeason.get(seasonNumber);
-            const sw = sp?.watched ?? 0;
-            const st = sp?.total ?? realSeasons.find((s) => s.season_number === seasonNumber)?.episode_count ?? 0;
-            const seasonName = realSeasons.find((s) => s.season_number === seasonNumber)?.name ?? `Season ${seasonNumber}`;
-            return sw < st ? (
-              <button
-                type="button"
-                disabled={markingSeason}
-                onClick={async () => {
-                  const season = realSeasons.find((s) => s.season_number === seasonNumber);
-                  if (!season) return;
-                  setMarkingSeason(true);
-                  try {
-                    const detail = await getShowSeason(show.id, seasonNumber);
-                    const watchedNums = new Set(
-                      userEpisodes
-                        .filter((e) => e.show_id === show.id && e.season_number === seasonNumber)
-                        .map((e) => e.episode_number)
+          {seasonNumber !== null &&
+            (() => {
+              const sp = progress.perSeason.get(seasonNumber);
+              const sw = sp?.watched ?? 0;
+              const st =
+                sp?.total ??
+                realSeasons.find((s) => s.season_number === seasonNumber)
+                  ?.episode_count ??
+                0;
+              const seasonName =
+                realSeasons.find((s) => s.season_number === seasonNumber)
+                  ?.name ?? `Season ${seasonNumber}`;
+              return sw < st ? (
+                <button
+                  type="button"
+                  disabled={markingSeason}
+                  onClick={async () => {
+                    const season = realSeasons.find(
+                      (s) => s.season_number === seasonNumber,
                     );
-                    const unwatched = (detail.episodes ?? []).filter(
-                      (e) => !watchedNums.has(e.episode_number)
-                    );
-                    for (const ep of unwatched) {
-                      await toggleEpisode(
-                        show,
-                        seasonNumber,
-                        ep.episode_number,
-                        ep.name,
-                        ep.runtime ?? null
+                    if (!season) return;
+                    setMarkingSeason(true);
+                    try {
+                      const detail = await getShowSeason(show.id, seasonNumber);
+                      const watchedNums = new Set(
+                        userEpisodes
+                          .filter(
+                            (e) =>
+                              e.show_id === show.id &&
+                              e.season_number === seasonNumber,
+                          )
+                          .map((e) => e.episode_number),
                       );
+                      const unwatched = (detail.episodes ?? []).filter(
+                        (e) => !watchedNums.has(e.episode_number),
+                      );
+                      for (const ep of unwatched) {
+                        await toggleEpisode(
+                          show,
+                          seasonNumber,
+                          ep.episode_number,
+                          ep.name,
+                          ep.runtime ?? null,
+                        );
+                      }
+                      toast.success(
+                        `Marked all ${season.name} episodes as watched`,
+                      );
+                    } catch {
+                      toast.error("Failed to mark season as watched");
+                    } finally {
+                      setMarkingSeason(false);
                     }
-                    toast.success(`Marked all ${season.name} episodes as watched`);
-                  } catch {
-                    toast.error("Failed to mark season as watched");
-                  } finally {
-                    setMarkingSeason(false);
-                  }
-                }}
-                className={cn(
-                  "w-full flex items-center justify-center gap-1.5 py-2 rounded-lg",
-                  "text-xs font-medium transition-colors",
-                  "bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground",
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
-                )}
-              >
-                {markingSeason ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <Check className="size-3.5" />
-                )}
-                Mark {seasonName} Watched ({sw}/{st})
-              </button>
-            ) : null;
-          })()}
+                  }}
+                  className={cn(
+                    "w-full flex items-center justify-center gap-1.5 py-2 rounded-lg",
+                    "text-xs font-medium transition-colors",
+                    "bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground",
+                    "disabled:opacity-50 disabled:cursor-not-allowed",
+                  )}
+                >
+                  {markingSeason ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Check className="size-3.5" />
+                  )}
+                  Mark {seasonName} Watched ({sw}/{st})
+                </button>
+              ) : null;
+            })()}
 
           {/* Season scope selector */}
           {realSeasons.length > 0 && (
@@ -268,21 +285,39 @@ export function LogEntryModal({
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Scope
               </label>
-              <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+              <div
+                className="flex gap-1.5 overflow-x-auto pb-1"
+                style={{ scrollbarWidth: "none" }}
+              >
                 <ScopePill
                   active={seasonNumber === null}
                   onClick={() => handleScopeChange(null)}
                   label="Overall Show"
-                  rating={showLogs.find((l) => l.show_id === show.id && l.season_number === null)?.rating ?? null}
+                  rating={
+                    showLogs.find(
+                      (l) => l.show_id === show.id && l.season_number === null,
+                    )?.rating ?? null
+                  }
                 />
                 {realSeasons.map((s) => {
                   const seasonLog = showLogs.find(
-                    (l) => l.show_id === show.id && l.season_number === s.season_number && l.rating != null
+                    (l) =>
+                      l.show_id === show.id &&
+                      l.season_number === s.season_number &&
+                      l.rating != null,
                   );
-                  const seasonProgress = progress.perSeason.get(s.season_number);
+                  const seasonProgress = progress.perSeason.get(
+                    s.season_number,
+                  );
                   const seasonWatched = seasonProgress?.watched ?? 0;
                   const seasonTotal = seasonProgress?.total ?? s.episode_count;
-                  const seasonPct = seasonTotal > 0 ? Math.min(100, Math.round((seasonWatched / seasonTotal) * 100)) : 0;
+                  const seasonPct =
+                    seasonTotal > 0
+                      ? Math.min(
+                          100,
+                          Math.round((seasonWatched / seasonTotal) * 100),
+                        )
+                      : 0;
                   return (
                     <ScopePill
                       key={s.id}
@@ -299,7 +334,7 @@ export function LogEntryModal({
             </div>
           )}
 
-          {/* Star rating — primary, near top */}
+          {/* Star rating - primary, near top */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Rating
@@ -314,9 +349,12 @@ export function LogEntryModal({
             </div>
           </div>
 
-          {/* Review text — primary, near top */}
+          {/* Review text - primary, near top */}
           <div className="space-y-1.5">
-            <label htmlFor="log-review" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <label
+              htmlFor="log-review"
+              className="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+            >
               Review
             </label>
             <textarea
@@ -330,12 +368,12 @@ export function LogEntryModal({
                 "px-4 py-3 text-sm text-foreground",
                 "placeholder:text-muted-foreground resize-none",
                 "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
-                "transition-colors"
+                "transition-colors",
               )}
             />
           </div>
 
-          {/* Personal tags — optional, chip-style input */}
+          {/* Personal tags - optional, chip-style input */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Tags
@@ -365,23 +403,36 @@ export function LogEntryModal({
                   if (e.key === "Enter" || e.key === ",") {
                     e.preventDefault();
                     addTag(tagInput);
-                  } else if (e.key === "Backspace" && !tagInput && tags.length > 0) {
+                  } else if (
+                    e.key === "Backspace" &&
+                    !tagInput &&
+                    tags.length > 0
+                  ) {
                     removeTag(tags[tags.length - 1]);
                   }
                 }}
                 onBlur={() => tagInput.trim() && addTag(tagInput)}
-                placeholder={tags.length === 0 ? "comfort show, cried, background watch..." : "Add tag..."}
+                placeholder={
+                  tags.length === 0
+                    ? "comfort show, cried, background watch..."
+                    : "Add tag..."
+                }
                 className="flex-1 min-w-[120px] bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
               />
             </div>
-            <p className="text-[11px] text-muted-foreground/60">Press enter or comma to add. Optional.</p>
+            <p className="text-[11px] text-muted-foreground/60">
+              Press enter or comma to add. Optional.
+            </p>
           </div>
 
           {/* Secondary controls below the fold */}
-          {/* Date watched — optional */}
+          {/* Date watched - optional */}
           <div className="space-y-1.5 pt-1">
             <div className="flex items-center justify-between">
-              <label htmlFor="log-date" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <label
+                htmlFor="log-date"
+                className="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+              >
                 Date Watched
               </label>
               {watchedDate && (
@@ -405,7 +456,7 @@ export function LogEntryModal({
                   "h-11 w-full rounded-full border border-input bg-background/40",
                   "pl-10 pr-4 text-sm text-foreground",
                   "focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40",
-                  "transition-colors"
+                  "transition-colors",
                 )}
               />
             </div>
@@ -420,18 +471,20 @@ export function LogEntryModal({
               onClick={() => setRewatch(!rewatch)}
               className={cn(
                 "relative h-5 w-9 rounded-full transition-colors",
-                rewatch ? "bg-primary" : "bg-secondary"
+                rewatch ? "bg-primary" : "bg-secondary",
               )}
             >
-              <span className={cn(
-                "absolute top-0.5 left-0.5 size-4 rounded-full bg-white transition-transform",
-                rewatch && "translate-x-4"
-              )} />
+              <span
+                className={cn(
+                  "absolute top-0.5 left-0.5 size-4 rounded-full bg-white transition-transform",
+                  rewatch && "translate-x-4",
+                )}
+              />
             </button>
             <span className="text-sm text-foreground">Rewatch</span>
           </label>
 
-          {/* Spoiler checkbox — only if review has text */}
+          {/* Spoiler checkbox - only if review has text */}
           {review.trim() && (
             <label className="flex items-center gap-2.5 cursor-pointer">
               <button
@@ -441,11 +494,25 @@ export function LogEntryModal({
                 onClick={() => setContainsSpoilers(!containsSpoilers)}
                 className={cn(
                   "size-4.5 rounded border transition-colors flex items-center justify-center",
-                  containsSpoilers ? "bg-primary border-primary" : "border-input"
+                  containsSpoilers
+                    ? "bg-primary border-primary"
+                    : "border-input",
                 )}
               >
                 {containsSpoilers && (
-                  <svg viewBox="0 0 12 12" className="size-3 text-primary-foreground"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <svg
+                    viewBox="0 0 12 12"
+                    className="size-3 text-primary-foreground"
+                  >
+                    <path
+                      d="M2 6l3 3 5-5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 )}
               </button>
               <span className="text-sm text-foreground">Contains spoilers</span>
@@ -462,15 +529,20 @@ export function LogEntryModal({
               "hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25",
               "active:translate-y-0 active:scale-[0.98]",
               "transition-all duration-150",
-              "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+              "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none",
             )}
           >
-            {submitting ? <Loader2 className="size-4 animate-spin" /> : submitText}
+            {submitting ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              submitText
+            )}
           </button>
 
           {rating === null && (
             <p className="text-center text-xs text-muted-foreground">
-              Set a rating to {isEditMode ? "save your review" : "publish your review"}
+              Set a rating to{" "}
+              {isEditMode ? "save your review" : "publish your review"}
             </p>
           )}
         </form>
@@ -479,7 +551,21 @@ export function LogEntryModal({
   );
 }
 
-function ScopePill({ active, onClick, label, rating, progressPct, progressLabel }: { active: boolean; onClick: () => void; label: string; rating?: number | null; progressPct?: number; progressLabel?: string }) {
+function ScopePill({
+  active,
+  onClick,
+  label,
+  rating,
+  progressPct,
+  progressLabel,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  rating?: number | null;
+  progressPct?: number;
+  progressLabel?: string;
+}) {
   return (
     <button
       type="button"
@@ -488,7 +574,7 @@ function ScopePill({ active, onClick, label, rating, progressPct, progressLabel 
         "shrink-0 flex flex-col items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
         active
           ? "bg-primary text-primary-foreground"
-          : "bg-secondary text-muted-foreground hover:text-foreground"
+          : "bg-secondary text-muted-foreground hover:text-foreground",
       )}
     >
       <span className="flex items-center gap-1.5">
@@ -508,7 +594,9 @@ function ScopePill({ active, onClick, label, rating, progressPct, progressLabel 
               style={{ width: `${progressPct}%` }}
             />
           </span>
-          <span className="text-[10px] tabular-nums opacity-80">{progressLabel}</span>
+          <span className="text-[10px] tabular-nums opacity-80">
+            {progressLabel}
+          </span>
         </span>
       )}
     </button>

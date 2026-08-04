@@ -11,7 +11,7 @@ interface AftershowLogoAnimatedProps {
 }
 
 /**
- * Aftershow logo — "The Projector Beam" (animated)
+ * Aftershow logo - "The Projector Beam" (animated)
  *
  * Same mark as the static AftershowLogo, with the beam triangles breathing
  * in opacity, the lens circle pulsing gently, and four dust motes twinkling

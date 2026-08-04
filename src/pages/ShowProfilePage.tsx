@@ -24,49 +24,90 @@ import { ShowCarousel } from "@/components/shows/ShowCarousel";
 import { ReviewFeed } from "@/components/shows/ReviewFeed";
 import type { ReviewWithAuthor } from "@/components/shows/ReviewCard";
 import { CommentThread } from "@/components/shows/CommentThread";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { StatusSegmentedControl } from "@/components/shows/QuickStatusControl";
 import { supabase } from "@/lib/supabase";
 import {
-  Loader2, Heart, Bookmark, Plus, ChevronLeft, Eye, List as ListIcon,
-  Tv, BookmarkCheck, RotateCcw, Play,
+  Loader2,
+  Heart,
+  Bookmark,
+  Plus,
+  ChevronLeft,
+  Eye,
+  List as ListIcon,
+  Tv,
+  BookmarkCheck,
+  RotateCcw,
+  Play,
 } from "lucide-react";
 
 type EditorialListPreview = {
-  id: string; title: string; description: string | null;
-  item_count: number; like_count: number;
-  preview_posters: { show_id: number; show_name: string; show_poster_path: string | null }[];
+  id: string;
+  title: string;
+  description: string | null;
+  item_count: number;
+  like_count: number;
+  preview_posters: {
+    show_id: number;
+    show_name: string;
+    show_poster_path: string | null;
+  }[];
 };
 
-const GENRE_CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "#C4B8E8"];
+const GENRE_CHART_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+  "#C4B8E8",
+];
 
 export function ShowProfilePage() {
   const { showId } = useParams<{ showId: string }>();
   const numericId = showId ? parseInt(showId, 10) : null;
   const { data: showDetail, loading, error } = useShowDetail(numericId);
-  const { toggleWatchlist, toggleLike, getShowData, setRating, userLogs } = useUserData();
+  const { toggleWatchlist, toggleLike, getShowData, setRating, userLogs } =
+    useUserData();
   const { isListSaved, saveList, unsaveList, getRewatchCount } = useSocial();
   const { user } = useAuth();
   const { reviews, refetch: refetchReviews } = useShowReviews(numericId);
   const [logModalOpen, setLogModalOpen] = useState(false);
   const [logModalSeason, setLogModalSeason] = useState<number | null>(null);
-  const [existingLogForEdit, setExistingLogForEdit] = useState<UserLog | null>(null);
+  const [existingLogForEdit, setExistingLogForEdit] = useState<UserLog | null>(
+    null,
+  );
   const [addToListOpen, setAddToListOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"cast" | "crew" | "details">("cast");
-  const [activeCommentReview, setActiveCommentReview] = useState<ReviewWithAuthor | null>(null);
-  const [editorialLists, setEditorialLists] = useState<EditorialListPreview[]>([]);
+  const [activeTab, setActiveTab] = useState<"cast" | "crew" | "details">(
+    "cast",
+  );
+  const [activeCommentReview, setActiveCommentReview] =
+    useState<ReviewWithAuthor | null>(null);
+  const [editorialLists, setEditorialLists] = useState<EditorialListPreview[]>(
+    [],
+  );
   const [trailerOpen, setTrailerOpen] = useState(false);
   const navigate = useNavigate();
 
   // Find existing review log for edit-in-place (scoped by season_number)
-  const openWriteReview = useCallback((seasonNum: number | null = null) => {
-    const existing = userLogs.find(
-      (l) => l.show_id === numericId && l.season_number === seasonNum
-    ) ?? null;
-    setExistingLogForEdit(existing);
-    setLogModalSeason(seasonNum);
-    setLogModalOpen(true);
-  }, [userLogs, numericId]);
+  const openWriteReview = useCallback(
+    (seasonNum: number | null = null) => {
+      const existing =
+        userLogs.find(
+          (l) => l.show_id === numericId && l.season_number === seasonNum,
+        ) ?? null;
+      setExistingLogForEdit(existing);
+      setLogModalSeason(seasonNum);
+      setLogModalOpen(true);
+    },
+    [userLogs, numericId],
+  );
 
   // Fetch editorial lists that contain this show, with first-4-poster previews
   useEffect(() => {
@@ -78,8 +119,13 @@ export function ShowProfilePage() {
           .from("list_items")
           .select("list_id")
           .eq("show_id", numericId);
-        if (!membership || membership.length === 0) { setEditorialLists([]); return; }
-        const listIds = [...new Set(membership.map((i: { list_id: string }) => i.list_id))];
+        if (!membership || membership.length === 0) {
+          setEditorialLists([]);
+          return;
+        }
+        const listIds = [
+          ...new Set(membership.map((i: { list_id: string }) => i.list_id)),
+        ];
 
         // Fetch the editorial lists (up to 2, ordered by like_count desc)
         const { data: lists } = await supabase
@@ -89,12 +135,21 @@ export function ShowProfilePage() {
           .eq("is_editorial", true)
           .order("like_count", { ascending: false })
           .limit(2);
-        if (!lists || lists.length === 0) { setEditorialLists([]); return; }
+        if (!lists || lists.length === 0) {
+          setEditorialLists([]);
+          return;
+        }
 
         // Fetch first 4 items of each list for the poster collage
         const previews: EditorialListPreview[] = [];
         for (const listRow of lists) {
-          const list = listRow as { id: string; title: string; description: string | null; item_count: number; like_count: number };
+          const list = listRow as {
+            id: string;
+            title: string;
+            description: string | null;
+            item_count: number;
+            like_count: number;
+          };
           const { data: previewItems } = await supabase
             .from("list_items")
             .select("show_id, show_name, show_poster_path, position")
@@ -102,15 +157,28 @@ export function ShowProfilePage() {
             .order("position", { ascending: true })
             .limit(4);
           previews.push({
-            id: list.id, title: list.title, description: list.description,
-            item_count: list.item_count, like_count: list.like_count,
-            preview_posters: (previewItems ?? []).map((i: { show_id: number; show_name: string; show_poster_path: string | null }) => ({
-              show_id: i.show_id, show_name: i.show_name, show_poster_path: i.show_poster_path,
-            })),
+            id: list.id,
+            title: list.title,
+            description: list.description,
+            item_count: list.item_count,
+            like_count: list.like_count,
+            preview_posters: (previewItems ?? []).map(
+              (i: {
+                show_id: number;
+                show_name: string;
+                show_poster_path: string | null;
+              }) => ({
+                show_id: i.show_id,
+                show_name: i.show_name,
+                show_poster_path: i.show_poster_path,
+              }),
+            ),
           });
         }
         setEditorialLists(previews);
-      } catch { setEditorialLists([]); }
+      } catch {
+        setEditorialLists([]);
+      }
     })();
   }, [numericId]);
 
@@ -130,15 +198,16 @@ export function ShowProfilePage() {
     if (youtube.length === 0) return null;
     const trailers = youtube.filter((v) => v.type === "Trailer");
     const teasers = youtube.filter((v) => v.type === "Teaser");
-    const pool = trailers.length > 0 ? trailers : teasers.length > 0 ? teasers : youtube;
+    const pool =
+      trailers.length > 0 ? trailers : teasers.length > 0 ? teasers : youtube;
     const official = pool.filter((v) => v.official);
     return (official.length > 0 ? official : pool)[0] ?? null;
   }, [showDetail?.videos]);
 
   const ratedReviews = reviews.filter((r) => r.rating !== null);
   const showLogs = useMemo(
-    () => numericId ? userLogs.filter((l) => l.show_id === numericId) : [],
-    [userLogs, numericId]
+    () => (numericId ? userLogs.filter((l) => l.show_id === numericId) : []),
+    [userLogs, numericId],
   );
 
   if (loading) {
@@ -153,28 +222,44 @@ export function ShowProfilePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 px-4">
         <Tv className="size-12 text-muted-foreground/30" strokeWidth={1} />
-        <p className="text-sm text-muted-foreground">{error ? `Error: ${error}` : "Show not found"}</p>
-        <Link to="/" className="text-xs text-accent hover:underline">Back to home</Link>
+        <p className="text-sm text-muted-foreground">
+          {error ? `Error: ${error}` : "Show not found"}
+        </p>
+        <Link to="/" className="text-xs text-accent hover:underline">
+          Back to home
+        </Link>
       </div>
     );
   }
 
-  const year = showDetail.first_air_date ? showDetail.first_air_date.slice(0, 4) : "TBA";
+  const year = showDetail.first_air_date
+    ? showDetail.first_air_date.slice(0, 4)
+    : "TBA";
   const cast = showDetail.credits?.cast ?? [];
   const crew = showDetail.credits?.crew ?? [];
   const similar = showDetail.similar?.results ?? [];
   const recommendations = showDetail.recommendations?.results ?? [];
-  const watchProviders: { provider_id: number; provider_name: string; logo_path: string | null }[] = [];
+  const watchProviders: {
+    provider_id: number;
+    provider_name: string;
+    logo_path: string | null;
+  }[] = [];
 
   const show: TVShow = {
-    id: showDetail.id, name: showDetail.name, original_name: showDetail.original_name,
-    overview: showDetail.overview, poster_path: showDetail.poster_path,
-    backdrop_path: showDetail.backdrop_path, first_air_date: showDetail.first_air_date,
-    vote_average: showDetail.vote_average, vote_count: showDetail.vote_count,
-    popularity: showDetail.popularity, genre_ids: [], origin_country: showDetail.origin_country,
+    id: showDetail.id,
+    name: showDetail.name,
+    original_name: showDetail.original_name,
+    overview: showDetail.overview,
+    poster_path: showDetail.poster_path,
+    backdrop_path: showDetail.backdrop_path,
+    first_air_date: showDetail.first_air_date,
+    vote_average: showDetail.vote_average,
+    vote_count: showDetail.vote_count,
+    popularity: showDetail.popularity,
+    genre_ids: [],
+    origin_country: showDetail.origin_country,
     original_language: showDetail.original_language,
   };
-
 
   const histogram = [0, 0, 0, 0, 0];
   ratedReviews.forEach((r) => {
@@ -183,22 +268,29 @@ export function ShowProfilePage() {
     }
   });
   const maxHist = Math.max(...histogram, 1);
-  const avgRating = ratedReviews.length > 0
-    ? ratedReviews.reduce((sum, r) => sum + (r.rating ?? 0), 0) / ratedReviews.length
-    : null;
+  const avgRating =
+    ratedReviews.length > 0
+      ? ratedReviews.reduce((sum, r) => sum + (r.rating ?? 0), 0) /
+        ratedReviews.length
+      : null;
 
   const showData = getShowData(show.id);
   const rewatchCount = getRewatchCount(show.id);
-  const communityScore = showDetail.vote_average > 0
-    ? Math.round((showDetail.vote_average / 10) * 100)
-    : null;
+  const communityScore =
+    showDetail.vote_average > 0
+      ? Math.round((showDetail.vote_average / 10) * 100)
+      : null;
 
   return (
     <>
       <SEOMeta
         title={showDetail.name}
         description={showDetail.overview?.slice(0, 160)}
-        ogImage={showDetail.backdrop_path ? `https://image.tmdb.org/t/p/w1280${showDetail.backdrop_path}` : undefined}
+        ogImage={
+          showDetail.backdrop_path
+            ? `https://image.tmdb.org/t/p/w1280${showDetail.backdrop_path}`
+            : undefined
+        }
         ogType="video.show"
       />
       <div className="flex flex-col w-full pb-page-enter">
@@ -207,12 +299,25 @@ export function ShowProfilePage() {
           {/* Backdrop banner with angled bottom clip */}
           <div className="relative w-full h-[35vh] min-h-[240px] max-h-[400px] overflow-hidden">
             {showDetail.backdrop_path ? (
-              <img src={backdropUrl(showDetail.backdrop_path, "w780")} alt={`${showDetail.name} backdrop`} className="absolute inset-0 w-full h-full object-cover" />
+              <img
+                src={backdropUrl(showDetail.backdrop_path, "w780")}
+                alt={`${showDetail.name} backdrop`}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
             ) : (
               <div className="absolute inset-0 bg-secondary/30" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" style={{ paddingBottom: "15%" }} />
-            <div className="absolute bottom-0 left-0 right-0 h-[20%]" style={{ background: "var(--background)", clipPath: "polygon(0 100%, 100% 100%, 100% 30%, 0 100%)" }} />
+            <div
+              className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent"
+              style={{ paddingBottom: "15%" }}
+            />
+            <div
+              className="absolute bottom-0 left-0 right-0 h-[20%]"
+              style={{
+                background: "var(--background)",
+                clipPath: "polygon(0 100%, 100% 100%, 100% 30%, 0 100%)",
+              }}
+            />
             <button
               onClick={() => navigate(-1)}
               className="absolute top-4 left-4 size-9 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors z-10"
@@ -228,72 +333,130 @@ export function ShowProfilePage() {
               <div className="w-24 shrink-0">
                 <div className="aspect-poster rounded-lg overflow-hidden bg-muted border border-border/50 shadow-xl shadow-black/40">
                   {showDetail.poster_path ? (
-                    <img src={bestPosterUrl(showDetail, "w342")} alt={`${showDetail.name} poster`} className="w-full h-full object-cover" />
+                    <img
+                      src={bestPosterUrl(showDetail, "w342")}
+                      alt={`${showDetail.name} poster`}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center"><Tv className="size-8 text-muted-foreground/30" strokeWidth={1} /></div>
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Tv
+                        className="size-8 text-muted-foreground/30"
+                        strokeWidth={1}
+                      />
+                    </div>
                   )}
                 </div>
               </div>
               <div className="flex-1 min-w-0 pt-1">
-                <h1 className="font-display text-lg font-bold text-foreground tracking-tight leading-tight">{showDetail.name}</h1>
+                <h1 className="font-display text-lg font-bold text-foreground tracking-tight leading-tight">
+                  {showDetail.name}
+                </h1>
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-xs text-muted-foreground">
                   <span>{year}</span>
-                  {showDetail.episode_run_time?.[0] > 0 && (<><span className="text-muted-foreground/40">·</span><span>{showDetail.episode_run_time[0]}m</span></>)}
-                  {showDetail.number_of_seasons > 0 && (<><span className="text-muted-foreground/40">·</span><span>{showDetail.number_of_seasons} {showDetail.number_of_seasons === 1 ? "Season" : "Seasons"}</span></>)}
+                  {showDetail.episode_run_time?.[0] > 0 && (
+                    <>
+                      <span className="text-muted-foreground/40">·</span>
+                      <span>{showDetail.episode_run_time[0]}m</span>
+                    </>
+                  )}
+                  {showDetail.number_of_seasons > 0 && (
+                    <>
+                      <span className="text-muted-foreground/40">·</span>
+                      <span>
+                        {showDetail.number_of_seasons}{" "}
+                        {showDetail.number_of_seasons === 1
+                          ? "Season"
+                          : "Seasons"}
+                      </span>
+                    </>
+                  )}
                 </div>
                 {showDetail.created_by && showDetail.created_by.length > 0 && (
                   <p className="mt-1.5 text-xs text-muted-foreground">
                     Created by{" "}
                     {showDetail.created_by.map((c, i) => (
                       <span key={c.id}>
-                        <Link to={`/person/${c.id}`} className="text-foreground/80 hover:text-accent">{c.name}</Link>
+                        <Link
+                          to={`/person/${c.id}`}
+                          className="text-foreground/80 hover:text-accent"
+                        >
+                          {c.name}
+                        </Link>
                         {i < showDetail.created_by!.length - 1 && ", "}
                       </span>
                     ))}
                   </p>
                 )}
-                {showDetail.tagline && <p className="mt-1.5 text-xs italic text-muted-foreground">{showDetail.tagline}</p>}
+                {showDetail.tagline && (
+                  <p className="mt-1.5 text-xs italic text-muted-foreground">
+                    {showDetail.tagline}
+                  </p>
+                )}
               </div>
             </div>
 
             {showDetail.overview && (
-              <p className="mt-3 text-sm text-foreground/80 leading-relaxed">{showDetail.overview}</p>
+              <p className="mt-3 text-sm text-foreground/80 leading-relaxed">
+                {showDetail.overview}
+              </p>
             )}
 
             <div className="flex items-center gap-4 mt-3 py-2">
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Eye className="size-3.5" />{showDetail.vote_count.toLocaleString()}
+                <Eye className="size-3.5" />
+                {showDetail.vote_count.toLocaleString()}
               </span>
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Heart className="size-3.5" />{ratedReviews.filter(r => r.rating && r.rating >= 4).length}
+                <Heart className="size-3.5" />
+                {ratedReviews.filter((r) => r.rating && r.rating >= 4).length}
               </span>
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <ListIcon className="size-3.5" />{reviews.length}
+                <ListIcon className="size-3.5" />
+                {reviews.length}
               </span>
               {rewatchCount > 0 && (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <RotateCcw className="size-3.5" />{rewatchCount} {rewatchCount === 1 ? "rewatch" : "rewatches"}
+                  <RotateCcw className="size-3.5" />
+                  {rewatchCount} {rewatchCount === 1 ? "rewatch" : "rewatches"}
                 </span>
               )}
             </div>
 
             <div className="mt-3 rounded-xl border border-border/50 bg-card p-5">
-              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">Ratings</h3>
+              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">
+                Ratings
+              </h3>
               <div className="flex gap-4">
                 <div className="flex items-end gap-1.5 h-48 flex-1">
                   {histogram.map((count, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      key={i}
+                      className="flex-1 flex flex-col items-center gap-1"
+                    >
                       <div className="w-full flex-1 flex items-end">
-                        <div className="w-full rounded-t bg-primary/80 transition-all duration-500" style={{ height: `${(count / maxHist) * 100}%`, minHeight: count > 0 ? "6px" : "0" }} />
+                        <div
+                          className="w-full rounded-t bg-primary/80 transition-all duration-500"
+                          style={{
+                            height: `${(count / maxHist) * 100}%`,
+                            minHeight: count > 0 ? "6px" : "0",
+                          }}
+                        />
                       </div>
-                      <span className="text-[10px] text-muted-foreground">{i + 1}★</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {i + 1}★
+                      </span>
                     </div>
                   ))}
                 </div>
                 <div className="flex flex-col items-center justify-center gap-1 shrink-0 w-20">
-                  <span className="font-display text-4xl font-bold text-foreground">{avgRating !== null ? avgRating.toFixed(1) : "N/A"}</span>
+                  <span className="font-display text-4xl font-bold text-foreground">
+                    {avgRating !== null ? avgRating.toFixed(1) : "N/A"}
+                  </span>
                   <StarRating value={avgRating} readOnly size="sm" />
-                  <span className="text-[10px] text-muted-foreground">{ratedReviews.length} ratings</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {ratedReviews.length} ratings
+                  </span>
                 </div>
               </div>
             </div>
@@ -317,7 +480,9 @@ export function ShowProfilePage() {
                 />
               </div>
               <div className="border-t border-border/40 pt-3">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Your Rating</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                  Your Rating
+                </p>
                 <StarRating
                   value={showData?.rating ?? null}
                   onChange={(newRating) => setRating(show, newRating)}
@@ -327,10 +492,17 @@ export function ShowProfilePage() {
             </div>
 
             <div className="mt-4 flex gap-2">
-              <button onClick={() => openWriteReview(null)} className="flex-1 flex items-center justify-center gap-2 h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150">
+              <button
+                onClick={() => openWriteReview(null)}
+                className="flex-1 flex items-center justify-center gap-2 h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150"
+              >
                 <Plus className="size-4" /> Rate or Review
               </button>
-              <button onClick={() => setAddToListOpen(true)} className="flex items-center justify-center gap-2 px-4 h-11 rounded-full border border-border text-foreground font-medium text-sm hover:bg-secondary/50 hover:-translate-y-px active:translate-y-0 transition-all duration-150 shrink-0" aria-label="Add to Lists">
+              <button
+                onClick={() => setAddToListOpen(true)}
+                className="flex items-center justify-center gap-2 px-4 h-11 rounded-full border border-border text-foreground font-medium text-sm hover:bg-secondary/50 hover:-translate-y-px active:translate-y-0 transition-all duration-150 shrink-0"
+                aria-label="Add to Lists"
+              >
                 <ListIcon className="size-4" />
               </button>
             </div>
@@ -348,21 +520,38 @@ export function ShowProfilePage() {
             <div className="mt-5">
               <div className="flex gap-1 border-b border-border/40">
                 {(["cast", "crew", "details"] as const).map((tab) => (
-                  <button key={tab} onClick={() => setActiveTab(tab)} className={cn("px-3 py-2 text-sm font-medium capitalize transition-colors relative", activeTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={cn(
+                      "px-3 py-2 text-sm font-medium capitalize transition-colors relative",
+                      activeTab === tab
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
                     {tab}
-                    {activeTab === tab && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
+                    {activeTab === tab && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+                    )}
                   </button>
                 ))}
               </div>
               <div className="pt-3">
                 {activeTab === "cast" && <CastRow cast={cast} />}
                 {activeTab === "crew" && <CrewList crew={crew} />}
-                {activeTab === "details" && <DetailsBlock showDetail={showDetail} />}
+                {activeTab === "details" && (
+                  <DetailsBlock showDetail={showDetail} />
+                )}
               </div>
             </div>
 
             <div className="mt-6 -mx-4">
-              <ReviewFeed showId={numericId!} className="max-w-none px-0" onExpand={setActiveCommentReview} />
+              <ReviewFeed
+                showId={numericId!}
+                className="max-w-none px-0"
+                onExpand={setActiveCommentReview}
+              />
             </div>
           </div>
         </div>
@@ -373,7 +562,11 @@ export function ShowProfilePage() {
           <div className="relative w-full h-[50vh] min-h-[400px] max-h-[600px] overflow-hidden">
             {showDetail.backdrop_path ? (
               <>
-                <img src={backdropUrl(showDetail.backdrop_path, "w1280")} alt="" className="absolute inset-0 w-full h-full object-cover blur-sm scale-105" />
+                <img
+                  src={backdropUrl(showDetail.backdrop_path, "w1280")}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover blur-sm scale-105"
+                />
                 <div className="absolute inset-0 bg-background/60" />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
               </>
@@ -382,7 +575,11 @@ export function ShowProfilePage() {
             )}
 
             {/* Back button */}
-            <button onClick={() => navigate(-1)} className="absolute top-6 left-6 size-10 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors z-10" aria-label="Go back">
+            <button
+              onClick={() => navigate(-1)}
+              className="absolute top-6 left-6 size-10 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors z-10"
+              aria-label="Go back"
+            >
               <ChevronLeft className="size-5" />
             </button>
 
@@ -391,32 +588,65 @@ export function ShowProfilePage() {
               <div className="w-48 shrink-0">
                 <div className="aspect-poster rounded-xl overflow-hidden bg-muted border border-border/50 shadow-2xl shadow-black/50">
                   {showDetail.poster_path ? (
-                    <img src={bestPosterUrl(showDetail, "w500")} alt={`${showDetail.name} poster`} className="w-full h-full object-cover" />
+                    <img
+                      src={bestPosterUrl(showDetail, "w500")}
+                      alt={`${showDetail.name} poster`}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center"><Tv className="size-12 text-muted-foreground/30" strokeWidth={1} /></div>
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Tv
+                        className="size-12 text-muted-foreground/30"
+                        strokeWidth={1}
+                      />
+                    </div>
                   )}
                 </div>
               </div>
               <div className="flex-1 pb-2">
-                <h1 className="font-display text-4xl font-bold text-foreground tracking-tight leading-tight">{showDetail.name}</h1>
+                <h1 className="font-display text-4xl font-bold text-foreground tracking-tight leading-tight">
+                  {showDetail.name}
+                </h1>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-sm text-muted-foreground">
                   <span>{year}</span>
-                  {showDetail.episode_run_time?.[0] > 0 && <span>· {showDetail.episode_run_time[0]}m</span>}
-                  {showDetail.number_of_seasons > 0 && <span>· {showDetail.number_of_seasons} {showDetail.number_of_seasons === 1 ? "Season" : "Seasons"}</span>}
-                  {showDetail.genres.slice(0, 3).map((g) => <span key={g.id} className="text-foreground/60">· {g.name}</span>)}
+                  {showDetail.episode_run_time?.[0] > 0 && (
+                    <span>· {showDetail.episode_run_time[0]}m</span>
+                  )}
+                  {showDetail.number_of_seasons > 0 && (
+                    <span>
+                      · {showDetail.number_of_seasons}{" "}
+                      {showDetail.number_of_seasons === 1
+                        ? "Season"
+                        : "Seasons"}
+                    </span>
+                  )}
+                  {showDetail.genres.slice(0, 3).map((g) => (
+                    <span key={g.id} className="text-foreground/60">
+                      · {g.name}
+                    </span>
+                  ))}
                 </div>
                 {showDetail.created_by && showDetail.created_by.length > 0 && (
                   <p className="mt-2 text-sm text-muted-foreground">
                     Created by{" "}
                     {showDetail.created_by.map((c, i) => (
                       <span key={c.id}>
-                        <Link to={`/person/${c.id}`} className="text-foreground/80 hover:text-accent">{c.name}</Link>
+                        <Link
+                          to={`/person/${c.id}`}
+                          className="text-foreground/80 hover:text-accent"
+                        >
+                          {c.name}
+                        </Link>
                         {i < showDetail.created_by!.length - 1 && ", "}
                       </span>
                     ))}
                   </p>
                 )}
-                {showDetail.tagline && <p className="mt-2 text-base italic text-foreground/70">{showDetail.tagline}</p>}
+                {showDetail.tagline && (
+                  <p className="mt-2 text-base italic text-foreground/70">
+                    {showDetail.tagline}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -424,12 +654,19 @@ export function ShowProfilePage() {
           {/* Two-column body */}
           <div className="max-w-7xl mx-auto px-8 py-8 flex gap-8">
             {/* Left column ~65% */}
-            <div className="flex-1 min-w-0 space-y-8" style={{ flexBasis: "65%" }}>
+            <div
+              className="flex-1 min-w-0 space-y-8"
+              style={{ flexBasis: "65%" }}
+            >
               {/* Synopsis */}
               {showDetail.overview && (
                 <section>
-                  <h2 className="text-lg font-display font-semibold text-foreground mb-3">Synopsis</h2>
-                  <p className="text-sm text-foreground/80 leading-relaxed">{showDetail.overview}</p>
+                  <h2 className="text-lg font-display font-semibold text-foreground mb-3">
+                    Synopsis
+                  </h2>
+                  <p className="text-sm text-foreground/80 leading-relaxed">
+                    {showDetail.overview}
+                  </p>
                 </section>
               )}
 
@@ -437,25 +674,44 @@ export function ShowProfilePage() {
               <section>
                 <div className="flex gap-1 border-b border-border/40 mb-4">
                   {(["cast", "crew", "details"] as const).map((tab) => (
-                    <button key={tab} onClick={() => setActiveTab(tab)} className={cn("px-3 py-2 text-sm font-medium capitalize transition-colors relative", activeTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={cn(
+                        "px-3 py-2 text-sm font-medium capitalize transition-colors relative",
+                        activeTab === tab
+                          ? "text-primary"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
                       {tab}
-                      {activeTab === tab && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
+                      {activeTab === tab && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+                      )}
                     </button>
                   ))}
                 </div>
                 {activeTab === "cast" && <CastGrid cast={cast} />}
                 {activeTab === "crew" && <CrewList crew={crew} />}
-                {activeTab === "details" && <DetailsBlock showDetail={showDetail} />}
+                {activeTab === "details" && (
+                  <DetailsBlock showDetail={showDetail} />
+                )}
               </section>
 
               {/* Reviews */}
               <section>
-                <h2 className="text-lg font-display font-semibold text-foreground mb-4">Reviews</h2>
-                <ReviewFeed showId={numericId!} className="max-w-none px-0" onExpand={setActiveCommentReview} />
+                <h2 className="text-lg font-display font-semibold text-foreground mb-4">
+                  Reviews
+                </h2>
+                <ReviewFeed
+                  showId={numericId!}
+                  className="max-w-none px-0"
+                  onExpand={setActiveCommentReview}
+                />
               </section>
             </div>
 
-            {/* Right column ~35% — sticky sidebar */}
+            {/* Right column ~35% - sticky sidebar */}
             <aside className="w-80 shrink-0">
               <div className="sticky top-20 space-y-4">
                 {/* Toggle row + rating */}
@@ -478,7 +734,9 @@ export function ShowProfilePage() {
                     />
                   </div>
                   <div className="border-t border-border/40 pt-3">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Your Rating</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                      Your Rating
+                    </p>
                     <StarRating
                       value={showData?.rating ?? null}
                       onChange={(newRating) => setRating(show, newRating)}
@@ -486,10 +744,16 @@ export function ShowProfilePage() {
                     />
                   </div>
                   <div className="flex flex-col gap-2 pt-1">
-                    <button onClick={() => openWriteReview(null)} className="flex items-center justify-center gap-2 w-full h-10 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150">
+                    <button
+                      onClick={() => openWriteReview(null)}
+                      className="flex items-center justify-center gap-2 w-full h-10 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:-translate-y-px hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 transition-all duration-150"
+                    >
                       <Plus className="size-4" /> Rate or Review
                     </button>
-                    <button onClick={() => setAddToListOpen(true)} className="flex items-center justify-center gap-2 w-full h-10 rounded-full border border-border text-foreground font-medium text-sm hover:bg-secondary/50 hover:-translate-y-px active:translate-y-0 transition-all duration-150">
+                    <button
+                      onClick={() => setAddToListOpen(true)}
+                      className="flex items-center justify-center gap-2 w-full h-10 rounded-full border border-border text-foreground font-medium text-sm hover:bg-secondary/50 hover:-translate-y-px active:translate-y-0 transition-all duration-150"
+                    >
                       <ListIcon className="size-4" /> Add to Lists
                     </button>
                     {bestTrailer && (
@@ -506,30 +770,49 @@ export function ShowProfilePage() {
 
                 {/* Ratings histogram */}
                 <div className="rounded-xl border border-border/50 bg-card p-5">
-                  <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">Ratings</h3>
+                  <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">
+                    Ratings
+                  </h3>
                   <div className="flex gap-4">
                     <div className="flex items-end gap-1.5 h-48 flex-1">
                       {histogram.map((count, i) => (
-                        <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                        <div
+                          key={i}
+                          className="flex-1 flex flex-col items-center gap-1"
+                        >
                           <div className="w-full flex-1 flex items-end">
-                            <div className="w-full rounded-t bg-primary/80 transition-all duration-500" style={{ height: `${(count / maxHist) * 100}%`, minHeight: count > 0 ? "6px" : "0" }} />
+                            <div
+                              className="w-full rounded-t bg-primary/80 transition-all duration-500"
+                              style={{
+                                height: `${(count / maxHist) * 100}%`,
+                                minHeight: count > 0 ? "6px" : "0",
+                              }}
+                            />
                           </div>
-                          <span className="text-[10px] text-muted-foreground">{i + 1}★</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {i + 1}★
+                          </span>
                         </div>
                       ))}
                     </div>
                     <div className="flex flex-col items-center justify-center gap-1 shrink-0 w-20">
-                      <span className="font-display text-4xl font-bold text-foreground">{avgRating !== null ? avgRating.toFixed(1) : "N/A"}</span>
+                      <span className="font-display text-4xl font-bold text-foreground">
+                        {avgRating !== null ? avgRating.toFixed(1) : "N/A"}
+                      </span>
                       <StarRating value={avgRating} readOnly size="sm" />
-                      <span className="text-[10px] text-muted-foreground">{ratedReviews.length} ratings</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {ratedReviews.length} ratings
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Vibe Chart — genre donut */}
+                {/* Vibe Chart - genre donut */}
                 {genreData.length > 0 && (
                   <div className="rounded-xl border border-border/50 bg-card p-4">
-                    <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">Vibe Chart</h3>
+                    <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">
+                      Vibe Chart
+                    </h3>
                     <VibeChart data={genreData} />
                   </div>
                 )}
@@ -537,9 +820,14 @@ export function ShowProfilePage() {
                 {/* Community score gauge */}
                 {communityScore !== null && (
                   <div className="rounded-xl border border-border/50 bg-card p-4">
-                    <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">Community Score</h3>
+                    <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">
+                      Community Score
+                    </h3>
                     <div className="flex items-center gap-4">
-                      <CommunityScoreGauge score={communityScore} votes={showDetail.vote_count} />
+                      <CommunityScoreGauge
+                        score={communityScore}
+                        votes={showDetail.vote_count}
+                      />
                     </div>
                   </div>
                 )}
@@ -547,16 +835,35 @@ export function ShowProfilePage() {
                 {/* Where to watch */}
                 {watchProviders && watchProviders.length > 0 && (
                   <div className="rounded-xl border border-border/50 bg-card p-4">
-                    <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">Where to Watch</h3>
+                    <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">
+                      Where to Watch
+                    </h3>
                     <div className="flex flex-wrap gap-2">
-                      {watchProviders.slice(0, 6).map((provider: { provider_id: number; provider_name: string; logo_path: string | null }) => (
-                        <div key={provider.provider_id} className="flex items-center gap-2 rounded-lg border border-border/40 bg-secondary/30 px-2.5 py-1.5">
-                          {provider.logo_path && (
-                            <img src={posterUrl(provider.logo_path, "w92")} alt={provider.provider_name} className="size-6 rounded" />
-                          )}
-                          <span className="text-xs text-foreground">{provider.provider_name}</span>
-                        </div>
-                      ))}
+                      {watchProviders
+                        .slice(0, 6)
+                        .map(
+                          (provider: {
+                            provider_id: number;
+                            provider_name: string;
+                            logo_path: string | null;
+                          }) => (
+                            <div
+                              key={provider.provider_id}
+                              className="flex items-center gap-2 rounded-lg border border-border/40 bg-secondary/30 px-2.5 py-1.5"
+                            >
+                              {provider.logo_path && (
+                                <img
+                                  src={posterUrl(provider.logo_path, "w92")}
+                                  alt={provider.provider_name}
+                                  className="size-6 rounded"
+                                />
+                              )}
+                              <span className="text-xs text-foreground">
+                                {provider.provider_name}
+                              </span>
+                            </div>
+                          ),
+                        )}
                     </div>
                   </div>
                 )}
@@ -567,92 +874,135 @@ export function ShowProfilePage() {
           {/* Similar shows */}
           {similar.length > 0 && (
             <div className="py-4">
-              <ShowCarousel title="Similar Shows" shows={similar} posterSize="md" />
+              <ShowCarousel
+                title="Similar Shows"
+                shows={similar}
+                posterSize="md"
+              />
             </div>
           )}
           {recommendations.length > 0 && (
             <div className="py-4">
-              <ShowCarousel title="Recommended" shows={recommendations} posterSize="md" />
+              <ShowCarousel
+                title="Recommended"
+                shows={recommendations}
+                posterSize="md"
+              />
             </div>
           )}
 
-          {/* Featured In — editorial lists containing this show */}
+          {/* Featured In - editorial lists containing this show */}
           {editorialLists.length > 0 && (
             <div className="py-4 pb-12">
-              <h3 className="font-display text-lg font-semibold text-foreground mb-3 px-4 sm:px-0">Featured In</h3>
+              <h3 className="font-display text-lg font-semibold text-foreground mb-3 px-4 sm:px-0">
+                Featured In
+              </h3>
               <div className="flex gap-4 overflow-x-auto pb-2 px-4 sm:px-0 snap-x">
                 {editorialLists.map((list) => {
                   const saved = isListSaved(list.id);
                   return (
-                  <Link
-                    key={list.id}
-                    to={`/lists/${list.id}`}
-                    className="group flex-shrink-0 snap-start w-[280px] sm:w-[320px]"
-                  >
-                    <div className="rounded-xl border border-border bg-card/50 overflow-hidden transition-all hover:border-accent/40 hover:shadow-lg hover:shadow-accent/10">
-                      {/* Poster collage */}
-                      <div className="relative h-24 bg-secondary/30 overflow-hidden">
-                        {list.preview_posters.length > 0 ? (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            {list.preview_posters.slice(0, 4).map((poster, i) => (
-                              <img
-                                key={poster.show_id}
-                                src={posterUrl(poster.show_poster_path, "w92")}
-                                alt=""
-                                className="h-20 w-14 object-cover rounded-md border border-background/60 shadow-md"
-                                style={{
-                                  marginLeft: i === 0 ? 0 : -16,
-                                  zIndex: 4 - i,
-                                  transform: `rotate(${(i % 2 === 0 ? -1 : 1) * 2}deg)`,
-                                }}
-                                loading="lazy"
+                    <Link
+                      key={list.id}
+                      to={`/lists/${list.id}`}
+                      className="group flex-shrink-0 snap-start w-[280px] sm:w-[320px]"
+                    >
+                      <div className="rounded-xl border border-border bg-card/50 overflow-hidden transition-all hover:border-accent/40 hover:shadow-lg hover:shadow-accent/10">
+                        {/* Poster collage */}
+                        <div className="relative h-24 bg-secondary/30 overflow-hidden">
+                          {list.preview_posters.length > 0 ? (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              {list.preview_posters
+                                .slice(0, 4)
+                                .map((poster, i) => (
+                                  <img
+                                    key={poster.show_id}
+                                    src={posterUrl(
+                                      poster.show_poster_path,
+                                      "w92",
+                                    )}
+                                    alt=""
+                                    className="h-20 w-14 object-cover rounded-md border border-background/60 shadow-md"
+                                    style={{
+                                      marginLeft: i === 0 ? 0 : -16,
+                                      zIndex: 4 - i,
+                                      transform: `rotate(${(i % 2 === 0 ? -1 : 1) * 2}deg)`,
+                                    }}
+                                    loading="lazy"
+                                  />
+                                ))}
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center h-full text-muted-foreground">
+                              <ListIcon className="size-6" />
+                            </div>
+                          )}
+                        </div>
+                        {/* List info */}
+                        <div className="p-3 space-y-1.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-medium text-sm text-foreground line-clamp-1 group-hover:text-accent transition-colors">
+                              {list.title}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (!user) return;
+                                const showList: ShowList = {
+                                  id: list.id,
+                                  user_id: "",
+                                  title: list.title,
+                                  description: list.description,
+                                  is_public: true,
+                                  is_editorial: true,
+                                  like_count: list.like_count,
+                                  item_count: list.item_count,
+                                  created_at: "",
+                                  updated_at: "",
+                                };
+                                if (saved) unsaveList(list.id);
+                                else saveList(showList);
+                              }}
+                              className={cn(
+                                "flex items-center justify-center size-7 rounded-md transition-colors shrink-0",
+                                saved
+                                  ? "text-primary bg-primary/10"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50",
+                              )}
+                              aria-label={saved ? "Unsave list" : "Save list"}
+                            >
+                              <BookmarkCheck
+                                className={cn(
+                                  "size-4",
+                                  saved && "fill-primary",
+                                )}
                               />
-                            ))}
+                            </button>
                           </div>
-                        ) : (
-                          <div className="flex items-center justify-center h-full text-muted-foreground">
-                            <ListIcon className="size-6" />
+                          <p className="text-xs text-muted-foreground line-clamp-1">
+                            {list.description}
+                          </p>
+                          <div className="flex items-center gap-2 pt-1">
+                            <span className="text-xs text-muted-foreground">
+                              {list.item_count} shows
+                            </span>
+                            <span className="text-xs text-muted-foreground/60">
+                              ·
+                            </span>
+                            <span className="text-xs font-medium text-accent/80">
+                              Curated by Aftershow
+                            </span>
                           </div>
-                        )}
-                      </div>
-                      {/* List info */}
-                      <div className="p-3 space-y-1.5">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="font-medium text-sm text-foreground line-clamp-1 group-hover:text-accent transition-colors">{list.title}</p>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              if (!user) return;
-                              const showList: ShowList = { id: list.id, user_id: "", title: list.title, description: list.description, is_public: true, is_editorial: true, like_count: list.like_count, item_count: list.item_count, created_at: "", updated_at: "" };
-                              if (saved) unsaveList(list.id); else saveList(showList);
-                            }}
-                            className={cn(
-                              "flex items-center justify-center size-7 rounded-md transition-colors shrink-0",
-                              saved ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                            )}
-                            aria-label={saved ? "Unsave list" : "Save list"}
-                          >
-                            <BookmarkCheck className={cn("size-4", saved && "fill-primary")} />
-                          </button>
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-1">{list.description}</p>
-                        <div className="flex items-center gap-2 pt-1">
-                          <span className="text-xs text-muted-foreground">{list.item_count} shows</span>
-                          <span className="text-xs text-muted-foreground/60">·</span>
-                          <span className="text-xs font-medium text-accent/80">Curated by Aftershow</span>
                         </div>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
                   );
                 })}
               </div>
             </div>
           )}
         </div>
-
       </div>
 
       <LogEntryModal
@@ -666,16 +1016,22 @@ export function ShowProfilePage() {
         showLogs={showLogs}
         onSuccess={refetchReviews}
       />
-      <AddToListModal open={addToListOpen} onOpenChange={setAddToListOpen} show={show} />
+      <AddToListModal
+        open={addToListOpen}
+        onOpenChange={setAddToListOpen}
+        show={show}
+      />
 
       {bestTrailer && (
         <Dialog open={trailerOpen} onOpenChange={setTrailerOpen}>
           <DialogContent className="max-w-4xl p-0 overflow-hidden gap-0">
             <DialogHeader className="sr-only">
               <DialogTitle>{bestTrailer.name}</DialogTitle>
-              <DialogDescription>Watch the trailer for {showDetail.name}</DialogDescription>
+              <DialogDescription>
+                Watch the trailer for {showDetail.name}
+              </DialogDescription>
             </DialogHeader>
-            <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+            <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
               <iframe
                 src={`https://www.youtube-nocookie.com/embed/${bestTrailer.key}?autoplay=1&rel=0`}
                 title={bestTrailer.name}
@@ -688,7 +1044,10 @@ export function ShowProfilePage() {
         </Dialog>
       )}
 
-      <Dialog open={activeCommentReview !== null} onOpenChange={(open) => !open && setActiveCommentReview(null)}>
+      <Dialog
+        open={activeCommentReview !== null}
+        onOpenChange={(open) => !open && setActiveCommentReview(null)}
+      >
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Comments</DialogTitle>
@@ -701,10 +1060,13 @@ export function ShowProfilePage() {
               <div className="rounded-lg border border-border/40 bg-card/50 p-3">
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="text-sm font-medium text-foreground">
-                    {activeCommentReview.author_display_name || activeCommentReview.author_username}
+                    {activeCommentReview.author_display_name ||
+                      activeCommentReview.author_username}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {activeCommentReview.rating != null ? `${activeCommentReview.rating}★` : ""}
+                    {activeCommentReview.rating != null
+                      ? `${activeCommentReview.rating}★`
+                      : ""}
                   </span>
                 </div>
                 <p className="text-sm text-foreground/80 leading-6 line-clamp-3">
@@ -720,13 +1082,23 @@ export function ShowProfilePage() {
   );
 }
 
-function ToggleIcon({ icon: Icon, label, active, onClick }: { icon: React.ComponentType<{ className?: string }>; label: string; active: boolean; onClick: () => void }) {
+function ToggleIcon({
+  icon: Icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       onClick={onClick}
       className={cn(
         "flex flex-col items-center gap-1.5 p-2 rounded-lg transition-all duration-150 hover:-translate-y-px",
-        active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+        active ? "text-primary" : "text-muted-foreground hover:text-foreground",
       )}
     >
       <Icon className={cn("size-6", active && "fill-primary")} />
@@ -735,7 +1107,11 @@ function ToggleIcon({ icon: Icon, label, active, onClick }: { icon: React.Compon
   );
 }
 
-function VibeChart({ data }: { data: { name: string; value: number; color: string }[] }) {
+function VibeChart({
+  data,
+}: {
+  data: { name: string; value: number; color: string }[];
+}) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
@@ -744,7 +1120,14 @@ function VibeChart({ data }: { data: { name: string; value: number; color: strin
   return (
     <div className="flex items-center gap-4">
       <svg width="120" height="120" viewBox="0 0 120 120" className="shrink-0">
-        <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--muted)" strokeWidth="14" />
+        <circle
+          cx="60"
+          cy="60"
+          r={radius}
+          fill="none"
+          stroke="var(--muted)"
+          strokeWidth="14"
+        />
         {data.map((d, i) => {
           const dash = (d.value / total) * circumference;
           const circle = (
@@ -768,7 +1151,10 @@ function VibeChart({ data }: { data: { name: string; value: number; color: strin
       <div className="flex-1 space-y-1.5">
         {data.map((d, i) => (
           <div key={i} className="flex items-center gap-2">
-            <span className="size-2.5 rounded-full shrink-0" style={{ background: d.color }} />
+            <span
+              className="size-2.5 rounded-full shrink-0"
+              style={{ background: d.color }}
+            />
             <span className="text-xs text-foreground truncate">{d.name}</span>
           </div>
         ))}
@@ -777,19 +1163,39 @@ function VibeChart({ data }: { data: { name: string; value: number; color: strin
   );
 }
 
-function CommunityScoreGauge({ score, votes }: { score: number; votes: number }) {
+function CommunityScoreGauge({
+  score,
+  votes,
+}: {
+  score: number;
+  votes: number;
+}) {
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
   const dash = (score / 100) * circumference;
-  const color = score >= 70 ? "var(--chart-3)" : score >= 40 ? "var(--chart-4)" : "var(--destructive)";
+  const color =
+    score >= 70
+      ? "var(--chart-3)"
+      : score >= 40
+        ? "var(--chart-4)"
+        : "var(--destructive)";
 
   return (
     <div className="flex items-center gap-4 w-full">
       <div className="relative shrink-0">
         <svg width="100" height="100" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r={radius} fill="none" stroke="var(--muted)" strokeWidth="8" />
           <circle
-            cx="50" cy="50" r={radius}
+            cx="50"
+            cy="50"
+            r={radius}
+            fill="none"
+            stroke="var(--muted)"
+            strokeWidth="8"
+          />
+          <circle
+            cx="50"
+            cy="50"
+            r={radius}
             fill="none"
             stroke={color}
             strokeWidth="8"
@@ -800,11 +1206,15 @@ function CommunityScoreGauge({ score, votes }: { score: number; votes: number })
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-display text-xl font-bold text-foreground">{score}%</span>
+          <span className="font-display text-xl font-bold text-foreground">
+            {score}%
+          </span>
         </div>
       </div>
       <div className="flex flex-col">
-        <span className="text-sm font-medium text-foreground">{votes.toLocaleString()} votes</span>
+        <span className="text-sm font-medium text-foreground">
+          {votes.toLocaleString()} votes
+        </span>
         <span className="text-xs text-muted-foreground">TMDB Community</span>
       </div>
     </div>
@@ -814,30 +1224,62 @@ function CommunityScoreGauge({ score, votes }: { score: number; votes: number })
 function CastRow({ cast }: { cast: CastMember[] }) {
   const [imgErrors, setImgErrors] = useState<Record<number, boolean>>({});
   const [expanded, setExpanded] = useState(false);
-  if (!cast || cast.length === 0) return <p className="text-sm text-muted-foreground py-4">No cast data available.</p>;
+  if (!cast || cast.length === 0)
+    return (
+      <p className="text-sm text-muted-foreground py-4">
+        No cast data available.
+      </p>
+    );
   const visibleCast = expanded ? cast : cast.slice(0, 20);
   return (
     <div className="space-y-2">
-      <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+      <div
+        className="flex gap-3 overflow-x-auto pb-2"
+        style={{ scrollbarWidth: "none" }}
+      >
         <style>{`div::-webkit-scrollbar{display:none}`}</style>
         {visibleCast.map((member) => {
           const errored = imgErrors[member.id];
           return (
-            <Link key={member.id} to={`/person/${member.id}`} className="flex flex-col items-center gap-1.5 shrink-0 w-16">
+            <Link
+              key={member.id}
+              to={`/person/${member.id}`}
+              className="flex flex-col items-center gap-1.5 shrink-0 w-16"
+            >
               <div className="size-16 rounded-full overflow-hidden bg-muted ring-1 ring-border/30">
                 {errored || !member.profile_path ? (
-                  <div className="w-full h-full flex items-center justify-center bg-secondary/30"><Tv className="size-6 text-muted-foreground/30" strokeWidth={1} /></div>
+                  <div className="w-full h-full flex items-center justify-center bg-secondary/30">
+                    <Tv
+                      className="size-6 text-muted-foreground/30"
+                      strokeWidth={1}
+                    />
+                  </div>
                 ) : (
-                  <img src={profileUrl(member.profile_path, "w185")} alt={member.name} loading="lazy" onError={() => setImgErrors((p) => ({ ...p, [member.id]: true }))} className="w-full h-full object-cover" />
+                  <img
+                    src={profileUrl(member.profile_path, "w185")}
+                    alt={member.name}
+                    loading="lazy"
+                    onError={() =>
+                      setImgErrors((p) => ({ ...p, [member.id]: true }))
+                    }
+                    className="w-full h-full object-cover"
+                  />
                 )}
               </div>
-              <p className="text-xs font-medium text-foreground truncate text-center w-full">{member.name}</p>
-              <p className="text-[10px] text-muted-foreground truncate text-center w-full">{member.character}</p>
+              <p className="text-xs font-medium text-foreground truncate text-center w-full">
+                {member.name}
+              </p>
+              <p className="text-[10px] text-muted-foreground truncate text-center w-full">
+                {member.character}
+              </p>
             </Link>
           );
         })}
         {!expanded && cast.length > 20 && (
-          <button onClick={() => setExpanded(true)} className="flex flex-col items-center justify-center gap-1.5 shrink-0 w-16">
+          <button
+            onClick={() => setExpanded(true)}
+            className="flex flex-col items-center justify-center gap-1.5 shrink-0 w-16"
+          >
             <div className="size-16 rounded-full bg-secondary flex items-center justify-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
               +{cast.length - 20}
             </div>
@@ -846,7 +1288,12 @@ function CastRow({ cast }: { cast: CastMember[] }) {
         )}
       </div>
       {expanded && cast.length > 20 && (
-        <button onClick={() => setExpanded(false)} className="text-xs text-accent hover:underline">Show Less</button>
+        <button
+          onClick={() => setExpanded(false)}
+          className="text-xs text-accent hover:underline"
+        >
+          Show Less
+        </button>
       )}
     </div>
   );
@@ -855,7 +1302,10 @@ function CastRow({ cast }: { cast: CastMember[] }) {
 function CastGrid({ cast }: { cast: CastMember[] }) {
   const [imgErrors, setImgErrors] = useState<Record<number, boolean>>({});
   const [expanded, setExpanded] = useState(false);
-  if (!cast || cast.length === 0) return <p className="text-sm text-muted-foreground">No cast data available.</p>;
+  if (!cast || cast.length === 0)
+    return (
+      <p className="text-sm text-muted-foreground">No cast data available.</p>
+    );
   const visibleCast = expanded ? cast : cast.slice(0, 18);
   return (
     <div className="space-y-4">
@@ -863,24 +1313,48 @@ function CastGrid({ cast }: { cast: CastMember[] }) {
         {visibleCast.map((member) => {
           const errored = imgErrors[member.id];
           return (
-            <Link key={member.id} to={`/person/${member.id}`} className="flex flex-col items-center gap-2 group">
+            <Link
+              key={member.id}
+              to={`/person/${member.id}`}
+              className="flex flex-col items-center gap-2 group"
+            >
               <div className="size-20 lg:size-24 rounded-full overflow-hidden bg-muted ring-1 ring-border/30 group-hover:ring-primary/50 transition-all pb-poster-glow">
                 {errored || !member.profile_path ? (
-                  <div className="w-full h-full flex items-center justify-center bg-secondary/30"><Tv className="size-8 text-muted-foreground/30" strokeWidth={1} /></div>
+                  <div className="w-full h-full flex items-center justify-center bg-secondary/30">
+                    <Tv
+                      className="size-8 text-muted-foreground/30"
+                      strokeWidth={1}
+                    />
+                  </div>
                 ) : (
-                  <img src={profileUrl(member.profile_path, "w185")} alt={member.name} loading="lazy" onError={() => setImgErrors((p) => ({ ...p, [member.id]: true }))} className="w-full h-full object-cover" />
+                  <img
+                    src={profileUrl(member.profile_path, "w185")}
+                    alt={member.name}
+                    loading="lazy"
+                    onError={() =>
+                      setImgErrors((p) => ({ ...p, [member.id]: true }))
+                    }
+                    className="w-full h-full object-cover"
+                  />
                 )}
               </div>
               <div className="text-center">
-                <p className="text-xs font-medium text-foreground truncate w-full">{member.name}</p>
-                <p className="text-[10px] text-muted-foreground truncate w-full">{member.character}</p>
+                <p className="text-xs font-medium text-foreground truncate w-full">
+                  {member.name}
+                </p>
+                <p className="text-[10px] text-muted-foreground truncate w-full">
+                  {member.character}
+                </p>
               </div>
             </Link>
           );
         })}
       </div>
       {cast.length > 18 && (
-        <button onClick={() => setExpanded(!expanded)} className="text-sm text-accent hover:underline">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-sm text-accent hover:underline"
+        >
           {expanded ? "Show Less" : `Show ${cast.length - 18} More`}
         </button>
       )}
@@ -889,14 +1363,40 @@ function CastGrid({ cast }: { cast: CastMember[] }) {
 }
 
 function CrewList({ crew }: { crew: CrewMember[] }) {
-  if (!crew || crew.length === 0) return <p className="text-sm text-muted-foreground">No crew data available.</p>;
-  const topCrew = crew.filter((c) => ["Creator", "Director", "Producer", "Executive Producer", "Writer"].includes(c.job)).slice(0, 15);
-  if (topCrew.length === 0) return <p className="text-sm text-muted-foreground">No key crew data available.</p>;
+  if (!crew || crew.length === 0)
+    return (
+      <p className="text-sm text-muted-foreground">No crew data available.</p>
+    );
+  const topCrew = crew
+    .filter((c) =>
+      [
+        "Creator",
+        "Director",
+        "Producer",
+        "Executive Producer",
+        "Writer",
+      ].includes(c.job),
+    )
+    .slice(0, 15);
+  if (topCrew.length === 0)
+    return (
+      <p className="text-sm text-muted-foreground">
+        No key crew data available.
+      </p>
+    );
   return (
     <div className="grid grid-cols-2 gap-x-6 gap-y-2">
       {topCrew.map((member, i) => (
-        <div key={`${member.id}-${i}`} className="flex items-center justify-between py-1">
-          <Link to={`/person/${member.id}`} className="text-sm text-foreground hover:text-accent transition-colors">{member.name}</Link>
+        <div
+          key={`${member.id}-${i}`}
+          className="flex items-center justify-between py-1"
+        >
+          <Link
+            to={`/person/${member.id}`}
+            className="text-sm text-foreground hover:text-accent transition-colors"
+          >
+            {member.name}
+          </Link>
           <span className="text-xs text-muted-foreground">{member.job}</span>
         </div>
       ))}
@@ -910,16 +1410,38 @@ function DetailsBlock({ showDetail }: { showDetail: TVShowDetail }) {
       {showDetail.genres.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {showDetail.genres.map((g) => (
-            <span key={g.id} className="px-2 py-0.5 rounded-full bg-secondary text-xs text-foreground">{g.name}</span>
+            <span
+              key={g.id}
+              className="px-2 py-0.5 rounded-full bg-secondary text-xs text-foreground"
+            >
+              {g.name}
+            </span>
           ))}
         </div>
       )}
       <div className="grid grid-cols-2 gap-y-1.5 text-xs">
-        <span className="text-muted-foreground">Status</span><span className="text-foreground text-right">{showDetail.status}</span>
-        <span className="text-muted-foreground">Seasons</span><span className="text-foreground text-right">{showDetail.number_of_seasons}</span>
-        <span className="text-muted-foreground">Episodes</span><span className="text-foreground text-right">{showDetail.number_of_episodes}</span>
-        <span className="text-muted-foreground">Language</span><span className="text-foreground text-right">{showDetail.original_language.toUpperCase()}</span>
-        {showDetail.networks?.[0] && (<><span className="text-muted-foreground">Network</span><span className="text-foreground text-right">{showDetail.networks[0].name}</span></>)}
+        <span className="text-muted-foreground">Status</span>
+        <span className="text-foreground text-right">{showDetail.status}</span>
+        <span className="text-muted-foreground">Seasons</span>
+        <span className="text-foreground text-right">
+          {showDetail.number_of_seasons}
+        </span>
+        <span className="text-muted-foreground">Episodes</span>
+        <span className="text-foreground text-right">
+          {showDetail.number_of_episodes}
+        </span>
+        <span className="text-muted-foreground">Language</span>
+        <span className="text-foreground text-right">
+          {showDetail.original_language.toUpperCase()}
+        </span>
+        {showDetail.networks?.[0] && (
+          <>
+            <span className="text-muted-foreground">Network</span>
+            <span className="text-foreground text-right">
+              {showDetail.networks[0].name}
+            </span>
+          </>
+        )}
       </div>
     </div>
   );

@@ -9,11 +9,11 @@ Stores messages submitted via the public contact form. No auth required to inser
 
 ### `contact_messages`
 - `id` (uuid PK)
-- `name` (text — sender's name)
-- `email` (text — sender's email, for replies)
-- `message` (text — the message body)
+- `name` (text - sender's name)
+- `email` (text - sender's email, for replies)
+- `message` (text - the message body)
 - `created_at` (timestamptz)
-- `handled` (boolean, default false — for admin triage)
+- `handled` (boolean, default false - for admin triage)
 
 ## Security
 - RLS enabled.
@@ -21,7 +21,7 @@ Stores messages submitted via the public contact form. No auth required to inser
 - SELECT/UPDATE/DELETE: authenticated only (for admin triage).
 
 ## Important Notes
-1. No email delivery is configured — messages are stored in the database only.
+1. No email delivery is configured - messages are stored in the database only.
 2. The `handled` column lets an admin mark messages as addressed.
 */
 

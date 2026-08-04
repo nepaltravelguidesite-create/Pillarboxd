@@ -9,10 +9,10 @@ interface AftershowLogoProps {
 }
 
 /**
- * Aftershow logo — "The Projector Beam"
+ * Aftershow logo - "The Projector Beam"
  *
  * A film projector's beam still cutting through a dark room after the reel
- * has ended — dust drifting in the light — right before the house lights
+ * has ended - dust drifting in the light - right before the house lights
  * come up. Single-color SVG, inherits currentColor, scales from 16px to favicon.
  */
 export function AftershowLogo({

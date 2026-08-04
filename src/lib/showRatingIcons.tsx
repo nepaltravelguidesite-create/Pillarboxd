@@ -8,14 +8,14 @@ export type RatingIconProps = {
 
 export type RatingIcon = ComponentType<RatingIconProps>;
 
-// Lucide-react Star icon path (24×24 viewBox) — pixel-identical to the default
+// Lucide-react Star icon path (24×24 viewBox) - pixel-identical to the default
 // StarRating icon so custom-color stars match the silhouette of regular stars.
 const STAR_PATH =
   "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z";
 
 /**
  * Factory: creates a star icon component filled with a custom gradient.
- * The star silhouette is always the lucide Star path — only the fill color
+ * The star silhouette is always the lucide Star path - only the fill color
  * changes per show.  Unfilled stars render as a low-opacity neutral outline,
  * matching the default StarRating's empty state.
  */
@@ -23,10 +23,19 @@ function createGradientStarIcon(
   gradientId: string,
   gradient: React.ReactNode,
 ): RatingIcon {
-  return function GradientStarIcon({ filled, className, style }: RatingIconProps) {
+  return function GradientStarIcon({
+    filled,
+    className,
+    style,
+  }: RatingIconProps) {
     if (!filled) {
       return (
-        <svg viewBox="0 0 24 24" className={className} style={style} fill="none">
+        <svg
+          viewBox="0 0 24 24"
+          className={className}
+          style={style}
+          fill="none"
+        >
           <path
             d={STAR_PATH}
             fill="none"
@@ -48,7 +57,7 @@ function createGradientStarIcon(
 }
 
 // ---------------------------------------------------------------------------
-// Game of Thrones — fire/ember gradient (dark #6b1e0c → bright #f2872e)
+// Game of Thrones - fire/ember gradient (dark #6b1e0c → bright #f2872e)
 // ---------------------------------------------------------------------------
 
 const GotStarIcon = createGradientStarIcon(
@@ -60,7 +69,7 @@ const GotStarIcon = createGradientStarIcon(
 );
 
 // ---------------------------------------------------------------------------
-// House of the Dragon — ice gradient (dark #1c3a52 → bright #cfe8f5)
+// House of the Dragon - ice gradient (dark #1c3a52 → bright #cfe8f5)
 // Paired as fire/ice opposite of Game of Thrones.
 // ---------------------------------------------------------------------------
 
@@ -73,7 +82,7 @@ const HotdStarIcon = createGradientStarIcon(
 );
 
 // ---------------------------------------------------------------------------
-// A Knight of the Seven Kingdoms — steel gradient (dark #3f434c → light #cdd2d9)
+// A Knight of the Seven Kingdoms - steel gradient (dark #3f434c → light #cdd2d9)
 // ---------------------------------------------------------------------------
 
 const KnightStarIcon = createGradientStarIcon(
@@ -85,7 +94,7 @@ const KnightStarIcon = createGradientStarIcon(
 );
 
 // ---------------------------------------------------------------------------
-// Loki — gold gradient (dark #6b5314 → bright #f0c24e)
+// Loki - gold gradient (dark #6b5314 → bright #f0c24e)
 // ---------------------------------------------------------------------------
 
 const LokiStarIcon = createGradientStarIcon(
@@ -97,7 +106,7 @@ const LokiStarIcon = createGradientStarIcon(
 );
 
 // ---------------------------------------------------------------------------
-// Twin Peaks — warm brown gradient (dark #3f2814 → tawny #c99a63)
+// Twin Peaks - warm brown gradient (dark #3f2814 → tawny #c99a63)
 // ---------------------------------------------------------------------------
 
 const TwinPeaksStarIcon = createGradientStarIcon(
@@ -109,7 +118,7 @@ const TwinPeaksStarIcon = createGradientStarIcon(
 );
 
 // ---------------------------------------------------------------------------
-// Lost — brass gradient (dark #5c4620 → bright #e8b84b)
+// Lost - brass gradient (dark #5c4620 → bright #e8b84b)
 // ---------------------------------------------------------------------------
 
 const LostStarIcon = createGradientStarIcon(
@@ -121,7 +130,7 @@ const LostStarIcon = createGradientStarIcon(
 );
 
 // ---------------------------------------------------------------------------
-// You — cold blue gradient (dark navy #14283c → icy cyan #6fc7e0)
+// You - cold blue gradient (dark navy #14283c → icy cyan #6fc7e0)
 // ---------------------------------------------------------------------------
 
 const YouStarIcon = createGradientStarIcon(
@@ -133,7 +142,7 @@ const YouStarIcon = createGradientStarIcon(
 );
 
 // ---------------------------------------------------------------------------
-// Dexter — red gradient (dark #5c0b10 → bright #d43a44)
+// Dexter - red gradient (dark #5c0b10 → bright #d43a44)
 // ---------------------------------------------------------------------------
 
 const DexterStarIcon = createGradientStarIcon(
@@ -145,7 +154,7 @@ const DexterStarIcon = createGradientStarIcon(
 );
 
 // ---------------------------------------------------------------------------
-// Breaking Bad — toxic teal gradient (dark #0a3a34 → bright #5eead4)
+// Breaking Bad - toxic teal gradient (dark #0a3a34 → bright #5eead4)
 // ---------------------------------------------------------------------------
 
 const BreakingBadStarIcon = createGradientStarIcon(
@@ -157,7 +166,7 @@ const BreakingBadStarIcon = createGradientStarIcon(
 );
 
 // ---------------------------------------------------------------------------
-// Daredevil — crimson gradient (dark #4a0a10 → bright #c8202b)
+// Daredevil - crimson gradient (dark #4a0a10 → bright #c8202b)
 // ---------------------------------------------------------------------------
 
 const DaredevilStarIcon = createGradientStarIcon(
@@ -169,7 +178,7 @@ const DaredevilStarIcon = createGradientStarIcon(
 );
 
 // ---------------------------------------------------------------------------
-// Stranger Things — festive multi-color gradient (red → teal → gold → pink)
+// Stranger Things - festive multi-color gradient (red → teal → gold → pink)
 // sweeping horizontally across the star shape.
 // ---------------------------------------------------------------------------
 
@@ -184,21 +193,21 @@ const StrangerThingsStarIcon = createGradientStarIcon(
 );
 
 // ---------------------------------------------------------------------------
-// Registry — keyed by TMDB show ID
+// Registry - keyed by TMDB show ID
 // ---------------------------------------------------------------------------
 
 export const showRatingIcons: Record<number, RatingIcon> = {
-  1399: GotStarIcon, // Game of Thrones (2011) — fire/ember star
-  94997: HotdStarIcon, // House of the Dragon (2022) — ice star
-  224372: KnightStarIcon, // A Knight of the Seven Kingdoms (2026) — steel star
-  84958: LokiStarIcon, // Loki (2021) — gold star
-  1920: TwinPeaksStarIcon, // Twin Peaks (1990) — warm brown star
-  4607: LostStarIcon, // Lost (2004) — brass star
-  78191: YouStarIcon, // You (2018) — cold blue star
-  1405: DexterStarIcon, // Dexter (2006) — red star
-  1396: BreakingBadStarIcon, // Breaking Bad (2008) — toxic teal star
-  61889: DaredevilStarIcon, // Marvel's Daredevil (2015) — crimson star
-  66732: StrangerThingsStarIcon, // Stranger Things (2016) — festive gradient star
+  1399: GotStarIcon, // Game of Thrones (2011) - fire/ember star
+  94997: HotdStarIcon, // House of the Dragon (2022) - ice star
+  224372: KnightStarIcon, // A Knight of the Seven Kingdoms (2026) - steel star
+  84958: LokiStarIcon, // Loki (2021) - gold star
+  1920: TwinPeaksStarIcon, // Twin Peaks (1990) - warm brown star
+  4607: LostStarIcon, // Lost (2004) - brass star
+  78191: YouStarIcon, // You (2018) - cold blue star
+  1405: DexterStarIcon, // Dexter (2006) - red star
+  1396: BreakingBadStarIcon, // Breaking Bad (2008) - toxic teal star
+  61889: DaredevilStarIcon, // Marvel's Daredevil (2015) - crimson star
+  66732: StrangerThingsStarIcon, // Stranger Things (2016) - festive gradient star
 };
 
 export function getShowRatingIcon(showId: number): RatingIcon | undefined {

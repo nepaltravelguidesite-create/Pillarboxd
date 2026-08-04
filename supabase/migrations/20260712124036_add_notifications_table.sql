@@ -9,12 +9,12 @@ new follows, comments on their reviews, likes on their reviews or lists.
 
 ### `notifications`
 - `id` (uuid PK)
-- `user_id` (uuid, DEFAULT auth.uid() — the RECIPIENT, not the actor)
-- `actor_id` (uuid — who performed the action, nullable for system-generated)
+- `user_id` (uuid, DEFAULT auth.uid() - the RECIPIENT, not the actor)
+- `actor_id` (uuid - who performed the action, nullable for system-generated)
 - `type` (text: 'follow' | 'comment' | 'review_like' | 'list_like')
-- `entity_id` (uuid — the id of the liked/commented entity, nullable for follows)
-- `entity_type` (text: 'log' | 'list' | 'profile' — what was acted upon)
-- `message` (text — pre-rendered human-readable text, e.g. "jane_doe liked your review of Severance")
+- `entity_id` (uuid - the id of the liked/commented entity, nullable for follows)
+- `entity_type` (text: 'log' | 'list' | 'profile' - what was acted upon)
+- `message` (text - pre-rendered human-readable text, e.g. "jane_doe liked your review of Severance")
 - `read` (boolean, default false)
 - `created_at` (timestamptz)
 

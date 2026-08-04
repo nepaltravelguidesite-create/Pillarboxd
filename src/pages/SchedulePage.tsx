@@ -36,7 +36,7 @@ interface ScheduleEntry {
 type Tab = "released" | "upcoming";
 
 // ---------------------------------------------------------------------------
-// Module-level cache — keyed by show ID, expires after 10 minutes
+// Module-level cache - keyed by show ID, expires after 10 minutes
 // ---------------------------------------------------------------------------
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -73,7 +73,7 @@ async function fetchPoolIds(): Promise<number[]> {
     new Set([
       ...(onAir.results ?? []).map((s) => s.id),
       ...(popular.results ?? []).map((s) => s.id),
-    ])
+    ]),
   );
   poolCache = { ids, ts: Date.now() };
   return ids;
@@ -119,7 +119,7 @@ function episodeLabel(entry: ScheduleEntry): string {
     return "New Show";
   }
   if (episode.episode_number === 1) {
-    // Premiering a new season — "New Season" if it's the latest
+    // Premiering a new season - "New Season" if it's the latest
     if (episode.season_number === numberOfSeasons) {
       return "New Season";
     }
@@ -134,7 +134,7 @@ function episodeLabel(entry: ScheduleEntry): string {
 
 function groupByDate(
   entries: ScheduleEntry[],
-  tab: Tab
+  tab: Tab,
 ): { date: string; entries: ScheduleEntry[] }[] {
   const map = new Map<string, ScheduleEntry[]>();
   for (const entry of entries) {
@@ -179,7 +179,7 @@ function ScheduleCard({ entry }: { entry: ScheduleEntry }) {
           <img
             src={bestPosterUrl(
               { id: entry.showId, poster_path: entry.posterPath },
-              "w342"
+              "w342",
             )}
             alt={entry.showName}
             loading="lazy"
@@ -188,7 +188,7 @@ function ScheduleCard({ entry }: { entry: ScheduleEntry }) {
             className={cn(
               "absolute inset-0 w-full h-full object-cover",
               "transition-all duration-500 group-hover:scale-[1.04]",
-              imgLoaded ? "opacity-100" : "opacity-0"
+              imgLoaded ? "opacity-100" : "opacity-0",
             )}
           />
         )}
@@ -209,7 +209,8 @@ function ScheduleCard({ entry }: { entry: ScheduleEntry }) {
         </p>
         <p className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
           {isHighlight
-            ? entry.episode.name || `S${entry.episode.season_number}E${entry.episode.episode_number}`
+            ? entry.episode.name ||
+              `S${entry.episode.season_number}E${entry.episode.episode_number}`
             : `S${entry.episode.season_number}E${entry.episode.episode_number}${entry.episode.name ? ` · ${entry.episode.name}` : ""}`}
         </p>
       </div>
@@ -285,7 +286,7 @@ function TabButton({
         "flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full transition-all duration-150",
         active
           ? "bg-primary/15 text-primary"
-          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50",
       )}
     >
       {children}
@@ -318,13 +319,19 @@ export function SchedulePage() {
 
         const episodeShowIds = new Set(userEpisodes.map((e) => e.show_id));
         const watchlistShowIds = new Set(
-          userShows.filter((s) => s.watchlisted || s.status).map((s) => s.show_id)
+          userShows
+            .filter((s) => s.watchlisted || s.status)
+            .map((s) => s.show_id),
         );
         const userShowIds = new Set([...episodeShowIds, ...watchlistShowIds]);
-        const allIds = Array.from(new Set([...globalIds, ...Array.from(userShowIds)]));
+        const allIds = Array.from(
+          new Set([...globalIds, ...Array.from(userShowIds)]),
+        );
 
         // 2. Fetch details for all shows (cached)
-        const details = await Promise.all(allIds.map((id) => fetchDetailCached(id)));
+        const details = await Promise.all(
+          allIds.map((id) => fetchDetailCached(id)),
+        );
         if (cancelledRef.current) return;
 
         // 3. Flatten into schedule entries
@@ -376,7 +383,7 @@ export function SchedulePage() {
     return () => {
       cancelledRef.current = true;
     };
-    // Only re-run when user show data changes — don't re-fetch on every render
+    // Only re-run when user show data changes - don't re-fetch on every render
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userShows.length, userEpisodes.length]);
 
@@ -392,80 +399,97 @@ export function SchedulePage() {
 
   return (
     <>
-    <SEOMeta title="Schedule" />
-    <div className="min-h-screen">
-      {/* Page header */}
-      <div className="px-4 sm:px-6 lg:px-8 max-w-screen-xl mx-auto pt-6 pb-4">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="flex items-center justify-center size-9 rounded-xl bg-primary/10 text-primary">
-            <Calendar className="size-5" strokeWidth={2} />
-          </div>
-          <div>
-            <h1 className="font-display text-2xl font-black tracking-tight text-foreground">
-              Schedule
-            </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              What's airing now and coming up next
-            </p>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex items-center gap-1">
-          <TabButton active={tab === "upcoming"} onClick={() => setTab("upcoming")}>
-            <span className="relative flex size-2">
-              {tab === "upcoming" && (
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-              )}
-              <span className={cn("relative inline-flex rounded-full size-2", tab === "upcoming" ? "bg-primary" : "bg-muted-foreground/40")} />
-            </span>
-            Upcoming
-          </TabButton>
-          <TabButton active={tab === "released"} onClick={() => setTab("released")}>
-            Released
-          </TabButton>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="px-4 sm:px-6 lg:px-8 max-w-screen-xl mx-auto pb-16 space-y-8">
-        {loading ? (
-          <>
-            {[0, 1, 2].map((gi) => (
-              <div key={gi} className="space-y-3">
-                <div className="flex items-baseline gap-3">
-                  <Skeleton className="h-4 w-24 rounded" />
-                  <div className="flex-1 h-px bg-border/40" />
-                </div>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4">
-                  {Array.from({ length: gi === 0 ? 5 : gi === 1 ? 3 : 4 }).map((_, i) => (
-                    <ScheduleCardSkeleton key={i} />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </>
-        ) : grouped.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="flex items-center justify-center size-16 rounded-full bg-muted text-muted-foreground mb-4">
-              <Calendar className="size-7" strokeWidth={1.5} />
+      <SEOMeta title="Schedule" />
+      <div className="min-h-screen">
+        {/* Page header */}
+        <div className="px-4 sm:px-6 lg:px-8 max-w-screen-xl mx-auto pt-6 pb-4">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex items-center justify-center size-9 rounded-xl bg-primary/10 text-primary">
+              <Calendar className="size-5" strokeWidth={2} />
             </div>
-            <p className="font-display text-lg font-bold text-foreground">
-              {tab === "upcoming" ? "Nothing upcoming right now" : "No recent releases found"}
-            </p>
-            <p className="text-sm text-muted-foreground mt-2 max-w-xs">
-              {tab === "upcoming"
-                ? "Add shows to your watchlist and they'll show up here when new episodes are scheduled."
-                : "Check back after episodes start airing."}
-            </p>
+            <div>
+              <h1 className="font-display text-2xl font-black tracking-tight text-foreground">
+                Schedule
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                What's airing now and coming up next
+              </p>
+            </div>
           </div>
-        ) : (
-          grouped.map(({ date, entries: dateEntries }) => (
-            <DateSection key={date} date={date} entries={dateEntries} />
-          ))
-        )}
+
+          {/* Tabs */}
+          <div className="flex items-center gap-1">
+            <TabButton
+              active={tab === "upcoming"}
+              onClick={() => setTab("upcoming")}
+            >
+              <span className="relative flex size-2">
+                {tab === "upcoming" && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                )}
+                <span
+                  className={cn(
+                    "relative inline-flex rounded-full size-2",
+                    tab === "upcoming"
+                      ? "bg-primary"
+                      : "bg-muted-foreground/40",
+                  )}
+                />
+              </span>
+              Upcoming
+            </TabButton>
+            <TabButton
+              active={tab === "released"}
+              onClick={() => setTab("released")}
+            >
+              Released
+            </TabButton>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="px-4 sm:px-6 lg:px-8 max-w-screen-xl mx-auto pb-16 space-y-8">
+          {loading ? (
+            <>
+              {[0, 1, 2].map((gi) => (
+                <div key={gi} className="space-y-3">
+                  <div className="flex items-baseline gap-3">
+                    <Skeleton className="h-4 w-24 rounded" />
+                    <div className="flex-1 h-px bg-border/40" />
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4">
+                    {Array.from({
+                      length: gi === 0 ? 5 : gi === 1 ? 3 : 4,
+                    }).map((_, i) => (
+                      <ScheduleCardSkeleton key={i} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : grouped.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="flex items-center justify-center size-16 rounded-full bg-muted text-muted-foreground mb-4">
+                <Calendar className="size-7" strokeWidth={1.5} />
+              </div>
+              <p className="font-display text-lg font-bold text-foreground">
+                {tab === "upcoming"
+                  ? "Nothing upcoming right now"
+                  : "No recent releases found"}
+              </p>
+              <p className="text-sm text-muted-foreground mt-2 max-w-xs">
+                {tab === "upcoming"
+                  ? "Add shows to your watchlist and they'll show up here when new episodes are scheduled."
+                  : "Check back after episodes start airing."}
+              </p>
+            </div>
+          ) : (
+            grouped.map(({ date, entries: dateEntries }) => (
+              <DateSection key={date} date={date} entries={dateEntries} />
+            ))
+          )}
+        </div>
       </div>
-    </div>
     </>
   );
 }

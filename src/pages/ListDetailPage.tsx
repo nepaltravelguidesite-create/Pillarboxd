@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useSocial, type ShowList, type ListItem } from "@/context/SocialContext";
+import {
+  useSocial,
+  type ShowList,
+  type ListItem,
+} from "@/context/SocialContext";
 import { useAuth } from "@/context/AuthContext";
 import { type TVShow } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
@@ -18,17 +22,36 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Trash2, List, Lock, Globe, Heart, BookmarkCheck } from "lucide-react";
+import {
+  Loader2,
+  Trash2,
+  List,
+  Lock,
+  Globe,
+  Heart,
+  BookmarkCheck,
+} from "lucide-react";
 import { useUI } from "@/context/UIContext";
 
 // ---------------------------------------------------------------------------
-// ListDetailPage — /lists/:listId route
+// ListDetailPage - /lists/:listId route
 // ---------------------------------------------------------------------------
 
 export default function ListDetailPage() {
   const { listId } = useParams<{ listId: string }>();
   const { user } = useAuth();
-  const { myLists, getListItems, removeShowFromList, deleteList, isListLiked, toggleListLike, isListSaved, saveList, unsaveList, savedListsData } = useSocial();
+  const {
+    myLists,
+    getListItems,
+    removeShowFromList,
+    deleteList,
+    isListLiked,
+    toggleListLike,
+    isListSaved,
+    saveList,
+    unsaveList,
+    savedListsData,
+  } = useSocial();
   const { openAuthModal } = useUI();
 
   const [list, setList] = useState<ShowList | null>(null);
@@ -53,7 +76,10 @@ export default function ListDetailPage() {
 
     try {
       // First, try to find the list in the user's own lists or saved lists (fast path)
-      let meta = myLists.find((l) => l.id === listId) ?? savedListsData.find((l) => l.id === listId) ?? null;
+      let meta =
+        myLists.find((l) => l.id === listId) ??
+        savedListsData.find((l) => l.id === listId) ??
+        null;
 
       // Fetch items regardless of ownership (RLS handles visibility)
       const fetchedItems = await getListItems(listId);
@@ -61,7 +87,7 @@ export default function ListDetailPage() {
 
       // If we don't have metadata locally, infer from items or mark not found.
       // The items query is RLS-gated: if the list is private and not owned by the
-      // user, the query returns [] — so we treat empty + no local meta as
+      // user, the query returns [] - so we treat empty + no local meta as
       // "not found or not accessible".
       if (!meta) {
         if (fetchedItems.length === 0) {
@@ -119,7 +145,7 @@ export default function ListDetailPage() {
             ...prev,
             item_count: Math.max(prev.item_count - 1, 0),
           }
-        : prev
+        : prev,
     );
     setRemovingId(null);
   }
@@ -127,7 +153,7 @@ export default function ListDetailPage() {
   function handleDeleteList() {
     if (!listId || !list) return;
     deleteList(listId);
-    // Navigate home via Link-less redirect — use window location
+    // Navigate home via Link-less redirect - use window location
     window.location.href = "/lists";
   }
 
@@ -210,7 +236,7 @@ export default function ListDetailPage() {
                 "inline-flex items-center gap-1 self-start rounded-full px-2.5 py-0.5 text-[11px] font-medium",
                 list.is_public
                   ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground"
+                  : "bg-muted text-muted-foreground",
               )}
             >
               {list.is_public ? (
@@ -247,17 +273,29 @@ export default function ListDetailPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!user) { openAuthModal("signin"); return; }
+                    if (!user) {
+                      openAuthModal("signin");
+                      return;
+                    }
                     if (isListSaved(list.id)) unsaveList(list.id);
                     else saveList(list);
                   }}
                   className={cn(
                     "inline-flex items-center gap-1 transition-colors",
-                    isListSaved(list.id) ? "text-primary" : "hover:text-foreground"
+                    isListSaved(list.id)
+                      ? "text-primary"
+                      : "hover:text-foreground",
                   )}
-                  aria-label={isListSaved(list.id) ? "Unsave list" : "Save list"}
+                  aria-label={
+                    isListSaved(list.id) ? "Unsave list" : "Save list"
+                  }
                 >
-                  <BookmarkCheck className={cn("size-3.5", isListSaved(list.id) && "fill-primary")} />
+                  <BookmarkCheck
+                    className={cn(
+                      "size-3.5",
+                      isListSaved(list.id) && "fill-primary",
+                    )}
+                  />
                   {isListSaved(list.id) ? "Saved" : "Save"}
                 </button>
               )}
@@ -265,16 +303,28 @@ export default function ListDetailPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!user) { openAuthModal("signin"); return; }
+                    if (!user) {
+                      openAuthModal("signin");
+                      return;
+                    }
                     toggleListLike(list.id);
                   }}
                   className={cn(
                     "inline-flex items-center gap-1 transition-colors",
-                    isListLiked(list.id) ? "text-primary" : "hover:text-foreground"
+                    isListLiked(list.id)
+                      ? "text-primary"
+                      : "hover:text-foreground",
                   )}
-                  aria-label={isListLiked(list.id) ? "Unlike list" : "Like list"}
+                  aria-label={
+                    isListLiked(list.id) ? "Unlike list" : "Like list"
+                  }
                 >
-                  <Heart className={cn("size-3.5", isListLiked(list.id) && "fill-primary")} />
+                  <Heart
+                    className={cn(
+                      "size-3.5",
+                      isListLiked(list.id) && "fill-primary",
+                    )}
+                  />
                   {list.like_count} {list.like_count === 1 ? "like" : "likes"}
                 </button>
               )}
@@ -367,7 +417,7 @@ export default function ListDetailPage() {
                       className={cn(
                         "inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium",
                         "text-muted-foreground hover:bg-destructive/10 hover:text-destructive",
-                        "transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        "transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
                       )}
                     >
                       {removingId === item.show_id ? (
@@ -392,7 +442,9 @@ export default function ListDetailPage() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleRemove(item.show_id)}>
+                      <AlertDialogAction
+                        onClick={() => handleRemove(item.show_id)}
+                      >
                         Remove
                       </AlertDialogAction>
                     </AlertDialogFooter>
@@ -408,7 +460,7 @@ export default function ListDetailPage() {
 }
 
 // ---------------------------------------------------------------------------
-// Shell — shared layout wrapper
+// Shell - shared layout wrapper
 // ---------------------------------------------------------------------------
 
 function Shell({ children }: { children: React.ReactNode }) {

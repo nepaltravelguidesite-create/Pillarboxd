@@ -23,7 +23,10 @@ const SNAKE_LENGTH = 4;
 const LERP_SPEED = 0.12;
 const EMPTY_SKIP_SPEED = 0.35;
 
-function buildGrid(logs: { watched_date: string | null }[]): { cells: DayCell[]; maxCount: number } {
+function buildGrid(logs: { watched_date: string | null }[]): {
+  cells: DayCell[];
+  maxCount: number;
+} {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -66,12 +69,17 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-export function WatchActivityHeatmap({ logs, className }: WatchActivityHeatmapProps) {
+export function WatchActivityHeatmap({
+  logs,
+  className,
+}: WatchActivityHeatmapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [finished, setFinished] = useState(false);
   const [replayKey, setReplayKey] = useState(0);
-  const gridDataRef = useRef<{ cells: DayCell[]; maxCount: number } | null>(null);
+  const gridDataRef = useRef<{ cells: DayCell[]; maxCount: number } | null>(
+    null,
+  );
   const rafRef = useRef<number>(0);
   const reducedMotionRef = useRef(false);
 
@@ -100,7 +108,9 @@ export function WatchActivityHeatmap({ logs, className }: WatchActivityHeatmapPr
     if (!ctx) return;
     const gctx = ctx; // non-null reference for closures
 
-    reducedMotionRef.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    reducedMotionRef.current = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
 
     const dpr = window.devicePixelRatio || 1;
     const w = WEEKS * CELL_PLUS_GAP;
@@ -114,7 +124,9 @@ export function WatchActivityHeatmap({ logs, className }: WatchActivityHeatmapPr
     const gridCells = grid.cells;
     const maxC = grid.maxCount;
     const activeIndices: number[] = [];
-    gridCells.forEach((c, i) => { if (c.count > 0) activeIndices.push(i); });
+    gridCells.forEach((c, i) => {
+      if (c.count > 0) activeIndices.push(i);
+    });
     if (activeIndices.length === 0) return;
 
     const eaten = new Set<number>();
@@ -124,7 +136,13 @@ export function WatchActivityHeatmap({ logs, className }: WatchActivityHeatmapPr
       if (!cell) return;
       gctx.fillStyle = color;
       gctx.beginPath();
-      gctx.roundRect(cell.col * CELL_PLUS_GAP, cell.row * CELL_PLUS_GAP, CELL, CELL, 3);
+      gctx.roundRect(
+        cell.col * CELL_PLUS_GAP,
+        cell.row * CELL_PLUS_GAP,
+        CELL,
+        CELL,
+        3,
+      );
       gctx.fill();
     }
 
@@ -221,7 +239,7 @@ export function WatchActivityHeatmap({ logs, className }: WatchActivityHeatmapPr
       const dist = Math.sqrt(dx * dx + dy * dy);
 
       if (dist < 1.5) {
-        // Arrived — eat the cell
+        // Arrived - eat the cell
         const cellIdx = activeIndices[currentTargetIdx];
         if (cellIdx !== lastEatenIdx) {
           eaten.add(cellIdx);
@@ -236,13 +254,18 @@ export function WatchActivityHeatmap({ logs, className }: WatchActivityHeatmapPr
         return;
       }
 
-      // Move towards target — speed depends on whether current cell is empty
+      // Move towards target - speed depends on whether current cell is empty
       const speed = LERP_SPEED;
 
       // If we're transitioning through empty space (large gap), move faster
-      const prevActiveIdx = currentTargetIdx > 0 ? activeIndices[currentTargetIdx - 1] : activeIndices[0];
+      const prevActiveIdx =
+        currentTargetIdx > 0
+          ? activeIndices[currentTargetIdx - 1]
+          : activeIndices[0];
       const prevCell = gridCells[prevActiveIdx];
-      const gap = Math.abs(targetCell.col - prevCell.col) + Math.abs(targetCell.row - prevCell.row);
+      const gap =
+        Math.abs(targetCell.col - prevCell.col) +
+        Math.abs(targetCell.row - prevCell.row);
       const effectiveSpeed = gap > 3 ? EMPTY_SKIP_SPEED : speed;
 
       snakeX = lerp(snakeX, targetX, effectiveSpeed);
@@ -279,7 +302,7 @@ export function WatchActivityHeatmap({ logs, className }: WatchActivityHeatmapPr
           io.disconnect();
         }
       },
-      { threshold: 0.3 }
+      { threshold: 0.3 },
     );
     io.observe(container);
 
@@ -291,12 +314,27 @@ export function WatchActivityHeatmap({ logs, className }: WatchActivityHeatmapPr
 
   if (!hasActivity) return null;
 
-  const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthLabels = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
   return (
     <div className={cn("space-y-3", className)} ref={containerRef}>
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Watch Activity</h2>
+        <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+          Watch Activity
+        </h2>
         {finished && (
           <button
             onClick={replay}
@@ -323,7 +361,10 @@ export function WatchActivityHeatmap({ logs, className }: WatchActivityHeatmapPr
           </div>
           <div className="flex gap-[3px]">
             {/* Day labels */}
-            <div className="flex flex-col gap-[3px] mr-1 shrink-0" style={{ width: 16 }}>
+            <div
+              className="flex flex-col gap-[3px] mr-1 shrink-0"
+              style={{ width: 16 }}
+            >
               {["", "M", "", "W", "", "F", ""].map((d, i) => (
                 <span
                   key={i}

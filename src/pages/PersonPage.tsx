@@ -18,7 +18,7 @@ import { toast } from "sonner";
 // Types
 // ---------------------------------------------------------------------------
 
-/** A TV filmography cast entry — a TVShow augmented with role metadata. */
+/** A TV filmography cast entry - a TVShow augmented with role metadata. */
 type FilmographyEntry = TVShow & {
   character: string;
   episode_count: number;
@@ -60,7 +60,8 @@ export default function PersonPage() {
       })
       .catch((err) => {
         if (cancelled) return;
-        const msg = err instanceof Error ? err.message : "Failed to load person.";
+        const msg =
+          err instanceof Error ? err.message : "Failed to load person.";
         setError(msg);
         setLoading(false);
       });
@@ -109,7 +110,9 @@ export default function PersonPage() {
         toast.success(`Following ${person.name}`);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to toggle follow");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to toggle follow",
+      );
     } finally {
       setFollowLoading(false);
     }
@@ -143,8 +146,9 @@ export default function PersonPage() {
   }
 
   // ---- Data prep -----------------------------------------------------------
-  const filmography: FilmographyEntry[] = [...(person.tv_credits?.cast ?? [])]
-    .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+  const filmography: FilmographyEntry[] = [
+    ...(person.tv_credits?.cast ?? []),
+  ].sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
 
   const knownForCount = filmography.length;
 
@@ -156,139 +160,142 @@ export default function PersonPage() {
 
   return (
     <>
-    <SEOMeta title={person.name} />
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-        {/* ----------------------------------------------------------- Header */}
-        <section className="flex flex-col gap-6 sm:flex-row sm:gap-8">
-          {/* Profile photo */}
-          <div className="mx-auto shrink-0 sm:mx-0">
-            <div className="w-[120px] sm:w-[200px] aspect-[2/3] overflow-hidden rounded-xl border border-border/50 bg-muted shadow-lg shadow-black/30">
-              <img
-                src={profileUrl(person.profile_path, "h632")}
-                alt={person.name}
-                loading="lazy"
-                className="h-full w-full object-cover object-top"
-              />
-            </div>
-          </div>
-
-          {/* Bio / metadata */}
-          <div className="flex-1 min-w-0">
-            <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-              {person.name}
-            </h1>
-
-            {person.known_for_department && (
-              <p className="mt-2 text-sm font-medium uppercase tracking-widest text-primary">
-                {person.known_for_department}
-              </p>
-            )}
-
-            {bornLine && (
-              <p className="mt-1 text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground/80">Born:</span>{" "}
-                {bornLine}
-              </p>
-            )}
-
-            {knownForCount > 0 && (
-              <p className="mt-1 text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground/80">
-                  Known for:
-                </span>{" "}
-                {knownForCount} TV {knownForCount === 1 ? "credit" : "credits"}
-              </p>
-            )}
-
-            <div className="mt-3 flex items-center gap-3">
-              {user && (
-                <button
-                  onClick={toggleFollowPerson}
-                  disabled={followLoading}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 shrink-0",
-                    "disabled:opacity-60 disabled:cursor-not-allowed",
-                    isFollowing
-                      ? "bg-secondary text-foreground border border-border"
-                      : "bg-primary text-primary-foreground hover:-translate-y-px hover:shadow-md hover:shadow-primary/25"
-                  )}
-                >
-                  {followLoading ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : isFollowing ? (
-                    <UserCheck className="size-4" />
-                  ) : (
-                    <UserPlus className="size-4" />
-                  )}
-                  {isFollowing ? "Following" : "Follow"}
-                </button>
-              )}
-              {person.homepage && (
-                <a
-                  href={person.homepage}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline"
-                >
-                  Official website ↗
-                </a>
-              )}
+      <SEOMeta title={person.name} />
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+          {/* ----------------------------------------------------------- Header */}
+          <section className="flex flex-col gap-6 sm:flex-row sm:gap-8">
+            {/* Profile photo */}
+            <div className="mx-auto shrink-0 sm:mx-0">
+              <div className="w-[120px] sm:w-[200px] aspect-[2/3] overflow-hidden rounded-xl border border-border/50 bg-muted shadow-lg shadow-black/30">
+                <img
+                  src={profileUrl(person.profile_path, "h632")}
+                  alt={person.name}
+                  loading="lazy"
+                  className="h-full w-full object-cover object-top"
+                />
+              </div>
             </div>
 
-            {/* Biography */}
-            {person.biography ? (
-              <p className="mt-4 max-w-prose text-sm leading-relaxed text-foreground/80 sm:text-base">
-                {person.biography}
-              </p>
+            {/* Bio / metadata */}
+            <div className="flex-1 min-w-0">
+              <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+                {person.name}
+              </h1>
+
+              {person.known_for_department && (
+                <p className="mt-2 text-sm font-medium uppercase tracking-widest text-primary">
+                  {person.known_for_department}
+                </p>
+              )}
+
+              {bornLine && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  <span className="font-semibold text-foreground/80">
+                    Born:
+                  </span>{" "}
+                  {bornLine}
+                </p>
+              )}
+
+              {knownForCount > 0 && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  <span className="font-semibold text-foreground/80">
+                    Known for:
+                  </span>{" "}
+                  {knownForCount} TV{" "}
+                  {knownForCount === 1 ? "credit" : "credits"}
+                </p>
+              )}
+
+              <div className="mt-3 flex items-center gap-3">
+                {user && (
+                  <button
+                    onClick={toggleFollowPerson}
+                    disabled={followLoading}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 shrink-0",
+                      "disabled:opacity-60 disabled:cursor-not-allowed",
+                      isFollowing
+                        ? "bg-secondary text-foreground border border-border"
+                        : "bg-primary text-primary-foreground hover:-translate-y-px hover:shadow-md hover:shadow-primary/25",
+                    )}
+                  >
+                    {followLoading ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : isFollowing ? (
+                      <UserCheck className="size-4" />
+                    ) : (
+                      <UserPlus className="size-4" />
+                    )}
+                    {isFollowing ? "Following" : "Follow"}
+                  </button>
+                )}
+                {person.homepage && (
+                  <a
+                    href={person.homepage}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Official website ↗
+                  </a>
+                )}
+              </div>
+
+              {/* Biography */}
+              {person.biography ? (
+                <p className="mt-4 max-w-prose text-sm leading-relaxed text-foreground/80 sm:text-base">
+                  {person.biography}
+                </p>
+              ) : (
+                <p className="mt-4 text-sm italic text-muted-foreground">
+                  No biography available.
+                </p>
+              )}
+            </div>
+          </section>
+
+          {/* ----------------------------------------------------- Filmography */}
+          <section className="mt-12">
+            <div className="mb-5 flex items-baseline justify-between border-b border-border/50 pb-2">
+              <h2 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
+                TV Filmography
+              </h2>
+              {filmography.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {filmography.length}{" "}
+                  {filmography.length === 1 ? "show" : "shows"}
+                </span>
+              )}
+            </div>
+
+            {filmography.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+                <Tv
+                  className="size-10 text-muted-foreground/40"
+                  strokeWidth={1.5}
+                />
+                <p className="text-sm text-muted-foreground">
+                  No TV credits found for this person.
+                </p>
+              </div>
             ) : (
-              <p className="mt-4 text-sm italic text-muted-foreground">
-                No biography available.
-              </p>
+              <div className="grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+                {filmography.map((entry) => (
+                  <FilmographyCard key={entry.id} entry={entry} />
+                ))}
+              </div>
             )}
-          </div>
-        </section>
-
-        {/* ----------------------------------------------------- Filmography */}
-        <section className="mt-12">
-          <div className="mb-5 flex items-baseline justify-between border-b border-border/50 pb-2">
-            <h2 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
-              TV Filmography
-            </h2>
-            {filmography.length > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {filmography.length}{" "}
-                {filmography.length === 1 ? "show" : "shows"}
-              </span>
-            )}
-          </div>
-
-          {filmography.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-              <Tv
-                className="size-10 text-muted-foreground/40"
-                strokeWidth={1.5}
-              />
-              <p className="text-sm text-muted-foreground">
-                No TV credits found for this person.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-              {filmography.map((entry) => (
-                <FilmographyCard key={entry.id} entry={entry} />
-              ))}
-            </div>
-          )}
-        </section>
+          </section>
+        </div>
       </div>
-    </div>
     </>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Filmography card — ShowPosterCard + character/episode info underneath
+// Filmography card - ShowPosterCard + character/episode info underneath
 // ---------------------------------------------------------------------------
 
 function FilmographyCard({ entry }: { entry: FilmographyEntry }) {

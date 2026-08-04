@@ -26,7 +26,7 @@ interface AsyncState<T> {
 
 function useAsyncHook<T>(
   fetcher: () => Promise<T>,
-  deps: React.DependencyList
+  deps: React.DependencyList,
 ): AsyncState<T> {
   const [state, setState] = useState<AsyncState<T>>({
     data: null,
@@ -65,7 +65,7 @@ function useAsyncHook<T>(
 export function useTrendingShows(timeWindow: "day" | "week" = "week") {
   return useAsyncHook<TMDBPage<TVShow>>(
     () => getTrendingShows(timeWindow),
-    [timeWindow]
+    [timeWindow],
   );
 }
 
@@ -74,10 +74,7 @@ export function useTrendingShows(timeWindow: "day" | "week" = "week") {
 // ---------------------------------------------------------------------------
 
 export function usePopularShows(page = 1) {
-  return useAsyncHook<TMDBPage<TVShow>>(
-    () => getPopularShows(page),
-    [page]
-  );
+  return useAsyncHook<TMDBPage<TVShow>>(() => getPopularShows(page), [page]);
 }
 
 // ---------------------------------------------------------------------------
@@ -85,10 +82,7 @@ export function usePopularShows(page = 1) {
 // ---------------------------------------------------------------------------
 
 export function useTopRatedShows(page = 1) {
-  return useAsyncHook<TMDBPage<TVShow>>(
-    () => getTopRatedShows(page),
-    [page]
-  );
+  return useAsyncHook<TMDBPage<TVShow>>(() => getTopRatedShows(page), [page]);
 }
 
 // ---------------------------------------------------------------------------
@@ -98,7 +92,7 @@ export function useTopRatedShows(page = 1) {
 export function useAiringTodayShows(page = 1) {
   return useAsyncHook<TMDBPage<TVShow>>(
     () => getAiringTodayShows(page),
-    [page]
+    [page],
   );
 }
 
@@ -107,10 +101,7 @@ export function useAiringTodayShows(page = 1) {
 // ---------------------------------------------------------------------------
 
 export function useOnTheAirShows(page = 1) {
-  return useAsyncHook<TMDBPage<TVShow>>(
-    () => getOnTheAirShows(page),
-    [page]
-  );
+  return useAsyncHook<TMDBPage<TVShow>>(() => getOnTheAirShows(page), [page]);
 }
 
 // ---------------------------------------------------------------------------
@@ -120,7 +111,7 @@ export function useOnTheAirShows(page = 1) {
 export function useShowDetail(showId: number | null) {
   return useAsyncHook<TVShowDetail | null>(
     () => (showId ? getShowDetail(showId) : Promise.resolve(null)),
-    [showId]
+    [showId],
   );
 }
 
@@ -130,14 +121,11 @@ export function useShowDetail(showId: number | null) {
 
 export function useDiscoverShows(params: DiscoverTVParams) {
   const key = JSON.stringify(params);
-  return useAsyncHook<TMDBPage<TVShow>>(
-    () => discoverShows(params),
-    [key]
-  );
+  return useAsyncHook<TMDBPage<TVShow>>(() => discoverShows(params), [key]);
 }
 
 // ---------------------------------------------------------------------------
-// Search shows (for search results page — not the live dropdown)
+// Search shows (for search results page - not the live dropdown)
 // ---------------------------------------------------------------------------
 
 export function useSearchShows(query: string, page = 1) {
@@ -146,6 +134,6 @@ export function useSearchShows(query: string, page = 1) {
       query.trim().length > 0
         ? searchShows(query.trim(), page)
         : Promise.resolve(null),
-    [query, page]
+    [query, page],
   );
 }

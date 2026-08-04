@@ -21,14 +21,14 @@
 
 3. What is NOT changed
 - The existing INSERT / UPDATE / DELETE policies on `user_logs` remain
-  exactly as they are — they are correctly scoped to `auth.uid() = user_id`
+  exactly as they are - they are correctly scoped to `auth.uid() = user_id`
   and stay that way. Only who can READ log entries changes; who can write or
   modify them is unaffected.
 
 4. Security notes
 - SELECT is intentionally public to all authenticated users (reviews and
   ratings are shared social content, same as Letterboxd).
-- Writes remain owner-only — no other user can create, edit, or delete
+- Writes remain owner-only - no other user can create, edit, or delete
   someone else's log entries.
 - Idempotent: DROP IF EXISTS before CREATE so the migration is safe to re-run.
 */

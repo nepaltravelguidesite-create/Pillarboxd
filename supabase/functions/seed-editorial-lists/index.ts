@@ -106,7 +106,7 @@ async function fetchShowsForList(config: ListConfig): Promise<Show[]> {
     return shows;
   }
 
-  // Genre / keyword / origin / data — use discover endpoint
+  // Genre / keyword / origin / data - use discover endpoint
   const params: Record<string, string> = { sort_by: config.sort_by || "popularity.desc", page: "1" };
   if (config.with_genres) params.with_genres = config.with_genres;
   if (config.with_keywords) params.with_keywords = config.with_keywords;

@@ -106,7 +106,7 @@ function pickBestPoster(data) {
 }
 
 // ---------------------------------------------------------------------------
-// Curated show list — ~55 widely popular / iconic / prestige titles
+// Curated show list - ~55 widely popular / iconic / prestige titles
 // Some have hardcoded TMDB IDs (from showRatingIcons), others are searched by name.
 // ---------------------------------------------------------------------------
 
@@ -195,7 +195,7 @@ async function main() {
     if (!tmdbId) {
       const searchResult = await searchShow(showName);
       if (!searchResult) {
-        console.log(`  SKIP: "${showName}" — not found on TMDB`);
+        console.log(`  SKIP: "${showName}" - not found on TMDB`);
         skipped++;
         continue;
       }
@@ -208,14 +208,14 @@ async function main() {
     try {
       externalIds = await getExternalIds(tmdbId);
     } catch (e) {
-      console.log(`  SKIP: "${showName}" (TMDB ${tmdbId}) — external_ids failed: ${e.message}`);
+      console.log(`  SKIP: "${showName}" (TMDB ${tmdbId}) - external_ids failed: ${e.message}`);
       skipped++;
       continue;
     }
 
     const tvdbId = externalIds.tvdb_id;
     if (!tvdbId) {
-      console.log(`  SKIP: "${showName}" (TMDB ${tmdbId}) — no TVDB id`);
+      console.log(`  SKIP: "${showName}" (TMDB ${tmdbId}) - no TVDB id`);
       skipped++;
       continue;
     }
@@ -223,21 +223,21 @@ async function main() {
     // Get fanart posters
     const fanartData = await getFanartPosters(tvdbId);
     if (!fanartData) {
-      console.log(`  SKIP: "${showName}" (TMDB ${tmdbId}, TVDB ${tvdbId}) — fanart.tv returned nothing`);
+      console.log(`  SKIP: "${showName}" (TMDB ${tmdbId}, TVDB ${tvdbId}) - fanart.tv returned nothing`);
       skipped++;
       continue;
     }
 
     const posterUrl = pickBestPoster(fanartData);
     if (!posterUrl) {
-      console.log(`  SKIP: "${showName}" (TMDB ${tmdbId}, TVDB ${tvdbId}) — no tvposter in fanart response`);
+      console.log(`  SKIP: "${showName}" (TMDB ${tmdbId}, TVDB ${tvdbId}) - no tvposter in fanart response`);
       skipped++;
       continue;
     }
 
     results[tmdbId] = posterUrl;
     resolved++;
-    console.log(`  OK: "${showName}" — TMDB ${tmdbId}, TVDB ${tvdbId}, year ${year ?? "?"}`);
+    console.log(`  OK: "${showName}" - TMDB ${tmdbId}, TVDB ${tvdbId}, year ${year ?? "?"}`);
     console.log(`       → ${posterUrl}`);
 
     // Small delay to be nice to the APIs
@@ -251,7 +251,7 @@ async function main() {
  * Static map of TMDB show IDs to fanart.tv poster URLs.
  *
  * Populated by scripts/resolve-fanart-posters.mjs.
- * This is shipped with the app — no runtime fanart.tv API calls are made.
+ * This is shipped with the app - no runtime fanart.tv API calls are made.
  * Shows not in this map fall back to TMDB posters via bestPosterUrl().
  *
  * ${resolved} shows resolved from fanart.tv.

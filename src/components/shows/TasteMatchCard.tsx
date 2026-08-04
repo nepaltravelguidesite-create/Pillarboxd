@@ -19,7 +19,10 @@ interface CommonRating {
   their_rating: number;
 }
 
-export function TasteMatchCard({ profileUserId, profileDisplayName }: TasteMatchCardProps) {
+export function TasteMatchCard({
+  profileUserId,
+  profileDisplayName,
+}: TasteMatchCardProps) {
   const { user } = useAuth();
   const [data, setData] = useState<{
     common: CommonRating[];
@@ -56,22 +59,36 @@ export function TasteMatchCard({ profileUserId, profileDisplayName }: TasteMatch
       }
 
       // Build a map of my ratings by show_id (take the highest rating per show)
-      const myMap = new Map<number, { rating: number; name: string; poster: string | null }>();
+      const myMap = new Map<
+        number,
+        { rating: number; name: string; poster: string | null }
+      >();
       for (const log of myLogs) {
         const r = log.rating as number;
         const existing = myMap.get(log.show_id);
         if (!existing || r > existing.rating) {
-          myMap.set(log.show_id, { rating: r, name: log.show_name, poster: log.show_poster_path });
+          myMap.set(log.show_id, {
+            rating: r,
+            name: log.show_name,
+            poster: log.show_poster_path,
+          });
         }
       }
 
       // Build a map of their ratings by show_id (take the highest)
-      const theirMap = new Map<number, { rating: number; name: string; poster: string | null }>();
+      const theirMap = new Map<
+        number,
+        { rating: number; name: string; poster: string | null }
+      >();
       for (const log of theirLogs) {
         const r = log.rating as number;
         const existing = theirMap.get(log.show_id);
         if (!existing || r > existing.rating) {
-          theirMap.set(log.show_id, { rating: r, name: log.show_name, poster: log.show_poster_path });
+          theirMap.set(log.show_id, {
+            rating: r,
+            name: log.show_name,
+            poster: log.show_poster_path,
+          });
         }
       }
 
@@ -106,7 +123,9 @@ export function TasteMatchCard({ profileUserId, profileDisplayName }: TasteMatch
       const matchPct = Math.round((closeCount / common.length) * 100);
 
       // Sort by highest combined rating for display
-      common.sort((a, b) => (b.my_rating + b.their_rating) - (a.my_rating + a.their_rating));
+      common.sort(
+        (a, b) => b.my_rating + b.their_rating - (a.my_rating + a.their_rating),
+      );
 
       if (!cancelled) {
         setData({ common, matchPct, closeCount });
@@ -114,19 +133,28 @@ export function TasteMatchCard({ profileUserId, profileDisplayName }: TasteMatch
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user, profileUserId]);
 
   if (loading || !data || data.common.length === 0) return null;
 
   const topShows = data.common.slice(0, 3);
-  const matchColor = data.matchPct >= 75 ? "text-primary" : data.matchPct >= 50 ? "text-foreground" : "text-muted-foreground";
+  const matchColor =
+    data.matchPct >= 75
+      ? "text-primary"
+      : data.matchPct >= 50
+        ? "text-foreground"
+        : "text-muted-foreground";
 
   return (
     <div className="rounded-xl border border-border/50 bg-card p-5 space-y-4">
       <div className="flex items-center gap-2">
         <Sparkles className="size-4 text-primary" />
-        <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Taste Match</h2>
+        <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+          Taste Match
+        </h2>
       </div>
 
       <div className="flex items-baseline gap-2">
@@ -140,9 +168,13 @@ export function TasteMatchCard({ profileUserId, profileDisplayName }: TasteMatch
 
       <p className="text-sm text-muted-foreground">
         You and {profileDisplayName} have{" "}
-        <span className="text-foreground font-medium">{data.common.length}</span>{" "}
-        show{data.common.length === 1 ? "" : "s"} in common — your ratings are within 1 star on{" "}
-        <span className="text-foreground font-medium">{data.closeCount}</span> of them.
+        <span className="text-foreground font-medium">
+          {data.common.length}
+        </span>{" "}
+        show{data.common.length === 1 ? "" : "s"} in common - your ratings are
+        within 1 star on{" "}
+        <span className="text-foreground font-medium">{data.closeCount}</span>{" "}
+        of them.
       </p>
 
       {/* Top commonly rated shows */}
@@ -176,7 +208,9 @@ export function TasteMatchCard({ profileUserId, profileDisplayName }: TasteMatch
                   <div className="w-full h-full" />
                 )}
               </div>
-              <p className="text-[10px] text-muted-foreground truncate">{show.show_name}</p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                {show.show_name}
+              </p>
               <div className="flex items-center gap-0.5">
                 <span className="text-[9px] text-primary/70">You</span>
                 <StarRating value={show.my_rating} readOnly size="sm" />

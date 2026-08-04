@@ -1,9 +1,9 @@
 /**
- * TMDB API helper — exclusively targets /tv/ endpoints.
+ * TMDB API helper - exclusively targets /tv/ endpoints.
  *
  * Authentication:
- *   1. Set VITE_TMDB_READ_TOKEN  (Bearer auth — v4 Read Access Token, recommended)
- *   2. OR set VITE_TMDB_API_KEY  (query-param auth — v3 API key, fallback)
+ *   1. Set VITE_TMDB_READ_TOKEN  (Bearer auth - v4 Read Access Token, recommended)
+ *   2. OR set VITE_TMDB_API_KEY  (query-param auth - v3 API key, fallback)
  *
  * Example .env:
  *   VITE_TMDB_READ_TOKEN=eyJhbGciOiJSUzI1NiJ9...
@@ -21,7 +21,7 @@ const API_KEY = import.meta.env.VITE_TMDB_API_KEY as string | undefined;
 if (!READ_TOKEN && !API_KEY) {
   console.warn(
     "[Aftershow] No TMDB credentials found. " +
-      "Set VITE_TMDB_READ_TOKEN or VITE_TMDB_API_KEY in your .env file."
+      "Set VITE_TMDB_READ_TOKEN or VITE_TMDB_API_KEY in your .env file.",
   );
 }
 
@@ -44,7 +44,7 @@ export type ProfileSize = "w45" | "w185" | "h632" | "original";
 
 export function posterUrl(
   path: string | null | undefined,
-  size: PosterSize = "w342"
+  size: PosterSize = "w342",
 ): string {
   if (!path) return "/placeholder-poster.svg";
   return `${IMAGE_BASE_URL}/${size}${path}`;
@@ -55,12 +55,12 @@ export function posterUrl(
  * map first. If the show has a curated fanart poster, returns that URL;
  * otherwise falls back to the standard TMDB poster URL.
  *
- * Stays synchronous — the fanart map is a static lookup table shipped with
+ * Stays synchronous - the fanart map is a static lookup table shipped with
  * the app, not a runtime API call.
  */
 export function bestPosterUrl(
   show: { id: number; poster_path: string | null | undefined },
-  size: PosterSize = "w500"
+  size: PosterSize = "w500",
 ): string {
   const fanartUrl = fanartPosterMap[show.id];
   if (fanartUrl) return fanartUrl;
@@ -69,7 +69,7 @@ export function bestPosterUrl(
 
 export function backdropUrl(
   path: string | null | undefined,
-  size: BackdropSize = "w1280"
+  size: BackdropSize = "w1280",
 ): string {
   if (!path) return "/placeholder-backdrop.svg";
   return `${IMAGE_BASE_URL}/${size}${path}`;
@@ -77,7 +77,7 @@ export function backdropUrl(
 
 export function profileUrl(
   path: string | null | undefined,
-  size: ProfileSize = "w185"
+  size: ProfileSize = "w185",
 ): string {
   if (!path) return "/placeholder-profile.svg";
   return `${IMAGE_BASE_URL}/${size}${path}`;
@@ -89,14 +89,14 @@ export function profileUrl(
 
 async function tmdbFetch<T>(
   endpoint: string,
-  params: Record<string, string | number | boolean> = {}
+  params: Record<string, string | number | boolean> = {},
 ): Promise<T> {
   const url = new URL(`${BASE_URL}${endpoint}`);
 
   if (READ_TOKEN) {
-    // v4 Bearer auth — no API key in query string
+    // v4 Bearer auth - no API key in query string
     Object.entries(params).forEach(([k, v]) =>
-      url.searchParams.set(k, String(v))
+      url.searchParams.set(k, String(v)),
     );
     const res = await fetch(url.toString(), {
       headers: {
@@ -115,7 +115,7 @@ async function tmdbFetch<T>(
     // v3 API key auth
     url.searchParams.set("api_key", API_KEY);
     Object.entries(params).forEach(([k, v]) =>
-      url.searchParams.set(k, String(v))
+      url.searchParams.set(k, String(v)),
     );
     const res = await fetch(url.toString());
     if (!res.ok) {
@@ -128,7 +128,7 @@ async function tmdbFetch<T>(
   throw new TMDBError(
     401,
     "No TMDB credentials configured. Set VITE_TMDB_READ_TOKEN or VITE_TMDB_API_KEY.",
-    endpoint
+    endpoint,
   );
 }
 
@@ -287,7 +287,7 @@ export function getOnTheAirShows(page = 1): Promise<TMDBPage<TVShow>> {
 /** GET /tv/trending/tv/week  (uses trending endpoint but TV-only) */
 export function getTrendingShows(
   timeWindow: "day" | "week" = "week",
-  page = 1
+  page = 1,
 ): Promise<TMDBPage<TVShow>> {
   return tmdbFetch<TMDBPage<TVShow>>(`/trending/tv/${timeWindow}`, { page });
 }
@@ -295,14 +295,19 @@ export function getTrendingShows(
 /** GET /tv/{series_id} with optional appended responses */
 export function getShowDetail(
   seriesId: number,
-  appendToResponse: string[] = ["credits", "videos", "similar", "recommendations"]
+  appendToResponse: string[] = [
+    "credits",
+    "videos",
+    "similar",
+    "recommendations",
+  ],
 ): Promise<TVShowDetail> {
   return tmdbFetch<TVShowDetail>(`/tv/${seriesId}`, {
     append_to_response: appendToResponse.join(","),
   });
 }
 
-/** GET /tv/{series_id}/external_ids — resolves TheTVDB / IMDb / TVRage ids */
+/** GET /tv/{series_id}/external_ids - resolves TheTVDB / IMDb / TVRage ids */
 export interface ExternalIds {
   imdb_id: string | null;
   tvdb_id: number | null;
@@ -313,16 +318,14 @@ export interface ExternalIds {
   id: number;
 }
 
-export function getExternalIds(
-  seriesId: number
-): Promise<ExternalIds> {
+export function getExternalIds(seriesId: number): Promise<ExternalIds> {
   return tmdbFetch<ExternalIds>(`/tv/${seriesId}/external_ids`);
 }
 
 /** GET /tv/{series_id}/season/{season_number} */
 export function getShowSeason(
   seriesId: number,
-  seasonNumber: number
+  seasonNumber: number,
 ): Promise<SeasonDetail> {
   return tmdbFetch<SeasonDetail>(`/tv/${seriesId}/season/${seasonNumber}`);
 }
@@ -368,7 +371,7 @@ export interface DiscoverTVParams {
 }
 
 export function discoverShows(
-  params: DiscoverTVParams = {}
+  params: DiscoverTVParams = {},
 ): Promise<TMDBPage<TVShow>> {
   return tmdbFetch<TMDBPage<TVShow>>("/discover/tv", {
     ...params,
@@ -381,18 +384,18 @@ export function discoverShows(
 // Search endpoints
 // ---------------------------------------------------------------------------
 
-/** GET /search/tv — search TV shows only */
+/** GET /search/tv - search TV shows only */
 export function searchShows(
   query: string,
-  page = 1
+  page = 1,
 ): Promise<TMDBPage<TVShow>> {
   return tmdbFetch<TMDBPage<TVShow>>("/search/tv", { query, page });
 }
 
-/** GET /search/multi — returns TV + person results */
+/** GET /search/multi - returns TV + person results */
 export function searchMulti(
   query: string,
-  page = 1
+  page = 1,
 ): Promise<TMDBPage<SearchResult>> {
   return tmdbFetch<TMDBPage<SearchResult>>("/search/multi", { query, page });
 }
@@ -411,9 +414,7 @@ export function getTVGenres(): Promise<{ genres: Genre[] }> {
 // ---------------------------------------------------------------------------
 
 /** GET /person/{person_id} */
-export function getPerson(
-  personId: number
-): Promise<PersonDetail> {
+export function getPerson(personId: number): Promise<PersonDetail> {
   return tmdbFetch<PersonDetail>(`/person/${personId}`, {
     append_to_response: "tv_credits",
   });
@@ -453,15 +454,14 @@ export interface WatchProvidersResult {
   buy: WatchProvider[];
 }
 
-/** GET /tv/{series_id}/watch/providers — region-aware, falls back to US */
+/** GET /tv/{series_id}/watch/providers - region-aware, falls back to US */
 export function getWatchProviders(
   seriesId: number,
-  region = "US"
+  region = "US",
 ): Promise<WatchProvidersResult> {
-  return tmdbFetch<WatchProvidersResult>(
-    `/tv/${seriesId}/watch/providers`,
-    { watch_region: region }
-  ).then((data) => {
+  return tmdbFetch<WatchProvidersResult>(`/tv/${seriesId}/watch/providers`, {
+    watch_region: region,
+  }).then((data) => {
     // TMDB returns results keyed by country code; extract the requested region
     const full = data as unknown as {
       id: number;
@@ -470,7 +470,14 @@ export function getWatchProviders(
     };
     const regionData = full.results?.[region] ?? full.results?.["US"] ?? null;
     if (!regionData) {
-      return { link: full.link ?? "", flatrate: [], free: [], ads: [], rent: [], buy: [] };
+      return {
+        link: full.link ?? "",
+        flatrate: [],
+        free: [],
+        ads: [],
+        rent: [],
+        buy: [],
+      };
     }
     return regionData;
   });

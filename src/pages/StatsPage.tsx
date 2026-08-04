@@ -33,7 +33,7 @@ import { BarChart3, Clock, Tv, CheckCircle2, Sparkles } from "lucide-react";
 import { SubscriptionInsight } from "@/components/shows/SubscriptionInsight";
 
 // ---------------------------------------------------------------------------
-// StatsPage — /profile/stats route
+// StatsPage - /profile/stats route
 // Comprehensive stats dashboard: summary cards, genre breakdown donut,
 // ratings distribution histogram, and a shareable Year in Review card.
 // ---------------------------------------------------------------------------
@@ -41,7 +41,7 @@ import { SubscriptionInsight } from "@/components/shows/SubscriptionInsight";
 const REVIEW_YEAR = 2026;
 const LEGACY_FALLBACK_MINUTES = 45; // used only for episodes logged before runtime tracking existed
 
-// Deterministic mock genre assignment — same show always maps to the same
+// Deterministic mock genre assignment - same show always maps to the same
 // genre so the breakdown is stable across renders. We have no real genre data
 // in user_episodes/user_logs, so this is purely illustrative for the demo.
 const MOCK_GENRES = [
@@ -74,9 +74,7 @@ function genreForShow(showName: string): string {
 }
 
 // Full 0.5 → 5 star scale in half-star increments.
-const RATING_BUCKETS = [
-  0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5,
-];
+const RATING_BUCKETS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
 
 export default function StatsPage() {
   const { user, authState } = useAuth();
@@ -91,7 +89,7 @@ export default function StatsPage() {
     const totalEpisodes = userEpisodes.length;
     const totalMinutes = userEpisodes.reduce(
       (sum, ep) => sum + (ep.runtime_minutes ?? LEGACY_FALLBACK_MINUTES),
-      0
+      0,
     );
     const totalHours = Math.round(totalMinutes / 60);
     const showsTracked = new Set<number>([
@@ -103,22 +101,25 @@ export default function StatsPage() {
     // Completed: a show the user has watched > 10 episodes of AND rated.
     const episodesPerShow = new Map<number, number>();
     for (const ep of userEpisodes) {
-      episodesPerShow.set(ep.show_id, (episodesPerShow.get(ep.show_id) ?? 0) + 1);
+      episodesPerShow.set(
+        ep.show_id,
+        (episodesPerShow.get(ep.show_id) ?? 0) + 1,
+      );
     }
     for (const log of userLogs) {
       episodesPerShow.set(
         log.show_id,
-        (episodesPerShow.get(log.show_id) ?? 0) + log.episodes_watched
+        (episodesPerShow.get(log.show_id) ?? 0) + log.episodes_watched,
       );
     }
     const ratedShowIds = new Set(
-      userShows.filter((s) => s.rating != null).map((s) => s.show_id)
+      userShows.filter((s) => s.rating != null).map((s) => s.show_id),
     );
     const completedShows = [...episodesPerShow.entries()].filter(
-      ([showId, count]) => count > 10 && ratedShowIds.has(showId)
+      ([showId, count]) => count > 10 && ratedShowIds.has(showId),
     ).length;
 
-    // Genre breakdown — count unique shows per genre from logs.
+    // Genre breakdown - count unique shows per genre from logs.
     const showNames = new Set<string>(userLogs.map((l) => l.show_name));
     const genreCounts = new Map<string, number>();
     for (const name of showNames) {
@@ -126,7 +127,11 @@ export default function StatsPage() {
       genreCounts.set(g, (genreCounts.get(g) ?? 0) + 1);
     }
     const genreData = [...genreCounts.entries()]
-      .map(([name, value], i) => ({ name, value, fill: GENRE_COLORS[i % GENRE_COLORS.length] }))
+      .map(([name, value], i) => ({
+        name,
+        value,
+        fill: GENRE_COLORS[i % GENRE_COLORS.length],
+      }))
       .sort((a, b) => b.value - a.value);
 
     // Ratings distribution histogram.
@@ -155,11 +160,11 @@ export default function StatsPage() {
 
     // Year in Review (current REVIEW_YEAR).
     const yearEpisodes = userEpisodes.filter(
-      (e) => new Date(e.watched_at).getFullYear() === REVIEW_YEAR
+      (e) => new Date(e.watched_at).getFullYear() === REVIEW_YEAR,
     );
     const yearMinutes = yearEpisodes.reduce(
       (sum, ep) => sum + (ep.runtime_minutes ?? LEGACY_FALLBACK_MINUTES),
-      0
+      0,
     );
     const yearHours = Math.round(yearMinutes / 60);
 
@@ -171,12 +176,12 @@ export default function StatsPage() {
       else yearShowCounts.set(ep.show_id, { name: ep.show_name, count: 1 });
     }
     const favoriteShow = [...yearShowCounts.values()].sort(
-      (a, b) => b.count - a.count
+      (a, b) => b.count - a.count,
     )[0];
 
     // Highest rated show overall.
     const allRatings = [...userShows, ...userLogs].filter(
-      (x) => (x as { rating?: number | null }).rating != null
+      (x) => (x as { rating?: number | null }).rating != null,
     ) as Array<{ show_name: string; rating: number }>;
     const highestRated = allRatings.sort((a, b) => b.rating - a.rating)[0];
 
@@ -188,7 +193,7 @@ export default function StatsPage() {
       yearGenreCounts.set(g, (yearGenreCounts.get(g) ?? 0) + 1);
     }
     const topGenre = [...yearGenreCounts.entries()].sort(
-      (a, b) => b[1] - a[1]
+      (a, b) => b[1] - a[1],
     )[0]?.[0];
 
     return {
@@ -219,7 +224,7 @@ export default function StatsPage() {
   }
 
   // -------------------------------------------------------------------------
-  // Not signed in — prompt
+  // Not signed in - prompt
   // -------------------------------------------------------------------------
   if (!user) {
     return (
@@ -263,7 +268,7 @@ export default function StatsPage() {
   }
 
   // -------------------------------------------------------------------------
-  // Empty state — signed in but no data yet
+  // Empty state - signed in but no data yet
   // -------------------------------------------------------------------------
   if (!stats.hasData) {
     return (
@@ -282,8 +287,8 @@ export default function StatsPage() {
               No stats yet
             </h2>
             <p className="text-sm text-muted-foreground max-w-xs">
-              Start tracking shows, logging episodes, and rating titles to
-              build your personal stats dashboard.
+              Start tracking shows, logging episodes, and rating titles to build
+              your personal stats dashboard.
             </p>
             <Link
               to="/shows"
@@ -458,8 +463,8 @@ function StatsHeader() {
         Stats
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Your watching habits at a glance: totals, genre breakdowns, ratings,
-        and your year in TV.
+        Your watching habits at a glance: totals, genre breakdowns, ratings, and
+        your year in TV.
       </p>
     </header>
   );
@@ -522,7 +527,7 @@ function GenreLegend({
 }
 
 // ---------------------------------------------------------------------------
-// Year in Review — shareable gradient card
+// Year in Review - shareable gradient card
 // ---------------------------------------------------------------------------
 
 function YearInReview({
@@ -597,10 +602,7 @@ function YearInReview({
                   : "-"
               }
             />
-            <YearHighlight
-              label="Your top genre"
-              value={topGenre ?? "-"}
-            />
+            <YearHighlight label="Your top genre" value={topGenre ?? "-"} />
           </div>
 
           {/* Logo footer */}
