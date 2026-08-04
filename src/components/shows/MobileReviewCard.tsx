@@ -5,6 +5,7 @@ import { bestPosterUrl } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
 import { getShowRatingIcon } from "@/lib/showRatingIcons";
 import { VibeTagBadge } from "@/components/shows/VibeTag";
+import { TagChips } from "@/components/shows/TagChips";
 import type { ReviewWithAuthor } from "@/components/shows/ReviewCard";
 
 interface MobileReviewCardProps {
@@ -76,6 +77,13 @@ export function MobileReviewCard({ review }: MobileReviewCardProps) {
           </div>
         </Link>
       </div>
+
+      {/* Personal tags */}
+      {review.tags && review.tags.length > 0 && (
+        <div className="mt-2">
+          <TagChips tags={review.tags} size="xs" />
+        </div>
+      )}
 
       {/* Review text */}
       {review.review && (

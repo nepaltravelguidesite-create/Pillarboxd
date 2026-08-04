@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useSocial } from "@/context/SocialContext";
 import { useUserData } from "@/context/UserDataContext";
 import { useTrendingShows } from "@/hooks/use-tmdb";
-import { type TVShow } from "@/lib/tmdb";
+import { type TVShow, posterUrl } from "@/lib/tmdb";
 import { ShowPosterCard } from "@/components/shows/ShowPosterCard";
 import { ContinueWatchingCard } from "@/components/shows/ContinueWatchingCard";
 import { MobileListCard } from "@/components/shows/MobileListCard";
 import { MobileReviewCard } from "@/components/shows/MobileReviewCard";
+import { StarRating } from "@/components/shows/StarRating";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -73,6 +75,8 @@ export function HomePage() {
   const [listItems, setListItems] = useState<Record<string, (string | null)[]>>({});
   const [listCurators, setListCurators] = useState<Record<string, ProfileRow>>({});
   const [listsLoading, setListsLoading] = useState(true);
+  const [onThisDay, setOnThisDay] = useState<LogRow | null>(null);
+  const [onThisDayYears, setOnThisDayYears] = useState<number>(0);
 
   // Fetch friends' reviews
   const loadReviews = useCallback(async () => {
@@ -234,6 +238,40 @@ export function HomePage() {
     loadLists();
   }, [loadLists]);
 
+  // On This Day: find logs from previous years on today's month/day
+  useEffect(() => {
+    if (!user) return;
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const day = now.getDate();
+    const year = now.getFullYear();
+
+    (async () => {
+      const { data } = await supabase
+        .from("user_logs")
+        .select("*")
+        .eq("user_id", user.id)
+        .not("watched_date", "is", null)
+        .order("watched_date", { ascending: false })
+        .limit(200);
+
+      if (!data) return;
+      const typedLogs = data as LogRow[];
+      const matches = typedLogs.filter((log) => {
+        if (!log.watched_date) return false;
+        const d = new Date(log.watched_date);
+        return d.getMonth() + 1 === month && d.getDate() === day && d.getFullYear() !== year;
+      });
+
+      if (matches.length > 0) {
+        const mostRecent = matches[0];
+        const logYear = new Date(mostRecent.watched_date).getFullYear();
+        setOnThisDay(mostRecent);
+        setOnThisDayYears(year - logYear);
+      }
+    })();
+  }, [user]);
+
   const firstName = user?.displayName?.split(" ")[0] ?? "there";
 
   return (
@@ -278,6 +316,14 @@ export function HomePage() {
           </div>
         )}
       </div>
+
+      {/* On This Day memory */}
+      {user && onThisDay && (
+        <section className="space-y-3">
+          <SectionHeader title="On This Day" />
+          <OnThisDayCard log={onThisDay} yearsAgo={onThisDayYears} />
+        </section>
+      )}
 
       {/* Continue Watching — only for logged-in users with shows in progress */}
       {user && watchingShows.length > 0 && (
@@ -437,5 +483,46 @@ function ScrollSkeletonRow({ count, cardWidth = "w-24" }: { count: number; cardW
         </div>
       ))}
     </>
+  );
+}
+
+function OnThisDayCard({ log, yearsAgo }: { log: LogRow; yearsAgo: number }) {
+  const poster = log.show_poster_path ? posterUrl(log.show_poster_path, "w342") : null;
+
+  return (
+    <Link
+      to={`/show/${log.show_id}`}
+      className="flex items-center gap-4 rounded-xl border border-border/50 bg-card p-4 hover:border-primary/30 hover:bg-secondary/30 transition-all duration-200 group"
+    >
+      {poster ? (
+        <img
+          src={poster}
+          alt={log.show_name}
+          className="w-16 h-24 rounded-lg object-cover shrink-0"
+        />
+      ) : (
+        <div className="w-16 h-24 rounded-lg bg-muted shrink-0 flex items-center justify-center">
+          <Skeleton className="w-full h-full rounded-lg" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0 space-y-1">
+        <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+          {yearsAgo} {yearsAgo === 1 ? "year" : "years"} ago today
+        </p>
+        <h3 className="font-display text-base font-bold text-foreground truncate group-hover:text-primary transition-colors">
+          {log.show_name}
+        </h3>
+        {log.rating != null && log.rating > 0 && (
+          <div className="flex items-center gap-1">
+            <StarRating value={log.rating} readOnly size="sm" />
+          </div>
+        )}
+        {log.review && (
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {log.review}
+          </p>
+        )}
+      </div>
+    </Link>
   );
 }

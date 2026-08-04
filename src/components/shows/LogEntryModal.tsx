@@ -56,8 +56,22 @@ export function LogEntryModal({
   const [rewatch, setRewatch] = useState(false);
   const [seasonNumber, setSeasonNumber] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
 
   const ratingIcon = getShowRatingIcon(show.id);
+
+  function addTag(raw: string) {
+    const trimmed = raw.trim().toLowerCase();
+    if (trimmed && !tags.includes(trimmed) && tags.length < 8) {
+      setTags([...tags, trimmed]);
+    }
+    setTagInput("");
+  }
+
+  function removeTag(tag: string) {
+    setTags(tags.filter((t) => t !== tag));
+  }
 
   // Only show real seasons (skip season 0 specials)
   const realSeasons = seasons.filter((s) => s.season_number > 0);
@@ -72,6 +86,7 @@ export function LogEntryModal({
         setContainsSpoilers(existingLog.contains_spoiler);
         setRewatch(existingLog.rewatch);
         setSeasonNumber(existingLog.season_number);
+        setTags(existingLog.tags ?? []);
       } else {
         setWatchedDate(new Date().toISOString().slice(0, 10));
         setRating(initialRating);
@@ -79,7 +94,9 @@ export function LogEntryModal({
         setContainsSpoilers(false);
         setRewatch(false);
         setSeasonNumber(initialSeasonNumber);
+        setTags([]);
       }
+      setTagInput("");
       setSubmitting(false);
     }
   }, [open, show.id, initialRating, initialSeasonNumber, existingLog]);
@@ -95,12 +112,14 @@ export function LogEntryModal({
       setReview(existing.review ?? "");
       setContainsSpoilers(existing.contains_spoiler);
       setRewatch(existing.rewatch);
+      setTags(existing.tags ?? []);
     } else {
       setWatchedDate(new Date().toISOString().slice(0, 10));
       setRating(seasonNum === null ? initialRating : null);
       setReview("");
       setContainsSpoilers(false);
       setRewatch(false);
+      setTags([]);
     }
   }
 
@@ -128,6 +147,7 @@ export function LogEntryModal({
         rating,
         contains_spoiler: containsSpoilers,
         season_number: seasonNumber,
+        tags: tags.length > 0 ? tags : null,
       };
 
       if (isEditMode && existingLog) {
@@ -313,6 +333,48 @@ export function LogEntryModal({
                 "transition-colors"
               )}
             />
+          </div>
+
+          {/* Personal tags — optional, chip-style input */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Tags
+            </label>
+            <div className="flex flex-wrap gap-1.5 items-center rounded-2xl border border-input bg-background/40 px-3 py-2.5 min-h-[44px]">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 rounded-full bg-primary/15 text-primary text-xs font-medium px-2.5 py-1"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    className="text-primary/60 hover:text-primary transition-colors"
+                    aria-label={`Remove ${tag}`}
+                  >
+                    <X className="size-3" />
+                  </button>
+                </span>
+              ))}
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === ",") {
+                    e.preventDefault();
+                    addTag(tagInput);
+                  } else if (e.key === "Backspace" && !tagInput && tags.length > 0) {
+                    removeTag(tags[tags.length - 1]);
+                  }
+                }}
+                onBlur={() => tagInput.trim() && addTag(tagInput)}
+                placeholder={tags.length === 0 ? "comfort show, cried, background watch..." : "Add tag..."}
+                className="flex-1 min-w-[120px] bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground/60">Press enter or comma to add. Optional.</p>
           </div>
 
           {/* Secondary controls below the fold */}

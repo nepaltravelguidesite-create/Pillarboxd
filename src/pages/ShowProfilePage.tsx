@@ -29,7 +29,7 @@ import { StatusSegmentedControl } from "@/components/shows/QuickStatusControl";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2, Heart, Bookmark, Plus, ChevronLeft, Eye, List as ListIcon,
-  Tv, BookmarkCheck, RotateCcw,
+  Tv, BookmarkCheck, RotateCcw, Play,
 } from "lucide-react";
 
 type EditorialListPreview = {
@@ -55,6 +55,7 @@ export function ShowProfilePage() {
   const [activeTab, setActiveTab] = useState<"cast" | "crew" | "details">("cast");
   const [activeCommentReview, setActiveCommentReview] = useState<ReviewWithAuthor | null>(null);
   const [editorialLists, setEditorialLists] = useState<EditorialListPreview[]>([]);
+  const [trailerOpen, setTrailerOpen] = useState(false);
   const navigate = useNavigate();
 
   // Find existing review log for edit-in-place (scoped by season_number)
@@ -122,6 +123,17 @@ export function ShowProfilePage() {
       color: GENRE_CHART_COLORS[i % GENRE_CHART_COLORS.length],
     }));
   }, [showDetail?.genres]);
+
+  const bestTrailer = useMemo(() => {
+    const videos = showDetail?.videos?.results ?? [];
+    const youtube = videos.filter((v) => v.site === "YouTube");
+    if (youtube.length === 0) return null;
+    const trailers = youtube.filter((v) => v.type === "Trailer");
+    const teasers = youtube.filter((v) => v.type === "Teaser");
+    const pool = trailers.length > 0 ? trailers : teasers.length > 0 ? teasers : youtube;
+    const official = pool.filter((v) => v.official);
+    return (official.length > 0 ? official : pool)[0] ?? null;
+  }, [showDetail?.videos]);
 
   const ratedReviews = reviews.filter((r) => r.rating !== null);
   const showLogs = useMemo(
@@ -323,6 +335,16 @@ export function ShowProfilePage() {
               </button>
             </div>
 
+            {bestTrailer && (
+              <button
+                onClick={() => setTrailerOpen(true)}
+                className="mt-3 flex items-center justify-center gap-2 w-full h-10 rounded-full border border-primary/30 bg-primary/10 text-primary font-medium text-sm hover:bg-primary/20 hover:-translate-y-px active:translate-y-0 transition-all duration-150"
+              >
+                <Play className="size-4 fill-primary" />
+                Watch Trailer
+              </button>
+            )}
+
             <div className="mt-5">
               <div className="flex gap-1 border-b border-border/40">
                 {(["cast", "crew", "details"] as const).map((tab) => (
@@ -470,6 +492,15 @@ export function ShowProfilePage() {
                     <button onClick={() => setAddToListOpen(true)} className="flex items-center justify-center gap-2 w-full h-10 rounded-full border border-border text-foreground font-medium text-sm hover:bg-secondary/50 hover:-translate-y-px active:translate-y-0 transition-all duration-150">
                       <ListIcon className="size-4" /> Add to Lists
                     </button>
+                    {bestTrailer && (
+                      <button
+                        onClick={() => setTrailerOpen(true)}
+                        className="flex items-center justify-center gap-2 w-full h-10 rounded-full border border-primary/30 bg-primary/10 text-primary font-medium text-sm hover:bg-primary/20 hover:-translate-y-px active:translate-y-0 transition-all duration-150"
+                      >
+                        <Play className="size-4 fill-primary" />
+                        Watch Trailer
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -636,6 +667,26 @@ export function ShowProfilePage() {
         onSuccess={refetchReviews}
       />
       <AddToListModal open={addToListOpen} onOpenChange={setAddToListOpen} show={show} />
+
+      {bestTrailer && (
+        <Dialog open={trailerOpen} onOpenChange={setTrailerOpen}>
+          <DialogContent className="max-w-4xl p-0 overflow-hidden gap-0">
+            <DialogHeader className="sr-only">
+              <DialogTitle>{bestTrailer.name}</DialogTitle>
+              <DialogDescription>Watch the trailer for {showDetail.name}</DialogDescription>
+            </DialogHeader>
+            <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${bestTrailer.key}?autoplay=1&rel=0`}
+                title={bestTrailer.name}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <Dialog open={activeCommentReview !== null} onOpenChange={(open) => !open && setActiveCommentReview(null)}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">

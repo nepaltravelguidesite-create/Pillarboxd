@@ -49,6 +49,7 @@ export interface UserLog {
   rating: number | null;
   contains_spoiler: boolean;
   vibe_tag?: string | null;
+  tags?: string[] | null;
   season_number: number | null;
   created_at: string;
 }

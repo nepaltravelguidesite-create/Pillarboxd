@@ -17,6 +17,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { Calendar, Trash2, RotateCcw, Eye, Star } from "lucide-react";
+import { TagChips } from "@/components/shows/TagChips";
 import { SEOMeta } from "@/components/SEOMeta";
 
 // ---------------------------------------------------------------------------
@@ -303,6 +304,11 @@ function LogEntry({
           <p className="mt-2 text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
             {log.review}
           </p>
+        )}
+
+        {/* Personal tags */}
+        {log.tags && log.tags.length > 0 && (
+          <div className="mt-2"><TagChips tags={log.tags} size="xs" /></div>
         )}
       </div>
     </article>

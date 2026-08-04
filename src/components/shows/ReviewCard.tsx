@@ -4,6 +4,7 @@ import { Heart, MessageCircle } from "lucide-react";
 import { StarRating } from "@/components/shows/StarRating";
 import { getShowRatingIcon } from "@/lib/showRatingIcons";
 import { VibeTagBadge } from "@/components/shows/VibeTag";
+import { TagChips } from "@/components/shows/TagChips";
 import { useSocial } from "@/context/SocialContext";
 import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
@@ -21,6 +22,7 @@ export interface ReviewWithAuthor {
   rewatch: boolean;
   contains_spoiler: boolean;
   vibe_tag?: string | null;
+  tags?: string[] | null;
   season_number?: number | null;
   created_at: string;
   author_username: string;
@@ -148,6 +150,13 @@ export function ReviewCard({ review, onExpand }: ReviewCardProps) {
               {review.review}
             </p>
           )}
+        </div>
+      )}
+
+      {/* Personal tags */}
+      {review.tags && review.tags.length > 0 && (
+        <div className="mt-3">
+          <TagChips tags={review.tags} size="xs" />
         </div>
       )}
 

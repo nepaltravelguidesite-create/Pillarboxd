@@ -14,7 +14,10 @@ import { EditFavoritesModal } from "@/components/shows/EditFavoritesModal";
 import { ShowPosterCard } from "@/components/shows/ShowPosterCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { VibeTagBadge } from "@/components/shows/VibeTag";
-import { Tv, Settings as SettingsIcon, Pencil, Bookmark, Heart, Star } from "lucide-react";
+import { TagChips } from "@/components/shows/TagChips";
+import { WatchActivityHeatmap } from "@/components/shows/WatchActivityHeatmap";
+import { TasteMatchCard } from "@/components/shows/TasteMatchCard";
+import { Tv, Settings as SettingsIcon, Pencil, Bookmark, Heart, Star, UserPlus } from "lucide-react";
 
 export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "reviews" }) {
   const { username } = useParams<{ username: string }>();
@@ -74,10 +77,28 @@ export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "review
 
   const [editFavoritesOpen, setEditFavoritesOpen] = useState(false);
   const [draftFavorites, setDraftFavorites] = useState<FavoriteShow[]>(favoriteShows);
+  const [followedPeople, setFollowedPeople] = useState<{ person_id: number; person_name: string }[]>([]);
 
   useEffect(() => {
     setDraftFavorites(favoriteShows);
   }, [favoriteShows]);
+
+  // Fetch followed people for own profile
+  useEffect(() => {
+    if (!isOwnProfile || !user) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("person_follows")
+        .select("person_id, person_name")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (!cancelled && data) {
+        setFollowedPeople(data as { person_id: number; person_name: string }[]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOwnProfile, user]);
 
   const handleFavoritesSaved = useCallback((saved: FavoriteShow[]) => {
     setDraftFavorites(saved);
@@ -298,6 +319,35 @@ export function UserProfilePage({ tab }: { tab?: "watchlist" | "likes" | "review
           </div>
         )}
 
+        {/* Taste Match — only for other users' profiles */}
+        {!isOwnProfile && profile && (
+          <TasteMatchCard profileUserId={profile.id} profileDisplayName={displayName} />
+        )}
+
+        {/* Watch Activity Heatmap — only for own profile */}
+        {isOwnProfile && userLogs.length > 0 && (
+          <WatchActivityHeatmap logs={userLogs} />
+        )}
+
+        {/* Following — people the user follows */}
+        {isOwnProfile && followedPeople.length > 0 && (
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Following</h2>
+            <div className="flex flex-wrap gap-2">
+              {followedPeople.map((person) => (
+                <Link
+                  key={person.person_id}
+                  to={`/person/${person.person_id}`}
+                  className="flex items-center gap-2 rounded-full border border-border/50 bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:border-primary/40 hover:bg-secondary/30 transition-all"
+                >
+                  <UserPlus className="size-3 text-muted-foreground" />
+                  {person.person_name}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Favorite Shows */}
         {(favoriteShows.length > 0 || isOwnProfile) && (
           <section className="space-y-2">
@@ -415,6 +465,9 @@ function ReviewLogEntry({ log }: { log: UserLog }) {
         )}
         {log.rating == null && log.vibe_tag && (
           <div className="mt-2"><VibeTagBadge value={log.vibe_tag} /></div>
+        )}
+        {log.tags && log.tags.length > 0 && (
+          <div className="mt-2"><TagChips tags={log.tags} size="xs" /></div>
         )}
         {log.review && (
           <p className="text-sm text-foreground/80 leading-7 mt-2">

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Loader2, Tv } from "lucide-react";
+import { Loader2, Tv, UserPlus, UserCheck } from "lucide-react";
 import {
   getPerson,
   profileUrl,
@@ -9,6 +9,10 @@ import {
 } from "@/lib/tmdb";
 import { ShowPosterCard } from "@/components/shows/ShowPosterCard";
 import { SEOMeta } from "@/components/SEOMeta";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -27,10 +31,13 @@ type FilmographyEntry = TVShow & {
 export default function PersonPage() {
   const { personId } = useParams<{ personId: string }>();
   const id = Number(personId);
+  const { user } = useAuth();
 
   const [person, setPerson] = useState<PersonDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,6 +50,7 @@ export default function PersonPage() {
     setLoading(true);
     setError(null);
     setPerson(null);
+    setIsFollowing(false);
 
     getPerson(id)
       .then((data) => {
@@ -57,10 +65,55 @@ export default function PersonPage() {
         setLoading(false);
       });
 
+    // Check if current user follows this person
+    if (user) {
+      supabase
+        .from("person_follows")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("person_id", id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (!cancelled) setIsFollowing(!!data);
+        });
+    }
+
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, user]);
+
+  const toggleFollowPerson = useCallback(async () => {
+    if (!user || !person) return;
+    setFollowLoading(true);
+    try {
+      if (isFollowing) {
+        const { error: unfollowErr } = await supabase
+          .from("person_follows")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("person_id", id);
+        if (unfollowErr) throw unfollowErr;
+        setIsFollowing(false);
+        toast.success(`Unfollowed ${person.name}`);
+      } else {
+        const { error: followErr } = await supabase
+          .from("person_follows")
+          .insert({
+            user_id: user.id,
+            person_id: id,
+            person_name: person.name,
+          });
+        if (followErr) throw followErr;
+        setIsFollowing(true);
+        toast.success(`Following ${person.name}`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to toggle follow");
+    } finally {
+      setFollowLoading(false);
+    }
+  }, [user, person, isFollowing, id]);
 
   // ---- Loading -------------------------------------------------------------
   if (loading) {
@@ -148,16 +201,40 @@ export default function PersonPage() {
               </p>
             )}
 
-            {person.homepage && (
-              <a
-                href={person.homepage}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-block text-sm text-primary hover:underline"
-              >
-                Official website ↗
-              </a>
-            )}
+            <div className="mt-3 flex items-center gap-3">
+              {user && (
+                <button
+                  onClick={toggleFollowPerson}
+                  disabled={followLoading}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 shrink-0",
+                    "disabled:opacity-60 disabled:cursor-not-allowed",
+                    isFollowing
+                      ? "bg-secondary text-foreground border border-border"
+                      : "bg-primary text-primary-foreground hover:-translate-y-px hover:shadow-md hover:shadow-primary/25"
+                  )}
+                >
+                  {followLoading ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : isFollowing ? (
+                    <UserCheck className="size-4" />
+                  ) : (
+                    <UserPlus className="size-4" />
+                  )}
+                  {isFollowing ? "Following" : "Follow"}
+                </button>
+              )}
+              {person.homepage && (
+                <a
+                  href={person.homepage}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline"
+                >
+                  Official website ↗
+                </a>
+              )}
+            </div>
 
             {/* Biography */}
             {person.biography ? (

@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
 import { bestPosterUrl } from "@/lib/tmdb";
 import { Calendar, Check, Star, Heart, Activity } from "lucide-react";
+import { TagChips } from "@/components/shows/TagChips";
 import { SEOMeta } from "@/components/SEOMeta";
 
 // ---------------------------------------------------------------------------
@@ -24,6 +25,7 @@ interface ActivityItem {
   showName: string;
   posterPath: string | null;
   description: string;
+  tags?: string[] | null;
 }
 
 export default function JournalPage() {
@@ -44,6 +46,7 @@ export default function JournalPage() {
       showName: l.show_name,
       posterPath: l.show_poster_path,
       description: buildLogDescription(l),
+      tags: l.tags,
     }));
 
     const episodes: ActivityItem[] = userEpisodes.map((e: UserEpisode) => ({
@@ -241,6 +244,9 @@ function ActivityRow({ item }: { item: ActivityItem }) {
         >
           {formatRelative(item.timestamp)}
         </time>
+        {item.tags && item.tags.length > 0 && (
+          <div className="mt-1"><TagChips tags={item.tags} size="xs" /></div>
+        )}
       </div>
     </li>
   );
