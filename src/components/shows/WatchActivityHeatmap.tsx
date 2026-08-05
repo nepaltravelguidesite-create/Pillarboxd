@@ -94,6 +94,7 @@ export function WatchActivityHeatmap({
   const hasActivity = activeCells.length > 0;
 
   const replay = useCallback(() => {
+    gridDataRef.current = null;
     setFinished(false);
     setReplayKey((k) => k + 1);
   }, []);
@@ -159,27 +160,21 @@ export function WatchActivityHeatmap({
     }
 
     function drawSnake(x: number, y: number) {
-      const segments = SNAKE_LENGTH;
-      for (let s = 0; s < segments; s) {
-        const t = s / segments;
-        const sx = x - s * CELL_PLUS_GAP * 0.7;
+      const SEGMENT_SPACING = CELL_PLUS_GAP * 1.05;
+      const size = CELL;
+      for (let s = 0; s < SNAKE_LENGTH; s++) {
+        const sx = x - s * SEGMENT_SPACING;
         const sy = y;
-        const alpha = 1 - t * 0.6;
-        const size = CELL - t * 3;
-        gctx.fillStyle = `rgba(239, 169, 169, ${alpha})`;
+        // Stepped color gradient: head brightest, body progressively darker
+        const shade = s / (SNAKE_LENGTH - 1);
+        const r = Math.round(239 - shade * 55);
+        const g = Math.round(169 - shade * 45);
+        const b = Math.round(169 - shade * 50);
+        gctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
         gctx.beginPath();
         gctx.roundRect(sx - size / 2, sy - size / 2, size, size, 3);
         gctx.fill();
-        s++;
       }
-      // Head glow
-      const grad = gctx.createRadialGradient(x, y, 0, x, y, CELL * 1.5);
-      grad.addColorStop(0, "rgba(239, 169, 169, 0.35)");
-      grad.addColorStop(1, "rgba(239, 169, 169, 0)");
-      gctx.fillStyle = grad;
-      gctx.beginPath();
-      gctx.arc(x, y, CELL * 1.5, 0, Math.PI * 2);
-      gctx.fill();
     }
 
     if (reducedMotionRef.current) {
@@ -310,7 +305,7 @@ export function WatchActivityHeatmap({
       io.disconnect();
       cancelAnimationFrame(rafRef.current);
     };
-  }, [logs, replayKey, hasActivity]);
+  }, [replayKey, hasActivity]);
 
   if (!hasActivity) return null;
 
