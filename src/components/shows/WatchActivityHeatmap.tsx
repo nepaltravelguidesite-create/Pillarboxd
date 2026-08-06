@@ -20,7 +20,7 @@ const CELL_PLUS_GAP = CELL + GAP;
 const ROWS = 7;
 const WEEKS = 53;
 const SNAKE_LENGTH = 4;
-const EMPTY_STEPS_PER_FRAME = 4;
+const EMPTY_STEPS_PER_FRAME = 1;
 const STEP_SLIDE_FRAMES = 4;
 
 function buildGrid(logs: { watched_date: string | null }[]): {
@@ -223,26 +223,20 @@ export function WatchActivityHeatmap({
     const activeCount = activeIndices.length;
     const path = serpentinePath;
 
-    // Pacing: fast through empty runs, deliberate on active cells
-    const TARGET_TOTAL_MS = 6000;
-    const FRAME_MS = 1000 / 60;
-    const targetTotalFrames = TARGET_TOTAL_MS / FRAME_MS;
-    const emptyCellsCount = path.length - activeCount;
-    const emptyTravelFrames = Math.ceil(emptyCellsCount / EMPTY_STEPS_PER_FRAME);
-    const restBudget = Math.max(0, targetTotalFrames - emptyTravelFrames);
-    const REST_DURATION = Math.max(
-      6,
-      Math.min(40, Math.round(restBudget / activeCount)),
-    );
-
+    // Fixed pacing: 1 cell/frame through empty space, ~500ms pause on active cells
+    const REST_DURATION = 30; // ~500ms eating pause
+    const LOOP_PAUSE_FRAMES = 100; // ~1.7s showing completed grid before loop
     const INITIAL_PAUSE = 25;
 
     let pathIdx = 0;
-    let phase: "initial" | "resting" | "sliding" | "fasting" | "done" =
+    let phase: "initial" | "resting" | "sliding" | "fasting" | "looping" =
       "initial";
     let restTimer = 0;
     let slideProgress = 0;
     let eatenCount = 0;
+    let loopPauseTimer = 0;
+    let firstPassComplete = false;
+    let isVisible = false;
     const startTime = performance.now();
     console.log(
       `[heatmap] animation starting — ${activeCount} active cells, path=${path.length}, REST_DURATION=${REST_DURATION} frames/cell`,
@@ -264,19 +258,34 @@ export function WatchActivityHeatmap({
       return false;
     }
 
-    function finishAnimation() {
+    function finishPass() {
       drawAll();
-      setFinished(true);
-      const elapsed = performance.now() - startTime;
-      console.log(
-        `[heatmap] animation finished — ${eatenCount} cells eaten, ${Math.round(elapsed)}ms total`,
-      );
-      phase = "done";
+      if (!firstPassComplete) {
+        firstPassComplete = true;
+        setFinished(true);
+        const elapsed = performance.now() - startTime;
+        console.log(
+          `[heatmap] first pass complete — ${eatenCount} cells eaten, ${Math.round(elapsed)}ms, looping...`,
+        );
+      }
+      loopPauseTimer = 0;
+      phase = "looping";
+    }
+
+    function restartLoop() {
+      pathIdx = 0;
+      eaten.clear();
+      eatenCount = 0;
+      restTimer = 0;
+      slideProgress = 0;
+      drawAll();
+      phase = "initial";
+      console.log(`[heatmap] loop restart — ${activeCount} active cells`);
     }
 
     function beginStep() {
       if (pathIdx + 1 >= path.length) {
-        finishAnimation();
+        finishPass();
         return;
       }
       // Look ahead: fast-travel through runs of 3+ empty cells
@@ -326,7 +335,17 @@ export function WatchActivityHeatmap({
     }
 
     function animate() {
-      if (phase === "done") return;
+      if (!isVisible) return;
+
+      if (phase === "looping") {
+        loopPauseTimer++;
+        if (loopPauseTimer >= LOOP_PAUSE_FRAMES) {
+          restartLoop();
+        }
+        drawAll();
+        rafRef.current = requestAnimationFrame(animate);
+        return;
+      }
 
       if (phase === "initial") {
         restTimer++;
@@ -338,7 +357,7 @@ export function WatchActivityHeatmap({
           } else if (pathIdx + 1 < path.length) {
             beginStep();
           } else {
-            finishAnimation();
+            finishPass();
             return;
           }
         }
@@ -354,7 +373,7 @@ export function WatchActivityHeatmap({
           if (pathIdx + 1 < path.length) {
             beginStep();
           } else {
-            finishAnimation();
+            finishPass();
             return;
           }
         }
@@ -374,7 +393,7 @@ export function WatchActivityHeatmap({
           } else if (pathIdx + 1 < path.length) {
             beginStep();
           } else {
-            finishAnimation();
+            finishPass();
             return;
           }
         }
@@ -406,7 +425,7 @@ export function WatchActivityHeatmap({
           if (ate) {
             phase = "resting";
           } else {
-            finishAnimation();
+            finishPass();
             return;
           }
         }
@@ -416,17 +435,20 @@ export function WatchActivityHeatmap({
       }
     }
 
-    // Start animation when scrolled into view
+    // Start/pause animation based on visibility
     const container = containerRef.current;
     if (!container) return;
 
-    let started = false;
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !started) {
-          started = true;
-          rafRef.current = requestAnimationFrame(animate);
-          io.disconnect();
+        if (entries[0].isIntersecting) {
+          if (!isVisible) {
+            isVisible = true;
+            rafRef.current = requestAnimationFrame(animate);
+          }
+        } else {
+          isVisible = false;
+          cancelAnimationFrame(rafRef.current);
         }
       },
       { threshold: 0.3 },
