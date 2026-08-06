@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,15 +23,40 @@ const SNAKE_LENGTH = 4;
 const EMPTY_STEPS_PER_FRAME = 1;
 const STEP_SLIDE_FRAMES = 4;
 
-function buildGrid(logs: { watched_date: string | null }[]): {
-  cells: DayCell[];
-  maxCount: number;
-} {
+const MIN_CELL = 7;
+const MIN_WEEKS = 26;
+const DAY_LABEL_COL_WIDTH = 18;
+const CONTAINER_PADDING = 8;
+
+interface Layout {
+  cell: number;
+  gap: number;
+  cellPlusGap: number;
+  weeks: number;
+}
+
+function computeLayout(containerWidth: number): Layout {
+  const avail = Math.max(80, containerWidth - DAY_LABEL_COL_WIDTH - CONTAINER_PADDING);
+  const gap = GAP;
+  let weeks = WEEKS;
+  let cell = Math.floor(avail / weeks) - gap;
+  if (cell < MIN_CELL) {
+    weeks = Math.max(MIN_WEEKS, Math.floor(avail / (MIN_CELL + gap)));
+    cell = Math.floor(avail / weeks) - gap;
+    if (cell < MIN_CELL) cell = MIN_CELL;
+  }
+  return { cell, gap, cellPlusGap: cell + gap, weeks };
+}
+
+function buildGrid(
+  logs: { watched_date: string | null }[],
+  weeks: number,
+): { cells: DayCell[]; maxCount: number } {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const start = new Date(today);
-  start.setDate(start.getDate() - (WEEKS * 7 - 1));
+  start.setDate(start.getDate() - (weeks * 7 - 1));
   while (start.getDay() !== 0) start.setDate(start.getDate() - 1);
 
   const countMap = new Map<string, number>();
@@ -44,7 +69,7 @@ function buildGrid(logs: { watched_date: string | null }[]): {
 
   const cells: DayCell[] = [];
   let maxCount = 0;
-  for (let col = 0; col < WEEKS; col++) {
+  for (let col = 0; col < weeks; col++) {
     for (let row = 0; row < ROWS; row++) {
       const date = new Date(start);
       date.setDate(start.getDate() + col * 7 + row);
@@ -73,18 +98,43 @@ export function WatchActivityHeatmap({
   const containerRef = useRef<HTMLDivElement>(null);
   const [finished, setFinished] = useState(false);
   const [replayKey, setReplayKey] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
   const gridDataRef = useRef<{ cells: DayCell[]; maxCount: number } | null>(
     null,
   );
+  const gridWeeksRef = useRef<number>(WEEKS);
   const rafRef = useRef<number>(0);
   const reducedMotionRef = useRef(false);
 
-  const { cells } = (() => {
-    if (!gridDataRef.current) {
-      gridDataRef.current = buildGrid(logs);
-    }
-    return gridDataRef.current;
-  })();
+  // Measure container width and track resize
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0].contentRect.width;
+      setContainerWidth(w);
+    });
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, []);
+
+  const layout = useMemo(
+    () => (containerWidth > 0 ? computeLayout(containerWidth) : null),
+    [containerWidth],
+  );
+
+  const cell = layout?.cell ?? CELL;
+  const gap = layout?.gap ?? GAP;
+  const cellPlusGap = layout?.cellPlusGap ?? CELL_PLUS_GAP;
+  const layoutWeeks = layout?.weeks ?? WEEKS;
+  const cornerRadius = Math.max(1, Math.round(cell * 0.2));
+
+  // Rebuild grid when weeks changes or on replay
+  if (gridDataRef.current === null || gridWeeksRef.current !== layoutWeeks) {
+    gridDataRef.current = buildGrid(logs, layoutWeeks);
+    gridWeeksRef.current = layoutWeeks;
+  }
+  const { cells } = gridDataRef.current;
 
   const activeCells = cells.filter((c) => c.count > 0);
   const hasActivity = activeCells.length > 0;
@@ -96,26 +146,27 @@ export function WatchActivityHeatmap({
   }, []);
 
   useEffect(() => {
-    if (!hasActivity) return;
-    gridDataRef.current = buildGrid(logs);
+    if (!hasActivity || !layout) return;
+    gridDataRef.current = buildGrid(logs, layoutWeeks);
     const grid = gridDataRef.current!;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const gctx = ctx; // non-null reference for closures
+    const gctx = ctx;
 
     reducedMotionRef.current = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
 
     const dpr = window.devicePixelRatio || 1;
-    const w = WEEKS * CELL_PLUS_GAP;
-    const h = ROWS * CELL_PLUS_GAP;
+    const w = layoutWeeks * cellPlusGap;
+    const h = ROWS * cellPlusGap;
     canvas.width = w * dpr;
     canvas.height = h * dpr;
     canvas.style.width = `${w}px`;
     canvas.style.height = `${h}px`;
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
     gctx.scale(dpr, dpr);
 
     const gridCells = grid.cells;
@@ -129,16 +180,16 @@ export function WatchActivityHeatmap({
     const eaten = new Set<number>();
 
     function drawCell(idx: number, color: string) {
-      const cell = gridCells[idx];
-      if (!cell) return;
+      const gridCell = gridCells[idx];
+      if (!gridCell) return;
       gctx.fillStyle = color;
       gctx.beginPath();
       gctx.roundRect(
-        cell.col * CELL_PLUS_GAP,
-        cell.row * CELL_PLUS_GAP,
-        CELL,
-        CELL,
-        3,
+        gridCell.col * cellPlusGap,
+        gridCell.row * cellPlusGap,
+        cell,
+        cell,
+        cornerRadius,
       );
       gctx.fill();
     }
@@ -159,7 +210,7 @@ export function WatchActivityHeatmap({
     const cellMap = new Map<string, number>();
     gridCells.forEach((c, i) => cellMap.set(`${c.col},${c.row}`, i));
     const serpentinePath: number[] = [];
-    for (let col = 0; col < WEEKS; col++) {
+    for (let col = 0; col < layoutWeeks; col++) {
       const goDown = col % 2 === 0;
       for (let r = 0; r < ROWS; r++) {
         const row = goDown ? r : ROWS - 1 - r;
@@ -171,9 +222,119 @@ export function WatchActivityHeatmap({
     function cellCenter(idx: number) {
       const c = gridCells[idx];
       return {
-        x: c.col * CELL_PLUS_GAP + CELL / 2,
-        y: c.row * CELL_PLUS_GAP + CELL / 2,
+        x: c.col * cellPlusGap + cell / 2,
+        y: c.row * cellPlusGap + cell / 2,
       };
+    }
+
+    const REEL_ACCENT = "rgba(239, 169, 169, 1)";
+    const REEL_DARK = "rgba(200, 130, 130, 1)";
+    const REEL_HUB = "rgba(180, 110, 110, 1)";
+    const TRAIL_COLOR = "239, 169, 169";
+
+    function drawFilmReel(
+      ctx: CanvasRenderingContext2D,
+      x: number,
+      y: number,
+      size: number,
+    ) {
+      const radius = size * 0.42;
+      const lineWidth = Math.max(1, size * 0.1);
+      const holeRadius = Math.max(0.8, size * 0.1);
+      const hubRadius = Math.max(1, size * 0.14);
+
+      ctx.save();
+      ctx.strokeStyle = REEL_ACCENT;
+      ctx.lineWidth = lineWidth;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = REEL_DARK;
+      for (let i = 0; i < 3; i++) {
+        const angle = (i / 3) * Math.PI * 2 - Math.PI / 2;
+        const hx = x + Math.cos(angle) * radius * 0.55;
+        const hy = y + Math.sin(angle) * radius * 0.55;
+        ctx.beginPath();
+        ctx.arc(hx, hy, holeRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = REEL_HUB;
+      ctx.beginPath();
+      ctx.arc(x, y, hubRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawLightTrail(
+      ctx: CanvasRenderingContext2D,
+      headX: number,
+      headY: number,
+      bodyPathIdxs: number[],
+    ) {
+      const positions: { x: number; y: number }[] = [{ x: headX, y: headY }];
+      for (const pi of bodyPathIdxs) {
+        if (pi < 0 || pi >= serpentinePath.length) continue;
+        positions.push(cellCenter(serpentinePath[pi]));
+      }
+      if (positions.length < 2) return;
+
+      const beamLength = cellPlusGap * 3.5;
+      const beamWidth = cell * 0.7;
+
+      for (let s = 1; s < positions.length; s++) {
+        const from = positions[s - 1];
+        const to = positions[s];
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 0.1) continue;
+        const ux = dx / dist;
+        const uy = dy / dist;
+
+        const tailX = from.x;
+        const tailY = from.y;
+        const tipX = from.x + ux * beamLength * (1 - (s - 1) / positions.length);
+        const tipY = from.y + uy * beamLength * (1 - (s - 1) / positions.length);
+
+        const px = -uy;
+        const py = ux;
+        const fade = 0.18 * (1 - (s - 1) / positions.length);
+        const halfW = beamWidth * 0.5 * (1 - (s - 1) / positions.length);
+
+        ctx.fillStyle = `rgba(${TRAIL_COLOR}, ${fade})`;
+        ctx.beginPath();
+        ctx.moveTo(tailX + px * halfW, tailY + py * halfW);
+        ctx.lineTo(tailX - px * halfW, tailY - py * halfW);
+        ctx.lineTo(tipX - px * halfW * 0.3, tipY - py * halfW * 0.3);
+        ctx.lineTo(tipX + px * halfW * 0.3, tipY + py * halfW * 0.3);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      const head = positions[0];
+      const prev = positions[1];
+      const hdx = head.x - prev.x;
+      const hdy = head.y - prev.y;
+      const hdist = Math.sqrt(hdx * hdx + hdy * hdy);
+      if (hdist > 0.1) {
+        const hux = hdx / hdist;
+        const huy = hdy / hdist;
+        const hpx = -huy;
+        const hpy = hux;
+        const hHalfW = beamWidth * 0.5;
+        const hTipX = head.x + hux * beamLength;
+        const hTipY = head.y + huy * beamLength;
+        ctx.fillStyle = `rgba(${TRAIL_COLOR}, 0.22)`;
+        ctx.beginPath();
+        ctx.moveTo(head.x + hpx * hHalfW, head.y + hpy * hHalfW);
+        ctx.lineTo(head.x - hpx * hHalfW, head.y - hpy * hHalfW);
+        ctx.lineTo(hTipX - hpx * hHalfW * 0.25, hTipY - hpy * hHalfW * 0.25);
+        ctx.lineTo(hTipX + hpx * hHalfW * 0.25, hTipY + hpy * hHalfW * 0.25);
+        ctx.closePath();
+        ctx.fill();
+      }
     }
 
     function drawSnakeBody(
@@ -181,34 +342,11 @@ export function WatchActivityHeatmap({
       headY: number,
       bodyPathIdxs: number[],
     ) {
-      const positions: { x: number; y: number }[] = [
-        { x: headX, y: headY },
-      ];
-      for (const pi of bodyPathIdxs) {
-        if (pi < 0 || pi >= serpentinePath.length) continue;
-        positions.push(cellCenter(serpentinePath[pi]));
-      }
-      // Draw from tail to head so head renders on top
-      for (let s = positions.length - 1; s >= 0; s--) {
-        const shade = s / Math.max(1, positions.length - 1);
-        const r = Math.round(239 - shade * 55);
-        const g = Math.round(169 - shade * 45);
-        const b = Math.round(169 - shade * 50);
-        gctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-        gctx.beginPath();
-        gctx.roundRect(
-          positions[s].x - CELL / 2,
-          positions[s].y - CELL / 2,
-          CELL,
-          CELL,
-          3,
-        );
-        gctx.fill();
-      }
+      drawLightTrail(gctx, headX, headY, bodyPathIdxs);
+      drawFilmReel(gctx, headX, headY, cell);
     }
 
     if (reducedMotionRef.current) {
-      // Static fully-colored heatmap
       eaten.clear();
       activeIndices.forEach((i) => eaten.add(i));
       drawAll();
@@ -223,9 +361,8 @@ export function WatchActivityHeatmap({
     const activeCount = activeIndices.length;
     const path = serpentinePath;
 
-    // Fixed pacing: 1 cell/frame through empty space, ~500ms pause on active cells
-    const REST_DURATION = 30; // ~500ms eating pause
-    const LOOP_PAUSE_FRAMES = 100; // ~1.7s showing completed grid before loop
+    const REST_DURATION = 30;
+    const LOOP_PAUSE_FRAMES = 100;
     const INITIAL_PAUSE = 25;
 
     let pathIdx = 0;
@@ -239,7 +376,7 @@ export function WatchActivityHeatmap({
     let isVisible = false;
     const startTime = performance.now();
     console.log(
-      `[heatmap] animation starting — ${activeCount} active cells, path=${path.length}, REST_DURATION=${REST_DURATION} frames/cell`,
+      `[heatmap] animation starting — ${activeCount} active cells, path=${path.length}, weeks=${layoutWeeks}, cell=${cell}, REST_DURATION=${REST_DURATION} frames/cell`,
     );
 
     function eatCurrentCell(): boolean {
@@ -288,7 +425,6 @@ export function WatchActivityHeatmap({
         finishPass();
         return;
       }
-      // Look ahead: fast-travel through runs of 3+ empty cells
       let emptyRun = 0;
       for (
         let i = pathIdx + 1;
@@ -435,7 +571,6 @@ export function WatchActivityHeatmap({
       }
     }
 
-    // Start/pause animation based on visibility
     const container = containerRef.current;
     if (!container) return;
 
@@ -459,24 +594,17 @@ export function WatchActivityHeatmap({
       io.disconnect();
       cancelAnimationFrame(rafRef.current);
     };
-  }, [replayKey, hasActivity]);
+  }, [replayKey, hasActivity, cell, gap, cellPlusGap, layoutWeeks, layout]);
 
   if (!hasActivity) return null;
 
   const monthLabels = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
   ];
+  const labelCount = Math.min(12, Math.ceil(layoutWeeks / 4.4));
+  const visibleLabels = monthLabels.slice(0, labelCount);
+  const labelWidth = cellPlusGap * 4.3;
 
   return (
     <div className={cn("space-y-3", className)} ref={containerRef}>
@@ -495,30 +623,30 @@ export function WatchActivityHeatmap({
         )}
       </div>
       <div className="overflow-x-auto pb-2 -mx-1 px-1">
-        <div className="inline-block min-w-full">
+        <div style={{ width: DAY_LABEL_COL_WIDTH + layoutWeeks * cellPlusGap }}>
           {/* Month labels */}
-          <div className="flex ml-[20px] mb-1" style={{ gap: 0 }}>
-            {monthLabels.map((m) => (
+          <div className="flex mb-1" style={{ marginLeft: DAY_LABEL_COL_WIDTH + 2 }}>
+            {visibleLabels.map((m) => (
               <span
                 key={m}
                 className="text-[10px] text-muted-foreground/60 font-medium"
-                style={{ width: CELL_PLUS_GAP * 4.3, flexShrink: 0 }}
+                style={{ width: labelWidth, flexShrink: 0 }}
               >
                 {m}
               </span>
             ))}
           </div>
-          <div className="flex gap-[3px]">
+          <div className="flex" style={{ gap }}>
             {/* Day labels */}
             <div
-              className="flex flex-col gap-[3px] mr-1 shrink-0"
-              style={{ width: 16 }}
+              className="flex flex-col shrink-0"
+              style={{ width: DAY_LABEL_COL_WIDTH - gap, gap }}
             >
               {["", "M", "", "W", "", "F", ""].map((d, i) => (
                 <span
                   key={i}
                   className="text-[10px] text-muted-foreground/60 font-medium flex items-center justify-end"
-                  style={{ height: CELL, lineHeight: `${CELL}px` }}
+                  style={{ height: cell, lineHeight: `${cell}px` }}
                 >
                   {d}
                 </span>
@@ -540,8 +668,8 @@ export function WatchActivityHeatmap({
             key={i}
             className="rounded-sm"
             style={{
-              width: 11,
-              height: 11,
+              width: Math.min(cell, 11),
+              height: Math.min(cell, 11),
               background:
                 i === 0
                   ? "rgba(148, 163, 184, 0.08)"
