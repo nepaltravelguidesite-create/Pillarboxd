@@ -20,8 +20,8 @@ const CELL_PLUS_GAP = CELL + GAP;
 const ROWS = 7;
 const WEEKS = 53;
 const SNAKE_LENGTH = 4;
-const LERP_SPEED = 0.12;
-const EMPTY_SKIP_SPEED = 0.35;
+const EMPTY_STEPS_PER_FRAME = 4;
+const STEP_SLIDE_FRAMES = 4;
 
 function buildGrid(logs: { watched_date: string | null }[]): {
   cells: DayCell[];
@@ -63,10 +63,6 @@ function intensityColor(count: number, maxCount: number): string {
   const ratio = Math.min(count / maxCount, 1);
   const opacity = 0.25 + ratio * 0.75;
   return `rgba(239, 169, 169, ${opacity})`;
-}
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
 }
 
 export function WatchActivityHeatmap({
@@ -159,20 +155,54 @@ export function WatchActivityHeatmap({
       }
     }
 
-    function drawSnake(x: number, y: number) {
-      const SEGMENT_SPACING = CELL_PLUS_GAP * 1.05;
-      const size = CELL;
-      for (let s = 0; s < SNAKE_LENGTH; s++) {
-        const sx = x - s * SEGMENT_SPACING;
-        const sy = y;
-        // Stepped color gradient: head brightest, body progressively darker
-        const shade = s / (SNAKE_LENGTH - 1);
+    // Build serpentine (boustrophedon) path: down col 0, up col 1, down col 2...
+    const cellMap = new Map<string, number>();
+    gridCells.forEach((c, i) => cellMap.set(`${c.col},${c.row}`, i));
+    const serpentinePath: number[] = [];
+    for (let col = 0; col < WEEKS; col++) {
+      const goDown = col % 2 === 0;
+      for (let r = 0; r < ROWS; r++) {
+        const row = goDown ? r : ROWS - 1 - r;
+        const idx = cellMap.get(`${col},${row}`);
+        if (idx !== undefined) serpentinePath.push(idx);
+      }
+    }
+
+    function cellCenter(idx: number) {
+      const c = gridCells[idx];
+      return {
+        x: c.col * CELL_PLUS_GAP + CELL / 2,
+        y: c.row * CELL_PLUS_GAP + CELL / 2,
+      };
+    }
+
+    function drawSnakeBody(
+      headX: number,
+      headY: number,
+      bodyPathIdxs: number[],
+    ) {
+      const positions: { x: number; y: number }[] = [
+        { x: headX, y: headY },
+      ];
+      for (const pi of bodyPathIdxs) {
+        if (pi < 0 || pi >= serpentinePath.length) continue;
+        positions.push(cellCenter(serpentinePath[pi]));
+      }
+      // Draw from tail to head so head renders on top
+      for (let s = positions.length - 1; s >= 0; s--) {
+        const shade = s / Math.max(1, positions.length - 1);
         const r = Math.round(239 - shade * 55);
         const g = Math.round(169 - shade * 45);
         const b = Math.round(169 - shade * 50);
         gctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
         gctx.beginPath();
-        gctx.roundRect(sx - size / 2, sy - size / 2, size, size, 3);
+        gctx.roundRect(
+          positions[s].x - CELL / 2,
+          positions[s].y - CELL / 2,
+          CELL,
+          CELL,
+          3,
+        );
         gctx.fill();
       }
     }
@@ -186,102 +216,204 @@ export function WatchActivityHeatmap({
       return;
     }
 
-    // Animation: snake moves through active cells in chronological order
+    // Animation: serpentine snake sweep through the grid
     eaten.clear();
     drawAll();
 
-    let currentTargetIdx = 0;
-    let snakeX = gridCells[activeIndices[0]].col * CELL_PLUS_GAP + CELL / 2;
-    let snakeY = gridCells[activeIndices[0]].row * CELL_PLUS_GAP + CELL / 2;
-    let lastEatenIdx = -1;
-    let phase: "moving" | "resting" = "moving";
-    let restTimer = 0;
-    const REST_DURATION = 8;
+    const activeCount = activeIndices.length;
+    const path = serpentinePath;
 
-    function animate() {
-      if (currentTargetIdx >= activeIndices.length) {
-        // Eat the last cell
-        const lastIdx = activeIndices[activeIndices.length - 1];
-        if (lastIdx !== lastEatenIdx) {
-          eaten.add(lastIdx);
-          lastEatenIdx = lastIdx;
-        }
-        drawAll();
-        setFinished(true);
+    // Pacing: fast through empty runs, deliberate on active cells
+    const TARGET_TOTAL_MS = 6000;
+    const FRAME_MS = 1000 / 60;
+    const targetTotalFrames = TARGET_TOTAL_MS / FRAME_MS;
+    const emptyCellsCount = path.length - activeCount;
+    const emptyTravelFrames = Math.ceil(emptyCellsCount / EMPTY_STEPS_PER_FRAME);
+    const restBudget = Math.max(0, targetTotalFrames - emptyTravelFrames);
+    const REST_DURATION = Math.max(
+      6,
+      Math.min(40, Math.round(restBudget / activeCount)),
+    );
+
+    const INITIAL_PAUSE = 25;
+
+    let pathIdx = 0;
+    let phase: "initial" | "resting" | "sliding" | "fasting" | "done" =
+      "initial";
+    let restTimer = 0;
+    let slideProgress = 0;
+    let eatenCount = 0;
+    const startTime = performance.now();
+    console.log(
+      `[heatmap] animation starting — ${activeCount} active cells, path=${path.length}, REST_DURATION=${REST_DURATION} frames/cell`,
+    );
+
+    function eatCurrentCell(): boolean {
+      const cellIdx = path[pathIdx];
+      if (cellIdx === undefined) return false;
+      if (gridCells[cellIdx].count > 0 && !eaten.has(cellIdx)) {
+        eaten.add(cellIdx);
+        eatenCount++;
+        const eatenCell = gridCells[cellIdx];
+        const remaining = activeCount - eatenCount;
+        console.log(
+          `[heatmap] ate cell ${eatenCell.date.toISOString().slice(0, 10)} — ${remaining} remaining`,
+        );
+        return true;
+      }
+      return false;
+    }
+
+    function finishAnimation() {
+      drawAll();
+      setFinished(true);
+      const elapsed = performance.now() - startTime;
+      console.log(
+        `[heatmap] animation finished — ${eatenCount} cells eaten, ${Math.round(elapsed)}ms total`,
+      );
+      phase = "done";
+    }
+
+    function beginStep() {
+      if (pathIdx + 1 >= path.length) {
+        finishAnimation();
         return;
       }
+      // Look ahead: fast-travel through runs of 3+ empty cells
+      let emptyRun = 0;
+      for (
+        let i = pathIdx + 1;
+        i < path.length && i <= pathIdx + 6;
+        i++
+      ) {
+        if (gridCells[path[i]].count === 0) emptyRun++;
+        else break;
+      }
+      if (emptyRun >= 3) {
+        phase = "fasting";
+      } else {
+        slideProgress = 0;
+        phase = "sliding";
+      }
+    }
 
-      const targetCell = gridCells[activeIndices[currentTargetIdx]];
-      const targetX = targetCell.col * CELL_PLUS_GAP + CELL / 2;
-      const targetY = targetCell.row * CELL_PLUS_GAP + CELL / 2;
+    function getHeadPos(): { x: number; y: number } {
+      if (phase === "sliding" && pathIdx + 1 < path.length) {
+        const from = cellCenter(path[pathIdx]);
+        const to = cellCenter(path[pathIdx + 1]);
+        return {
+          x: from.x + (to.x - from.x) * slideProgress,
+          y: from.y + (to.y - from.y) * slideProgress,
+        };
+      }
+      return cellCenter(path[pathIdx]);
+    }
+
+    function getBodyPathIndices(): number[] {
+      const indices: number[] = [];
+      const start = phase === "sliding" ? pathIdx : pathIdx - 1;
+      for (let s = 0; s < SNAKE_LENGTH - 1; s++) {
+        const pi = start - s;
+        if (pi >= 0) indices.push(pi);
+      }
+      return indices;
+    }
+
+    function render() {
+      drawAll();
+      const head = getHeadPos();
+      drawSnakeBody(head.x, head.y, getBodyPathIndices());
+    }
+
+    function animate() {
+      if (phase === "done") return;
+
+      if (phase === "initial") {
+        restTimer++;
+        if (restTimer >= INITIAL_PAUSE) {
+          restTimer = 0;
+          const ate = eatCurrentCell();
+          if (ate) {
+            phase = "resting";
+          } else if (pathIdx + 1 < path.length) {
+            beginStep();
+          } else {
+            finishAnimation();
+            return;
+          }
+        }
+        render();
+        rafRef.current = requestAnimationFrame(animate);
+        return;
+      }
 
       if (phase === "resting") {
         restTimer++;
         if (restTimer >= REST_DURATION) {
           restTimer = 0;
-          phase = "moving";
-          currentTargetIdx++;
+          if (pathIdx + 1 < path.length) {
+            beginStep();
+          } else {
+            finishAnimation();
+            return;
+          }
         }
-        // Continue drawing
-        drawAll();
-        drawSnake(snakeX, snakeY);
+        render();
         rafRef.current = requestAnimationFrame(animate);
         return;
       }
 
-      const dx = targetX - snakeX;
-      const dy = targetY - snakeY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < 1.5) {
-        // Arrived - eat the cell
-        const cellIdx = activeIndices[currentTargetIdx];
-        if (cellIdx !== lastEatenIdx) {
-          eaten.add(cellIdx);
-          lastEatenIdx = cellIdx;
+      if (phase === "sliding") {
+        slideProgress += 1 / STEP_SLIDE_FRAMES;
+        if (slideProgress >= 1) {
+          slideProgress = 0;
+          pathIdx++;
+          const ate = eatCurrentCell();
+          if (ate) {
+            phase = "resting";
+          } else if (pathIdx + 1 < path.length) {
+            beginStep();
+          } else {
+            finishAnimation();
+            return;
+          }
         }
-        snakeX = targetX;
-        snakeY = targetY;
-        phase = "resting";
-        drawAll();
-        drawSnake(snakeX, snakeY);
+        render();
         rafRef.current = requestAnimationFrame(animate);
         return;
       }
 
-      // Move towards target - speed depends on whether current cell is empty
-      const speed = LERP_SPEED;
-
-      // If we're transitioning through empty space (large gap), move faster
-      const prevActiveIdx =
-        currentTargetIdx > 0
-          ? activeIndices[currentTargetIdx - 1]
-          : activeIndices[0];
-      const prevCell = gridCells[prevActiveIdx];
-      const gap =
-        Math.abs(targetCell.col - prevCell.col) +
-        Math.abs(targetCell.row - prevCell.row);
-      const effectiveSpeed = gap > 3 ? EMPTY_SKIP_SPEED : speed;
-
-      snakeX = lerp(snakeX, targetX, effectiveSpeed);
-      snakeY = lerp(snakeY, targetY, effectiveSpeed);
-
-      // Eat cells we pass over
-      for (let i = currentTargetIdx; i < activeIndices.length; i++) {
-        const idx = activeIndices[i];
-        const c = gridCells[idx];
-        const cx = c.col * CELL_PLUS_GAP + CELL / 2;
-        const cy = c.row * CELL_PLUS_GAP + CELL / 2;
-        const d = Math.sqrt((cx - snakeX) ** 2 + (cy - snakeY) ** 2);
-        if (d < CELL_PLUS_GAP * 0.6 && !eaten.has(idx)) {
-          eaten.add(idx);
-          lastEatenIdx = idx;
+      if (phase === "fasting") {
+        let advanced = 0;
+        let hitActive = false;
+        while (
+          advanced < EMPTY_STEPS_PER_FRAME &&
+          pathIdx + 1 < path.length
+        ) {
+          const nextCellIdx = path[pathIdx + 1];
+          if (gridCells[nextCellIdx].count > 0) {
+            hitActive = true;
+            break;
+          }
+          pathIdx++;
+          advanced++;
         }
+        if (hitActive) {
+          slideProgress = 0;
+          phase = "sliding";
+        } else if (pathIdx + 1 >= path.length) {
+          const ate = eatCurrentCell();
+          if (ate) {
+            phase = "resting";
+          } else {
+            finishAnimation();
+            return;
+          }
+        }
+        render();
+        rafRef.current = requestAnimationFrame(animate);
+        return;
       }
-
-      drawAll();
-      drawSnake(snakeX, snakeY);
-      rafRef.current = requestAnimationFrame(animate);
     }
 
     // Start animation when scrolled into view
